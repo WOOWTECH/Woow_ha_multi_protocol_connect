@@ -4,7 +4,7 @@
   "codeowners": ["@woowtech"],
   "config_flow": true,
   "documentation": "https://aiot.woowtech.io/blog",
-  "iot_class": "local_push",
+  "iot_class": "",
   "issue_tracker": "https://github.com/woowtech/Woow_ha_dmx_component/issues",
-  "version": "2.0.0"
+  "version": "2.1.0"
 }

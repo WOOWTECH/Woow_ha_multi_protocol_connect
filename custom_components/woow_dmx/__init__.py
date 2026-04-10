@@ -11,7 +11,7 @@ from homeassistant.components.http import StaticPathConfig
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
-from .const import DOMAIN, PANEL_ICON, PANEL_TITLE
+from .const import CONFIG_SUBDIR, DOMAIN, PANEL_ICON, PANEL_TITLE
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -51,10 +51,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         config={"url": f"/{DOMAIN}/frontend/panel.html"},
     )
 
+    # Ensure the component's config subdirectory exists
+    subdir = hass.config.path(CONFIG_SUBDIR)
+    os.makedirs(subdir, exist_ok=True)
+
     # Register WebSocket API for YAML file editing
     websocket_api.async_register_command(hass, handle_woow_dmx_ws)
 
-    _LOGGER.info("Woow DMX Setup Guide panel registered")
+    _LOGGER.info("Woow DMX Setup Guide panel registered (config dir: %s/)", CONFIG_SUBDIR)
     return True
 
 
@@ -170,9 +174,14 @@ def _write_file(filepath: str, content: str, orig_stat=None) -> None:
 async def handle_woow_dmx_ws(
     hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict
 ) -> None:
-    """Handle WebSocket commands for file editing."""
+    """Handle WebSocket commands for file editing.
+
+    All operations are scoped to the component's subdirectory
+    (config_dir/CONFIG_SUBDIR/) to prevent cross-component file access.
+    """
     action = msg["action"]
     config_dir = hass.config.path()
+    scoped_dir = os.path.join(config_dir, CONFIG_SUBDIR)
 
     if action == "list":
         ext = msg["ext"]
@@ -180,7 +189,7 @@ async def handle_woow_dmx_ws(
             ext = "yaml"
         try:
             files = await hass.async_add_executor_job(
-                _list_files, config_dir, ext, msg["depth"]
+                _list_files, scoped_dir, ext, msg["depth"]
             )
             connection.send_result(msg["id"], {"files": files})
         except Exception as err:
@@ -192,9 +201,10 @@ async def handle_woow_dmx_ws(
         if not raw_path:
             connection.send_error(msg["id"], "invalid_path", "Path is empty")
             return
-        full_path = os.path.join(config_dir, raw_path)
-        if not _is_safe_path(full_path, config_dir):
-            connection.send_error(msg["id"], "invalid_path", "Path outside config directory")
+        full_path = os.path.join(scoped_dir, raw_path)
+        if not _is_safe_path(full_path, scoped_dir):
+            connection.send_error(msg["id"], "invalid_path",
+                                  f"Path outside {CONFIG_SUBDIR}/ directory")
             return
         try:
             content = await hass.async_add_executor_job(_read_file, full_path)
@@ -212,19 +222,19 @@ async def handle_woow_dmx_ws(
         if not raw_path:
             connection.send_error(msg["id"], "invalid_path", "Path is empty")
             return
-        full_path = os.path.join(config_dir, raw_path)
-        if not _is_safe_path(full_path, config_dir):
-            connection.send_error(msg["id"], "invalid_path", "Path outside config directory")
+        full_path = os.path.join(scoped_dir, raw_path)
+        if not _is_safe_path(full_path, scoped_dir):
+            connection.send_error(msg["id"], "invalid_path",
+                                  f"Path outside {CONFIG_SUBDIR}/ directory")
             return
         content = msg["content"]
         try:
-            # Preserve original file permissions if it exists
             orig = None
             if os.path.exists(full_path):
                 orig = os.stat(full_path)
             await hass.async_add_executor_job(_write_file, full_path, content, orig)
             connection.send_result(msg["id"], {"success": True, "path": raw_path})
-            _LOGGER.info("Saved file: %s", raw_path)
+            _LOGGER.info("Saved file: %s/%s", CONFIG_SUBDIR, raw_path)
         except Exception as err:
-            _LOGGER.exception("Failed to save file: %s", raw_path)
+            _LOGGER.exception("Failed to save file: %s/%s", CONFIG_SUBDIR, raw_path)
             connection.send_error(msg["id"], "save_failed", str(err))

@@ -474,7 +474,7 @@ modbus:<br />
     }
 
     function newFile() {
-      let filename = prompt("請輸入新檔案名稱（相對於 HA 設定目錄）：", "modbus_config.yaml");
+      let filename = prompt("請輸入新檔案名稱（儲存於 config/modbus/ 目錄下）：", "modbus_config.yaml");
       if (!filename) return;
       filename = filename.replace(/\.\./g, "").trim();
       if (!filename.endsWith(".yaml") && !filename.endsWith(".yml")) filename += ".yaml";

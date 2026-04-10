@@ -463,7 +463,7 @@ light:<br />
     }
 
     function newFile() {
-      let filename = prompt("請輸入新檔案名稱（相對於 HA 設定目錄）：", "dmx_config.yaml");
+      let filename = prompt("請輸入新檔案名稱（儲存於 config/dmx/ 目錄下）：", "dmx_config.yaml");
       if (!filename) return;
       filename = filename.replace(/\.\./g, "").trim();
       if (!filename.endsWith(".yaml") && !filename.endsWith(".yml")) filename += ".yaml";
