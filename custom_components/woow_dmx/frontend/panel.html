@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Woow DMX 設定指南</title>
+  <style>
+    :root {
+      --primary: #9c27b0;
+      --primary-dark: #7b1fa2;
+      --accent: #ff9800;
+      --danger: #f44336;
+      --danger-dark: #d32f2f;
+      --success: #4caf50;
+      --bg: #f5f5f5;
+      --card-bg: #ffffff;
+      --text: #212121;
+      --text-secondary: #616161;
+      --border: #e0e0e0;
+      --shadow: 0 2px 8px rgba(0,0,0,0.1);
+      --radius: 12px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #1c1c1c;
+        --card-bg: #2c2c2c;
+        --text: #e0e0e0;
+        --text-secondary: #9e9e9e;
+        --border: #404040;
+        --shadow: 0 2px 8px rgba(0,0,0,0.3);
+      }
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 24px;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 32px;
+      padding: 32px 24px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      border-radius: var(--radius);
+      color: #fff;
+      box-shadow: var(--shadow);
+    }
+    .header h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+    .header p { font-size: 15px; opacity: 0.9; }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+      transition: transform 0.15s ease;
+    }
+    .card:hover { transform: translateY(-1px); }
+    .card h2 { font-size: 20px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
+    .card h2 .icon { font-size: 24px; flex-shrink: 0; }
+    .card p, .card li { color: var(--text-secondary); font-size: 14px; line-height: 1.8; }
+    .card ul, .card ol { padding-left: 20px; margin-top: 8px; }
+    .card li { margin-bottom: 6px; }
+
+    a.btn {
+      display: inline-block; padding: 10px 24px; border-radius: 8px; font-size: 14px;
+      font-weight: 600; text-decoration: none; transition: all 0.2s ease; cursor: pointer;
+      border: none; text-align: center;
+    }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-accent { background: var(--accent); color: #fff; }
+    .btn-accent:hover { background: #f57c00; }
+    .btn-group { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
+
+    .step-badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--primary); color: #fff; font-size: 14px; font-weight: 700; flex-shrink: 0;
+    }
+    .steps { margin-top: 12px; }
+    .step { display: flex; gap: 14px; margin-bottom: 16px; align-items: flex-start; }
+    .step-content { flex: 1; }
+    .step-content strong { display: block; font-size: 15px; color: var(--text); margin-bottom: 2px; }
+    .step-content span { font-size: 13px; color: var(--text-secondary); }
+
+    .warning-box {
+      background: #fff3e0; border: 2px solid var(--accent); border-radius: 8px;
+      padding: 16px; margin-top: 16px; margin-bottom: 16px;
+    }
+    .warning-box.danger { background: #ffebee; border-color: var(--danger); }
+    @media (prefers-color-scheme: dark) {
+      .warning-box { background: #3e2723; }
+      .warning-box.danger { background: #3e1e1e; }
+    }
+    .warning-box p { color: var(--text) !important; font-size: 13px; font-weight: 500; }
+    .warning-box .warning-title { font-weight: 700; font-size: 15px; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+
+    button.btn-danger {
+      display: inline-flex; align-items: center; gap: 8px; padding: 12px 28px;
+      border-radius: 8px; font-size: 14px; font-weight: 700;
+      background: var(--danger); color: #fff; border: none; cursor: pointer; transition: all 0.2s ease;
+    }
+    button.btn-danger:hover { background: var(--danger-dark); }
+    button.btn-danger:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .restart-section { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-top: 16px; }
+    .checkbox-confirm { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text-secondary); cursor: pointer; user-select: none; }
+    .checkbox-confirm input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
+    #restartStatus { margin-top: 12px; font-size: 13px; font-weight: 600; min-height: 20px; }
+
+    .divider { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+
+    .code-block {
+      background: #263238; color: #eeffff; border-radius: 8px; padding: 16px; margin-top: 12px;
+      font-family: "Fira Code", "Consolas", monospace; font-size: 13px; overflow-x: auto; line-height: 1.6;
+    }
+    .success-box { background: #e8f5e9; border: 2px solid var(--success); border-radius: 8px; padding: 16px; margin-top: 16px; }
+    @media (prefers-color-scheme: dark) { .success-box { background: #1b3e1f; } }
+    .success-box p { color: var(--text) !important; font-size: 14px; }
+
+    /* YAML Editor */
+    .editor-section { border: 2px solid #9c27b0; border-radius: var(--radius); margin-bottom: 20px; box-shadow: var(--shadow); overflow: hidden; }
+    .editor-header {
+      background: linear-gradient(135deg, #9c27b0, #7b1fa2); color: #fff; padding: 14px 20px;
+      font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px;
+    }
+    .editor-header .ws-badge { margin-left: auto; display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 10px; font-size: 12px; font-weight: 600; }
+    .ws-badge.connected { background: rgba(76,175,80,0.25); color: #a5d6a7; }
+    .ws-badge.disconnected { background: rgba(244,67,54,0.25); color: #ef9a9a; }
+    .editor-toolbar { display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: var(--card-bg); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+    .editor-toolbar select { flex: 1; min-width: 140px; padding: 7px 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 13px; }
+    .editor-toolbar button { padding: 7px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+    .editor-toolbar button:hover { border-color: var(--primary); color: var(--primary); }
+    .editor-textarea { display: block; width: 100%; min-height: 400px; padding: 16px; background: #1a2328; color: #d4d4d4; border: none; font-family: "Fira Code", "Consolas", "Monaco", "Courier New", monospace; font-size: 14px; line-height: 1.6; resize: vertical; outline: none; tab-size: 2; }
+    .editor-textarea::placeholder { color: #546e72; }
+    .editor-textarea:focus { box-shadow: inset 0 0 0 2px rgba(156,39,176,0.3); }
+    .editor-footer { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; background: var(--card-bg); border-top: 1px solid var(--border); flex-wrap: wrap; gap: 8px; }
+    .editor-status { font-size: 13px; color: var(--text-secondary); flex: 1; min-width: 100px; }
+    .editor-footer-buttons { display: flex; gap: 8px; }
+    .btn-editor { padding: 8px 16px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+    .btn-editor:hover { border-color: var(--primary); color: var(--primary); }
+    .btn-save { padding: 8px 20px; border-radius: 6px; border: none; background: var(--success); color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: background 0.15s; }
+    .btn-save:hover { background: #388e3c; }
+    .btn-save:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    @media (max-width: 600px) {
+      body { padding: 16px; }
+      .header h1 { font-size: 22px; }
+      .editor-toolbar { gap: 6px; }
+      .editor-textarea { min-height: 300px; font-size: 12px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>Woow DMX 設定指南</h1>
+    <p>透過官方文檔 + AI 助手，輕鬆完成 DMX 燈光控制 YAML 設定</p>
+  </div>
+
+  <!-- Section 1: Official Documentation -->
+  <div class="card">
+    <h2><span class="icon">📖</span> Step 1：了解 DMX 燈光控制協議</h2>
+    <p>
+      DMX512 是專業燈光控制的標準協議，廣泛應用於舞台燈光、建築照明和智慧家居場景。
+      在 Home Assistant 中，您可以透過 <strong>ArtNet</strong> 或 <strong>sACN (E1.31)</strong> 來控制 DMX 裝置：
+    </p>
+    <ul>
+      <li><strong>ArtNet</strong> — 透過網路 (UDP) 傳送 DMX 訊號至 ArtNet 節點</li>
+      <li><strong>sACN / E1.31</strong> — 基於 ACN 標準的串流 DMX 資料協議</li>
+      <li><strong>DMX Universe</strong> — 每個 Universe 可控制最多 512 個通道</li>
+      <li><strong>通道地址</strong> — 每個燈具佔用一個或多個 DMX 通道（如 RGB 燈具佔用 3 個通道）</li>
+    </ul>
+    <div class="btn-group">
+      <a class="btn btn-primary" href="https://github.com/jnimmo/hass-dmx" target="_blank" rel="noopener">
+        DMX 整合文檔 (hass-dmx)
+      </a>
+      <a class="btn btn-primary" href="https://www.home-assistant.io/integrations/flux_led/" target="_blank" rel="noopener">
+        Flux LED 官方文檔
+      </a>
+    </div>
+  </div>
+
+  <!-- Section 2: AI Assistant -->
+  <div class="card">
+    <h2><span class="icon">🤖</span> Step 2：使用 Woow AI 助手取得 DMX 設定</h2>
+    <p>
+      透過 Woow AI 助手，您可以根據實際的 DMX 裝置型號、通道配置等資訊，
+      生成對應的 YAML 設定。AI 助手能幫助您正確配置：
+    </p>
+    <ul>
+      <li>DMX Universe 編號與網路介面設定</li>
+      <li>每個燈具的起始通道地址</li>
+      <li>燈具類型（調光器、RGB、RGBW、移動燈等）</li>
+      <li>轉換效果（淡入淡出時間、預設亮度等）</li>
+    </ul>
+    <div class="btn-group">
+      <a class="btn btn-accent" href="https://aiot.woowtech.io/blog" target="_blank" rel="noopener">
+        前往 Woow AI 助手
+      </a>
+    </div>
+  </div>
+
+  <!-- Section 3: How-to Guide -->
+  <div class="card">
+    <h2><span class="icon">📝</span> Step 3：完整 DMX 設定流程教學</h2>
+    <p>以下是從零開始完成 DMX 燈光控制設定的完整步驟：</p>
+    <div class="steps">
+      <div class="step">
+        <span class="step-badge">1</span>
+        <div class="step-content">
+          <strong>確認 DMX 硬體資訊</strong>
+          <span>記下您的 ArtNet 節點 IP 位址（或 sACN 多播設定）、Universe 編號，以及每個燈具的起始 DMX 通道地址。</span>
+        </div>
+      </div>
+      <div class="step">
+        <span class="step-badge">2</span>
+        <div class="step-content">
+          <strong>安裝 DMX 整合</strong>
+          <span>Home Assistant 可透過 HACS 安裝 <a href="https://github.com/jnimmo/hass-dmx" target="_blank">hass-dmx</a> 整合套件，支援 ArtNet 和 sACN 協議。</span>
+        </div>
+      </div>
+      <div class="step">
+        <span class="step-badge">3</span>
+        <div class="step-content">
+          <strong>向 AI 助手提問</strong>
+          <span>前往 <a href="https://aiot.woowtech.io/blog" target="_blank">Woow AI 助手</a>，提供以下資訊：<br />
+            ‣ DMX 節點類型（ArtNet / sACN）與 IP 位址<br />
+            ‣ 燈具類型（調光器、RGB、RGBW、色溫燈等）<br />
+            ‣ 起始通道地址與 Universe 編號
+          </span>
+        </div>
+      </div>
+      <div class="step">
+        <span class="step-badge">4</span>
+        <div class="step-content">
+          <strong>使用下方編輯器寫入 YAML 設定</strong>
+          <span>將 AI 助手產生的 YAML 設定，透過下方的<strong>內建 YAML 編輯器</strong>直接編輯 <code>configuration.yaml</code>。</span>
+        </div>
+      </div>
+      <div class="step">
+        <span class="step-badge">5</span>
+        <div class="step-content">
+          <strong>重新啟動 Home Assistant</strong>
+          <span>儲存設定後，重新啟動 Home Assistant 以載入 DMX 燈光設定。</span>
+        </div>
+      </div>
+      <div class="step">
+        <span class="step-badge">6</span>
+        <div class="step-content">
+          <strong>測試燈光控制</strong>
+          <span>前往 <em>開發者工具 → 服務</em>，呼叫 <code>light.turn_on</code> 測試 DMX 燈光是否正常回應。</span>
+        </div>
+      </div>
+    </div>
+
+    <p style="margin-top: 12px;"><strong>YAML 設定範例（ArtNet DMX 燈光）：</strong></p>
+    <div class="warning-box">
+      <p class="warning-title">💡 注意：需先安裝 hass-dmx 整合</p>
+      <p>DMX 控制需透過 HACS 安裝 <code>hass-dmx</code> 整合套件。安裝後才能使用以下 YAML 設定。</p>
+    </div>
+    <div class="code-block">
+# configuration.yaml — DMX 燈光設定範例<br />
+light:<br />
+&nbsp;&nbsp;- platform: dmx<br />
+&nbsp;&nbsp;&nbsp;&nbsp;host: 192.168.1.100  # ArtNet 節點 IP<br />
+&nbsp;&nbsp;&nbsp;&nbsp;port: 6454           # ArtNet 預設埠<br />
+&nbsp;&nbsp;&nbsp;&nbsp;dmx_channels: 512<br />
+&nbsp;&nbsp;&nbsp;&nbsp;default_level: 0<br />
+&nbsp;&nbsp;&nbsp;&nbsp;universe: 0<br />
+&nbsp;&nbsp;&nbsp;&nbsp;devices:<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- channel: 1<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;name: "客廳主燈"<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;type: dimmer<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;transition: 1<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- channel: 2<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;name: "氣氛 RGB 燈條"<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;type: rgb<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;transition: 2<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- channel: 5<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;name: "走廊射燈"<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;type: dimmer<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;default_level: 128<br />
+    </div>
+
+    <div class="success-box">
+      <p>
+        <strong>完成！</strong>透過以上步驟，您已成功設定 DMX 燈光控制。
+        現在可以在 Home Assistant 中控制所有 DMX 燈具，並建立自動化場景。
+      </p>
+    </div>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- Section 4: Built-in YAML Editor -->
+  <div class="editor-section" id="editorSection">
+    <div class="editor-header">
+      ✏️ YAML 設定檔編輯器
+      <span class="ws-badge disconnected" id="wsStatus">● 未連線</span>
+    </div>
+    <div class="editor-toolbar">
+      <select id="fileSelect" onchange="loadSelectedFile()">
+        <option value="">-- 選擇檔案 --</option>
+      </select>
+      <button onclick="refreshFileList()" title="重新整理檔案清單">🔄 重新整理</button>
+      <button onclick="changeFontSize(-1)" title="縮小字體">A-</button>
+      <button onclick="changeFontSize(1)" title="放大字體">A+</button>
+    </div>
+    <textarea id="editorArea" class="editor-textarea"
+      placeholder="選擇上方檔案開始編輯，或直接貼上 AI 產出的 DMX YAML 設定..."
+      spellcheck="false"></textarea>
+    <div class="editor-footer">
+      <span class="editor-status" id="editorStatus">準備就緒</span>
+      <div class="editor-footer-buttons">
+        <button class="btn-editor" onclick="newFile()">+ 新增檔案</button>
+        <button class="btn-save" id="saveBtn" onclick="saveFile()" disabled>💾 儲存</button>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- Section 5: Restart HA -->
+  <div class="card">
+    <h2><span class="icon">🔄</span> 重新啟動 Home Assistant</h2>
+    <p>修改 <code>configuration.yaml</code> 後，必須重新啟動 Home Assistant 才能使 DMX 設定生效。</p>
+    <div class="warning-box danger">
+      <p class="warning-title">⚠️ 重要警告</p>
+      <p>重新啟動將會<strong>暫時中斷所有自動化、裝置連線與服務</strong>。請確認設定已正確儲存後再執行。</p>
+    </div>
+    <div class="restart-section">
+      <label class="checkbox-confirm">
+        <input type="checkbox" id="confirmRestart" onchange="toggleRestartBtn()" />
+        我確認已儲存設定，並了解重啟將暫時中斷服務
+      </label>
+    </div>
+    <div class="restart-section">
+      <button class="btn-danger" id="restartBtn" disabled onclick="restartHA()">🔄 重新啟動 Home Assistant</button>
+    </div>
+    <div id="restartStatus"></div>
+  </div>
+
+  <div style="text-align: center; margin-top: 32px; color: var(--text-secondary); font-size: 12px;">
+    <p>Woow DMX Setup Guide v2.0.0 — Powered by <a href="https://aiot.woowtech.io/blog" target="_blank" style="color: var(--primary);">Woow Tech</a></p>
+  </div>
+
+  <script>
+    const WS_TYPE = "woow_dmx/ws";
+    const CACHE_PREFIX = "woow_dmx";
+
+    /* WebSocket Manager */
+    const WS = {
+      socket: null, msgId: 1, pending: {}, authenticated: false, _reconnectTimer: null,
+      connect() {
+        if (this.socket && this.socket.readyState <= 1) return;
+        const proto = location.protocol === "https:" ? "wss:" : "ws:";
+        this.socket = new WebSocket(proto + "//" + location.host + "/api/websocket");
+        this.socket.onmessage = (e) => this._onMessage(JSON.parse(e.data));
+        this.socket.onclose = () => this._onClose();
+        this.socket.onerror = () => {};
+      },
+      _onMessage(msg) {
+        if (msg.type === "auth_required") {
+          const token = getHAToken();
+          if (!token) { this._setStatus(false); return; }
+          this.socket.send(JSON.stringify({ type: "auth", access_token: token }));
+        } else if (msg.type === "auth_ok") {
+          this.authenticated = true; this._setStatus(true); refreshFileList();
+        } else if (msg.type === "auth_invalid") {
+          this.authenticated = false; this._setStatus(false);
+        } else if (msg.type === "result") {
+          const cb = this.pending[msg.id];
+          if (cb) { delete this.pending[msg.id]; msg.success ? cb.resolve(msg.result) : cb.reject(msg.error || { message: "Unknown error" }); }
+        }
+      },
+      _onClose() {
+        this.authenticated = false; this._setStatus(false);
+        clearTimeout(this._reconnectTimer);
+        this._reconnectTimer = setTimeout(() => this.connect(), 5000);
+      },
+      _setStatus(connected) {
+        const el = document.getElementById("wsStatus");
+        if (connected) { el.className = "ws-badge connected"; el.textContent = "● 已連線"; }
+        else { el.className = "ws-badge disconnected"; el.textContent = "● 未連線"; }
+      },
+      send(payload) {
+        return new Promise((resolve, reject) => {
+          if (!this.socket || !this.authenticated) { reject({ message: "WebSocket 未連線" }); return; }
+          const id = this.msgId++;
+          this.pending[id] = { resolve, reject };
+          this.socket.send(JSON.stringify({ id, ...payload }));
+          setTimeout(() => { if (this.pending[id]) { delete this.pending[id]; reject({ message: "請求逾時" }); } }, 30000);
+        });
+      }
+    };
+
+    function getHAToken() {
+      try { if (window.parent && window.parent.hassConnection) return window.parent.hassConnection.options.auth.accessToken; } catch (e) {}
+      try { const s = localStorage.getItem("hassTokens"); if (s) return JSON.parse(s).access_token; } catch (e) {}
+      try { const ps = window.parent.localStorage.getItem("hassTokens"); if (ps) return JSON.parse(ps).access_token; } catch (e) {}
+      return "";
+    }
+
+    /* Editor Logic */
+    let currentFile = "", editorDirty = false, originalContent = "", editorFontSize = 14;
+
+    async function refreshFileList() {
+      const select = document.getElementById("fileSelect");
+      const status = document.getElementById("editorStatus");
+      try {
+        status.textContent = "正在載入檔案清單...";
+        const result = await WS.send({ type: WS_TYPE, action: "list", ext: "yaml", depth: 10 });
+        const files = result.files || [];
+        select.innerHTML = '<option value="">-- 選擇檔案 --</option>';
+        files.forEach(f => { const opt = document.createElement("option"); opt.value = f; opt.textContent = f; select.appendChild(opt); });
+        status.textContent = "找到 " + files.length + " 個 YAML 檔案";
+        if (currentFile) { for (let i = 0; i < select.options.length; i++) { if (select.options[i].value === currentFile) { select.value = currentFile; break; } } }
+      } catch (err) { status.textContent = "載入檔案清單失敗：" + (err.message || err); }
+    }
+
+    async function loadSelectedFile() {
+      const select = document.getElementById("fileSelect"), textarea = document.getElementById("editorArea");
+      const status = document.getElementById("editorStatus"), saveBtn = document.getElementById("saveBtn");
+      const path = select.value;
+      if (!path) { textarea.value = ""; currentFile = ""; originalContent = ""; saveBtn.disabled = true; editorDirty = false; status.textContent = "準備就緒"; return; }
+      if (editorDirty && currentFile) { if (!confirm("目前的變更尚未儲存，確定要切換檔案嗎？")) { select.value = currentFile; return; } }
+      try {
+        status.textContent = "正在載入 " + path + "...";
+        const result = await WS.send({ type: WS_TYPE, action: "load", path: path });
+        textarea.value = result.content; originalContent = result.content; currentFile = result.path || path;
+        editorDirty = false; saveBtn.disabled = false; status.textContent = "已載入：" + currentFile; cacheState();
+      } catch (err) { status.textContent = "載入失敗：" + (err.message || err); }
+    }
+
+    async function saveFile() {
+      const textarea = document.getElementById("editorArea"), status = document.getElementById("editorStatus"), saveBtn = document.getElementById("saveBtn");
+      if (!currentFile) { status.textContent = "請先選擇或新增檔案"; return; }
+      if (!confirm("確定要儲存 " + currentFile + " 嗎？")) return;
+      saveBtn.disabled = true; status.textContent = "正在儲存 " + currentFile + "..."; status.style.color = "";
+      try {
+        await WS.send({ type: WS_TYPE, action: "save", path: currentFile, content: textarea.value });
+        originalContent = textarea.value; editorDirty = false;
+        status.style.color = "var(--success)"; status.textContent = "✓ 已儲存：" + currentFile; cacheState();
+        setTimeout(() => { status.style.color = ""; }, 4000);
+      } catch (err) {
+        status.style.color = "var(--danger)"; status.textContent = "儲存失敗：" + (err.message || err);
+        setTimeout(() => { status.style.color = ""; }, 5000);
+      } finally { saveBtn.disabled = false; }
+    }
+
+    function newFile() {
+      let filename = prompt("請輸入新檔案名稱（相對於 HA 設定目錄）：", "dmx_config.yaml");
+      if (!filename) return;
+      filename = filename.replace(/\.\./g, "").trim();
+      if (!filename.endsWith(".yaml") && !filename.endsWith(".yml")) filename += ".yaml";
+      const textarea = document.getElementById("editorArea"), select = document.getElementById("fileSelect");
+      const status = document.getElementById("editorStatus"), saveBtn = document.getElementById("saveBtn");
+      let exists = false;
+      for (let i = 0; i < select.options.length; i++) { if (select.options[i].value === filename) { exists = true; break; } }
+      if (!exists) { const opt = document.createElement("option"); opt.value = filename; opt.textContent = filename; select.appendChild(opt); }
+      select.value = filename; currentFile = filename; textarea.value = ""; originalContent = "";
+      saveBtn.disabled = false; editorDirty = true; status.textContent = "新檔案：" + filename + "（尚未儲存）"; textarea.focus();
+    }
+
+    function changeFontSize(delta) {
+      editorFontSize = Math.max(10, Math.min(24, editorFontSize + delta));
+      document.getElementById("editorArea").style.fontSize = editorFontSize + "px";
+      try { localStorage.setItem(CACHE_PREFIX + "_fontsize", editorFontSize); } catch(e) {}
+    }
+
+    function restoreFontSize() {
+      try { const s = localStorage.getItem(CACHE_PREFIX + "_fontsize"); if (s) { editorFontSize = parseInt(s, 10) || 14; document.getElementById("editorArea").style.fontSize = editorFontSize + "px"; } } catch(e) {}
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+      const textarea = document.getElementById("editorArea");
+      textarea.addEventListener("input", function() { editorDirty = (textarea.value !== originalContent); cacheState(); });
+      textarea.addEventListener("keydown", function(e) {
+        if (e.key === "Tab") { e.preventDefault(); const start = this.selectionStart, end = this.selectionEnd; this.value = this.value.substring(0, start) + "  " + this.value.substring(end); this.selectionStart = this.selectionEnd = start + 2; editorDirty = true; cacheState(); }
+      });
+      restoreFontSize(); restoreCache(); WS.connect();
+    });
+
+    document.addEventListener("keydown", function(e) { if ((e.ctrlKey || e.metaKey) && e.key === "s") { e.preventDefault(); if (currentFile) saveFile(); } });
+    window.addEventListener("beforeunload", function(e) { if (editorDirty) { e.preventDefault(); e.returnValue = ""; } });
+
+    function cacheState() {
+      try { localStorage.setItem(CACHE_PREFIX + "_cache", JSON.stringify({ file: currentFile, content: document.getElementById("editorArea").value, dirty: editorDirty, ts: Date.now() })); } catch(e) {}
+    }
+    function restoreCache() {
+      try { const raw = localStorage.getItem(CACHE_PREFIX + "_cache"); if (!raw) return; const data = JSON.parse(raw);
+        if (data.dirty && data.content && (Date.now() - data.ts) < 3600000) { document.getElementById("editorArea").value = data.content; currentFile = data.file || ""; editorDirty = true; document.getElementById("editorStatus").textContent = "已恢復未儲存的編輯內容" + (data.file ? "：" + data.file : ""); document.getElementById("saveBtn").disabled = !currentFile; }
+      } catch(e) {}
+    }
+
+    /* Restart HA */
+    function toggleRestartBtn() { document.getElementById("restartBtn").disabled = !document.getElementById("confirmRestart").checked; }
+
+    async function restartHA() {
+      const btn = document.getElementById("restartBtn"), status = document.getElementById("restartStatus");
+      btn.disabled = true; status.style.color = "var(--accent)"; status.textContent = "正在發送重啟指令...";
+      try {
+        const resp = await fetch(window.location.origin + "/api/services/homeassistant/restart", {
+          method: "POST", headers: { "Content-Type": "application/json", "Authorization": "Bearer " + getHAToken() }
+        });
+        if (resp.ok) { status.style.color = "var(--success)"; status.textContent = "重啟指令已送出！請稍候約 1-3 分鐘..."; }
+        else throw new Error("HTTP " + resp.status);
+      } catch (err) {
+        try { await WS.send({ type: "call_service", domain: "homeassistant", service: "restart" });
+          status.style.color = "var(--success)"; status.textContent = "重啟指令已送出！請稍候約 1-3 分鐘...";
+        } catch (e) { status.style.color = "var(--danger)"; status.textContent = "無法發送重啟指令。請至 設定 → 系統 → 重新啟動 手動執行。"; document.getElementById("confirmRestart").checked = false; }
+      }
+    }
+  </script>
+</body>
+</html>
