@@ -70,15 +70,29 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 # ---------------------------------------------------------------------------
 
 def _sanitize_path(raw: str) -> str:
-    """Remove path traversal sequences and normalize."""
-    sanitized = raw.replace("../", "").replace("..\\", "").strip("/").strip("\\")
+    """Validate and normalize path, rejecting any traversal attempts."""
+    # Reject null bytes
+    if "\x00" in raw:
+        return ""
+    # Reject absolute paths
+    if raw.startswith("/") or raw.startswith("\\"):
+        return ""
+    # Reject any path containing '..' as a component (traversal attempt)
+    normalized = raw.replace("\\", "/")
+    parts = normalized.split("/")
+    if ".." in parts:
+        return ""
+    # Strip leading/trailing slashes after validation
+    sanitized = normalized.strip("/")
     return sanitized
 
 
 def _is_safe_path(full_path: str, config_dir: str) -> bool:
     """Verify resolved path is within the HA config directory."""
     real = os.path.realpath(full_path)
-    return real.startswith(os.path.realpath(config_dir))
+    config_real = os.path.realpath(config_dir)
+    # Must be within config dir and not equal to it (no accessing config dir itself)
+    return real.startswith(config_real + os.sep) or real == config_real
 
 
 def _list_files(config_dir: str, ext: str, depth: int) -> list[str]:
