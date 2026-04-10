@@ -75,17 +75,25 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 def _sanitize_path(raw: str) -> str:
     """Validate and normalize path, rejecting any traversal attempts."""
+    import re
     # Reject null bytes
     if "\x00" in raw:
         return ""
     # Reject absolute paths
     if raw.startswith("/") or raw.startswith("\\"):
         return ""
-    # Reject any path containing '..' as a component (traversal attempt)
+    # Reject URL-encoded sequences (e.g., %2e, %2f, %5c)
+    if re.search(r"%[0-9a-fA-F]{2}", raw):
+        return ""
+    # Normalize backslashes
     normalized = raw.replace("\\", "/")
     parts = normalized.split("/")
-    if ".." in parts:
-        return ""
+    # Reject '..' traversal and any component with consecutive dots (3+)
+    for part in parts:
+        if part == "..":
+            return ""
+        if re.match(r"^\.{3,}$", part):
+            return ""
     # Strip leading/trailing slashes after validation
     sanitized = normalized.strip("/")
     return sanitized
