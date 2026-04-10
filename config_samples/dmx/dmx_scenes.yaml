@@ -1,0 +1,1062 @@
+# =============================================================================
+# DMX Scene Presets & Show Cues
+# Commercial Venue Lighting - Scene Library
+# =============================================================================
+#
+# This file defines reusable lighting scenes, chase sequences, color palettes,
+# dimmer presets, and fade configurations for the multi-zone commercial venue.
+#
+# Scene values use DMX range 0-255 unless otherwise noted.
+# Color values can be specified as:
+#   - DMX integer (0-255)
+#   - Percentage (0-100%)
+#   - Hex color (auto-mapped to nearest RGB/RGBW channels)
+#
+# Last Updated: 2026-04-10
+# =============================================================================
+
+# =============================================================================
+# Color Palettes - Reusable color definitions
+# =============================================================================
+color_palettes:
+  - id: "warm_white"
+    name: "Warm White (3000K)"
+    description: "Comfortable warm white for general ambiance"
+    rgb: [255, 180, 107]
+    rgbw: [255, 180, 107, 200]
+    cct_kelvin: 3000
+
+  - id: "neutral_white"
+    name: "Neutral White (4000K)"
+    description: "Balanced white for work environments"
+    rgb: [255, 209, 163]
+    rgbw: [255, 209, 163, 255]
+    cct_kelvin: 4000
+
+  - id: "cool_white"
+    name: "Cool White (5500K)"
+    description: "Energizing cool white for presentations"
+    rgb: [255, 236, 224]
+    rgbw: [255, 236, 224, 255]
+    cct_kelvin: 5500
+
+  - id: "daylight"
+    name: "Daylight (6500K)"
+    description: "Full daylight white for detail work and cleaning"
+    rgb: [255, 249, 253]
+    rgbw: [255, 249, 253, 255]
+    cct_kelvin: 6500
+
+  - id: "corporate_blue"
+    name: "Corporate Blue"
+    description: "Brand color - professional blue accent"
+    rgb: [20, 60, 180]
+    rgbw: [20, 60, 180, 0]
+
+  - id: "corporate_gold"
+    name: "Corporate Gold"
+    description: "Brand color - elegant gold/amber accent"
+    rgb: [255, 180, 30]
+    rgbw: [255, 180, 30, 40]
+
+  - id: "deep_blue"
+    name: "Deep Blue"
+    description: "Night mode / dramatic effect"
+    rgb: [5, 10, 80]
+    rgbw: [5, 10, 80, 0]
+
+  - id: "sunset_amber"
+    name: "Sunset Amber"
+    description: "Warm evening ambiance"
+    rgb: [255, 120, 20]
+    rgbw: [255, 120, 20, 30]
+
+  - id: "emerald_green"
+    name: "Emerald Green"
+    description: "Nature / eco-themed events"
+    rgb: [0, 180, 70]
+    rgbw: [0, 180, 70, 0]
+
+  - id: "royal_purple"
+    name: "Royal Purple"
+    description: "Luxury / VIP events"
+    rgb: [100, 20, 180]
+    rgbw: [100, 20, 180, 0]
+
+  - id: "fire_red"
+    name: "Fire Red"
+    description: "High energy / party / emergency"
+    rgb: [255, 20, 5]
+    rgbw: [255, 20, 5, 0]
+
+  - id: "ice_cyan"
+    name: "Ice Cyan"
+    description: "Cool / tech / winter theme"
+    rgb: [0, 200, 255]
+    rgbw: [0, 200, 255, 50]
+
+  - id: "soft_pink"
+    name: "Soft Pink"
+    description: "Relaxation / spa / gentle ambiance"
+    rgb: [255, 130, 170]
+    rgbw: [255, 130, 170, 40]
+
+  - id: "blackout"
+    name: "Blackout"
+    description: "All channels off"
+    rgb: [0, 0, 0]
+    rgbw: [0, 0, 0, 0]
+
+# =============================================================================
+# Dimmer Presets - Reusable intensity levels
+# =============================================================================
+dimmer_presets:
+  - id: "full"
+    name: "Full (100%)"
+    value: 255
+    percentage: 100
+
+  - id: "bright"
+    name: "Bright (85%)"
+    value: 217
+    percentage: 85
+
+  - id: "medium"
+    name: "Medium (60%)"
+    value: 153
+    percentage: 60
+
+  - id: "low"
+    name: "Low (35%)"
+    value: 89
+    percentage: 35
+
+  - id: "dim"
+    name: "Dim (15%)"
+    value: 38
+    percentage: 15
+
+  - id: "night_glow"
+    name: "Night Glow (5%)"
+    value: 13
+    percentage: 5
+
+  - id: "off"
+    name: "Off (0%)"
+    value: 0
+    percentage: 0
+
+# =============================================================================
+# Fade Time Configurations
+# =============================================================================
+fade_presets:
+  - id: "instant"
+    name: "Instant / Snap"
+    fade_ms: 0
+
+  - id: "quick"
+    name: "Quick Fade"
+    fade_ms: 300
+
+  - id: "normal"
+    name: "Normal Fade"
+    fade_ms: 1000
+
+  - id: "slow"
+    name: "Slow Fade"
+    fade_ms: 2500
+
+  - id: "very_slow"
+    name: "Very Slow Fade"
+    fade_ms: 5000
+
+  - id: "glacial"
+    name: "Glacial (Architectural)"
+    fade_ms: 10000
+
+  - id: "sunrise"
+    name: "Sunrise Simulation"
+    fade_ms: 30000
+
+  - id: "emergency_flash"
+    name: "Emergency Flash"
+    fade_ms: 50
+
+# =============================================================================
+# Scene Definitions
+# =============================================================================
+scenes:
+  # ===========================================================================
+  # WELCOME - Standard daytime welcome scene
+  # ===========================================================================
+  - id: "welcome"
+    name: "Welcome / Daytime Standard"
+    description: "Standard daytime lighting for guest arrival and normal operations"
+    trigger:
+      type: "schedule"
+      schedule: "0 7 * * 1-5"             # Mon-Fri 07:00
+      conditions:
+        - entity: "binary_sensor.venue_open"
+          state: "on"
+    fade_preset: "slow"
+    priority: 50
+
+    universe_states:
+      # --- Lobby (Universe 1) ---
+      - universe: 1
+        fixture_states:
+          # Strips - warm white at medium brightness
+          - group: "lobby_strips"
+            color_palette: "warm_white"
+            dimmer_preset: "medium"
+
+          # Pendants - neutral white, bright
+          - group: "lobby_pendants"
+            color_palette: "neutral_white"
+            dimmer_preset: "bright"
+            channels:
+              # Override: master dimmer channel (offset 4 within fixture)
+              4: 217                       # 85% master dimmer
+
+          # Wall washers - corporate blue accent, low
+          - group: "lobby_washers"
+            color_palette: "corporate_blue"
+            dimmer_preset: "low"
+
+          # Accents - warm white, dim
+          - group: "lobby_accents"
+            color_palette: "warm_white"
+            dimmer_preset: "dim"
+
+      # --- Main Hall (Universe 2) ---
+      - universe: 2
+        fixture_states:
+          # Moving heads - parked position, house wash
+          - group: "stage_movers"
+            channels:
+              0: 128                       # Pan centered
+              1: 0                         # Pan fine
+              2: 128                       # Tilt centered
+              3: 0                         # Tilt fine
+              4: 0                         # Speed: slow
+              5: 153                       # Dimmer: 60%
+              6: 0                         # Strobe: off
+              7: 0                         # Color wheel: open white
+              8: 0                         # Gobo: open
+              9: 0                         # Gobo rotation: off
+              10: 0                        # Prism: off
+              11: 128                      # Focus: mid
+              12: 128                      # Zoom: mid
+              13: 255                      # R: full warm
+              14: 180                      # G: warm
+              15: 107                      # B: warm
+
+          # PAR lights - warm wash
+          - group: "stage_pars"
+            channels:
+              0: 153                       # Dimmer: 60%
+              1: 255                       # R
+              2: 180                       # G
+              3: 107                       # B
+              4: 0                         # Strobe: off
+              5: 0                         # Color macro: off
+              6: 0                         # Mode: DMX
+
+          # Effects - off during welcome
+          - group: "stage_effects"
+            dimmer_preset: "off"
+
+      # --- Conference Rooms (Universe 3) ---
+      - universe: 3
+        fixture_states:
+          # All panels - neutral white for work
+          - group: "conf_all_panels"
+            channels:
+              0: 217                       # Brightness: 85%
+              1: 140                       # CCT: ~4000K (mapped 0=2700K, 255=6500K)
+
+          # Dimmer packs - spots on, table lamps on
+          - fixture: "conf_a_dimmer"
+            channels:
+              0: 180                       # Table spots: 70%
+              1: 153                       # Wall spots: 60%
+              2: 128                       # Table lamps: 50%
+              3: 0                         # Spare: off
+
+          - fixture: "conf_b_dimmer"
+            channels:
+              0: 180
+              1: 153
+              2: 128
+              3: 0
+
+          - fixture: "conf_c_dimmer"
+            channels:
+              0: 180
+              1: 153
+              2: 128
+              3: 0
+
+      # --- Exterior (Universe 4) ---
+      - universe: 4
+        fixture_states:
+          # Facade floods - off during daytime
+          - group: "ext_facade_front"
+            dimmer_preset: "off"
+          - group: "ext_facade_sides"
+            dimmer_preset: "off"
+
+          # Outline - off during daytime
+          - group: "ext_outline"
+            dimmer_preset: "off"
+
+          # Landscape - off during daytime
+          - group: "ext_landscape"
+            dimmer_preset: "off"
+
+          # Signage - on during business hours
+          - group: "ext_signage"
+            color_palette: "neutral_white"
+            dimmer_preset: "bright"
+
+  # ===========================================================================
+  # PRESENTATION - Optimized for speaker/screen presentations
+  # ===========================================================================
+  - id: "presentation"
+    name: "Presentation Mode"
+    description: "Reduced ambient light with focused stage/podium illumination"
+    trigger:
+      type: "manual"                       # Triggered by wall panel or automation
+    fade_preset: "normal"
+    priority: 60
+
+    universe_states:
+      - universe: 1
+        fixture_states:
+          - group: "lobby_strips"
+            color_palette: "warm_white"
+            dimmer_preset: "dim"
+          - group: "lobby_pendants"
+            color_palette: "warm_white"
+            dimmer_preset: "low"
+          - group: "lobby_washers"
+            dimmer_preset: "off"
+          - group: "lobby_accents"
+            dimmer_preset: "off"
+
+      - universe: 2
+        fixture_states:
+          # Moving heads - focused on podium/presenter area
+          - fixture: "mh_spot_foh_l"
+            channels:
+              0: 110                       # Pan: angled to podium
+              1: 0
+              2: 100                       # Tilt: down toward stage
+              3: 0
+              4: 0
+              5: 230                       # Dimmer: 90%
+              6: 0
+              7: 0                         # Open white
+              8: 0
+              9: 0
+              10: 0
+              11: 140                      # Focus
+              12: 100                      # Zoom: tighter
+              13: 255
+              14: 220
+              15: 180
+
+          - fixture: "mh_spot_foh_r"
+            channels:
+              0: 146                       # Pan: angled to podium (mirror)
+              1: 0
+              2: 100
+              3: 0
+              4: 0
+              5: 230
+              6: 0
+              7: 0
+              8: 0
+              9: 0
+              10: 0
+              11: 140
+              12: 100
+              13: 255
+              14: 220
+              15: 180
+
+          # Remaining movers - dim house wash
+          - fixture: "mh_spot_dsl"
+            channels: { 5: 50, 13: 200, 14: 150, 15: 100 }
+          - fixture: "mh_spot_dsr"
+            channels: { 5: 50, 13: 200, 14: 150, 15: 100 }
+          - fixture: "mh_spot_usl"
+            channels: { 5: 30 }
+          - fixture: "mh_spot_usr"
+            channels: { 5: 30 }
+          - fixture: "mh_spot_center"
+            channels: { 5: 30 }
+
+          # PARs - dim background wash
+          - group: "stage_pars"
+            channels:
+              0: 50                        # Dimmer: 20%
+              1: 180
+              2: 140
+              3: 90
+              4: 0
+              5: 0
+              6: 0
+
+          # Effects off
+          - group: "stage_effects"
+            dimmer_preset: "off"
+
+      - universe: 3
+        fixture_states:
+          # Conference panels dimmed for screen visibility
+          - group: "conf_all_panels"
+            channels:
+              0: 64                        # Brightness: 25%
+              1: 100                       # CCT: ~3500K warmer
+
+      - universe: 4
+        fixture_states:
+          - group: "ext_facade_front"
+            dimmer_preset: "off"
+          - group: "ext_signage"
+            color_palette: "neutral_white"
+            dimmer_preset: "medium"
+
+  # ===========================================================================
+  # PARTY - High energy entertainment mode
+  # ===========================================================================
+  - id: "party"
+    name: "Party / Event Mode"
+    description: "Dynamic, colorful lighting for events and celebrations"
+    trigger:
+      type: "manual"
+    fade_preset: "quick"
+    priority: 70
+
+    universe_states:
+      - universe: 1
+        fixture_states:
+          # Lobby strips - cycling color chase (see chase_sequences)
+          - group: "lobby_strips"
+            chase_ref: "rainbow_chase"
+            dimmer_preset: "full"
+
+          # Pendants - saturated color
+          - group: "lobby_pendants"
+            color_palette: "royal_purple"
+            dimmer_preset: "bright"
+
+          # Wall washers - alternating blue/gold
+          - fixture: "lobby_wash_entrance_l"
+            color_palette: "corporate_blue"
+            dimmer_preset: "full"
+          - fixture: "lobby_wash_entrance_r"
+            color_palette: "corporate_gold"
+            dimmer_preset: "full"
+          - fixture: "lobby_wash_feature_1"
+            color_palette: "corporate_blue"
+            dimmer_preset: "full"
+          - fixture: "lobby_wash_feature_2"
+            color_palette: "corporate_gold"
+            dimmer_preset: "full"
+          - fixture: "lobby_wash_feature_3"
+            color_palette: "corporate_blue"
+            dimmer_preset: "full"
+
+          # Accents - saturated
+          - group: "lobby_accents"
+            color_palette: "fire_red"
+            dimmer_preset: "medium"
+
+      - universe: 2
+        fixture_states:
+          # Moving heads - party movement chase
+          - group: "stage_movers"
+            chase_ref: "mover_sweep"
+            channels:
+              5: 255                       # Dimmer: full
+              6: 20                        # Strobe: slow
+              10: 64                       # Prism: engaged
+
+          # PARs - color chase
+          - group: "stage_pars"
+            chase_ref: "par_color_chase"
+            channels:
+              0: 255                       # Dimmer: full
+              4: 15                        # Strobe: subtle
+
+          # Strobes - slow pulse
+          - fixture: "strobe_sl"
+            color_palette: "ice_cyan"
+            dimmer_preset: "full"
+          - fixture: "strobe_sr"
+            color_palette: "fire_red"
+            dimmer_preset: "full"
+          - fixture: "strobe_center"
+            color_palette: "neutral_white"
+            dimmer_preset: "full"
+
+          # Fog - light haze
+          - fixture: "fog_haze"
+            channels:
+              0: 100                       # Output: 40%
+              1: 180                       # Fan: 70%
+
+      - universe: 3
+        fixture_states:
+          # Conference rooms dimmed or off during party
+          - group: "conf_all_panels"
+            channels:
+              0: 38                        # 15% background
+              1: 50                        # Warm CCT
+
+      - universe: 4
+        fixture_states:
+          # Facade - dynamic color
+          - group: "ext_facade_front"
+            chase_ref: "facade_color_wave"
+            dimmer_preset: "full"
+          - group: "ext_facade_sides"
+            color_palette: "royal_purple"
+            dimmer_preset: "bright"
+          - group: "ext_outline"
+            chase_ref: "rainbow_chase"
+            dimmer_preset: "full"
+          - group: "ext_landscape"
+            color_palette: "emerald_green"
+            dimmer_preset: "bright"
+          - group: "ext_signage"
+            color_palette: "corporate_gold"
+            dimmer_preset: "full"
+
+  # ===========================================================================
+  # EMERGENCY - Emergency evacuation lighting
+  # ===========================================================================
+  - id: "emergency"
+    name: "Emergency Mode"
+    description: "Full brightness white lighting for emergency evacuation"
+    trigger:
+      type: "automation"
+      conditions:
+        - entity: "binary_sensor.fire_alarm"
+          state: "on"
+        - entity: "binary_sensor.emergency_button"
+          state: "on"
+      logic: "OR"                          # Any condition triggers
+    fade_preset: "emergency_flash"
+    priority: 200                          # Highest priority - overrides everything
+
+    universe_states:
+      - universe: 1
+        fixture_states:
+          - group: "lobby_all"
+            color_palette: "daylight"
+            dimmer_preset: "full"
+
+      - universe: 2
+        fixture_states:
+          # Moving heads - all open white, full, pointing at exits
+          - group: "stage_movers"
+            channels:
+              0: 128                       # Pan: center
+              2: 90                        # Tilt: audience area
+              5: 255                       # Dimmer: full
+              6: 30                        # Strobe: attention-getting
+              7: 0                         # Open white
+              8: 0                         # Open gobo
+              12: 255                      # Zoom: wide
+              13: 255                      # R: full white
+              14: 255                      # G
+              15: 255                      # B
+
+          # PARs - full white
+          - group: "stage_pars"
+            channels:
+              0: 255                       # Dimmer: full
+              1: 255                       # R
+              2: 255                       # G
+              3: 255                       # B
+              4: 30                        # Strobe: attention
+
+          # Strobes - rapid flash
+          - fixture: "strobe_sl"
+            channels: { 0: 255, 1: 255, 2: 255 }
+          - fixture: "strobe_sr"
+            channels: { 0: 255, 1: 255, 2: 255 }
+          - fixture: "strobe_center"
+            channels: { 0: 255, 1: 255, 2: 255 }
+
+          # Fog - OFF during emergency
+          - fixture: "fog_main"
+            channels: { 0: 0, 1: 0 }
+          - fixture: "fog_haze"
+            channels: { 0: 0, 1: 0 }
+
+      - universe: 3
+        fixture_states:
+          - group: "conf_all_panels"
+            channels:
+              0: 255                       # Full brightness
+              1: 255                       # Maximum CCT (6500K)
+
+          # All dimmers full
+          - fixture: "conf_a_dimmer"
+            channels: { 0: 255, 1: 255, 2: 255, 3: 255 }
+          - fixture: "conf_b_dimmer"
+            channels: { 0: 255, 1: 255, 2: 255, 3: 255 }
+          - fixture: "conf_c_dimmer"
+            channels: { 0: 255, 1: 255, 2: 255, 3: 255 }
+
+      - universe: 4
+        fixture_states:
+          # All exterior lighting full white for visibility
+          - group: "ext_all"
+            color_palette: "daylight"
+            dimmer_preset: "full"
+
+  # ===========================================================================
+  # CLEANING - Maintenance/cleaning crew lighting
+  # ===========================================================================
+  - id: "cleaning"
+    name: "Cleaning / Maintenance Mode"
+    description: "Maximum visibility daylight white for cleaning and maintenance"
+    trigger:
+      type: "schedule"
+      schedule: "0 22 * * 1-5"             # Mon-Fri 22:00
+    fade_preset: "normal"
+    priority: 40
+
+    universe_states:
+      - universe: 1
+        fixture_states:
+          - group: "lobby_strips"
+            color_palette: "daylight"
+            dimmer_preset: "full"
+          - group: "lobby_pendants"
+            color_palette: "daylight"
+            dimmer_preset: "full"
+          - group: "lobby_washers"
+            color_palette: "daylight"
+            dimmer_preset: "full"
+          - group: "lobby_accents"
+            color_palette: "daylight"
+            dimmer_preset: "full"
+
+      - universe: 2
+        fixture_states:
+          # Stage - work lights mode
+          - group: "stage_movers"
+            channels:
+              0: 128
+              2: 100
+              5: 255                       # Full
+              6: 0                         # No strobe
+              7: 0
+              8: 0
+              12: 255                      # Wide zoom
+              13: 255
+              14: 255
+              15: 255
+
+          - group: "stage_pars"
+            channels:
+              0: 255
+              1: 255
+              2: 255
+              3: 255
+              4: 0
+              5: 0
+              6: 0
+
+          - group: "stage_effects"
+            dimmer_preset: "off"
+
+      - universe: 3
+        fixture_states:
+          - group: "conf_all_panels"
+            channels:
+              0: 255                       # Full brightness
+              1: 255                       # 6500K daylight
+          - fixture: "conf_a_dimmer"
+            channels: { 0: 255, 1: 255, 2: 255, 3: 0 }
+          - fixture: "conf_b_dimmer"
+            channels: { 0: 255, 1: 255, 2: 255, 3: 0 }
+          - fixture: "conf_c_dimmer"
+            channels: { 0: 255, 1: 255, 2: 255, 3: 0 }
+
+      - universe: 4
+        fixture_states:
+          # Exterior - pathway lighting only for safety
+          - group: "ext_facade_front"
+            dimmer_preset: "off"
+          - group: "ext_facade_sides"
+            dimmer_preset: "off"
+          - group: "ext_outline"
+            dimmer_preset: "off"
+          - group: "ext_landscape"
+            color_palette: "neutral_white"
+            dimmer_preset: "medium"
+          - group: "ext_signage"
+            color_palette: "neutral_white"
+            dimmer_preset: "bright"
+
+  # ===========================================================================
+  # NIGHT MODE - Minimal overnight security lighting
+  # ===========================================================================
+  - id: "night_mode"
+    name: "Night Mode / After Hours"
+    description: "Minimal security and accent lighting for overnight"
+    trigger:
+      type: "schedule"
+      schedule: "0 0 * * *"                # Midnight every day
+      conditions:
+        - entity: "binary_sensor.venue_open"
+          state: "off"
+    fade_preset: "very_slow"
+    priority: 30
+
+    universe_states:
+      - universe: 1
+        fixture_states:
+          # Minimal lobby lighting - security cameras need some light
+          - group: "lobby_strips"
+            color_palette: "deep_blue"
+            dimmer_preset: "night_glow"
+          - group: "lobby_pendants"
+            dimmer_preset: "off"
+          - group: "lobby_washers"
+            color_palette: "deep_blue"
+            dimmer_preset: "night_glow"
+          - group: "lobby_accents"
+            dimmer_preset: "off"
+
+      - universe: 2
+        fixture_states:
+          # Stage - completely off
+          - group: "stage_all"
+            dimmer_preset: "off"
+
+      - universe: 3
+        fixture_states:
+          # Conference rooms - off
+          - group: "conf_all_panels"
+            channels:
+              0: 0
+              1: 0
+
+          - fixture: "conf_a_dimmer"
+            channels: { 0: 0, 1: 0, 2: 0, 3: 0 }
+          - fixture: "conf_b_dimmer"
+            channels: { 0: 0, 1: 0, 2: 0, 3: 0 }
+          - fixture: "conf_c_dimmer"
+            channels: { 0: 0, 1: 0, 2: 0, 3: 0 }
+
+      - universe: 4
+        fixture_states:
+          # Exterior - architectural accent lighting at low level
+          - group: "ext_facade_front"
+            color_palette: "deep_blue"
+            dimmer_preset: "dim"
+          - group: "ext_facade_sides"
+            dimmer_preset: "off"
+          - group: "ext_outline"
+            color_palette: "corporate_blue"
+            dimmer_preset: "night_glow"
+          - group: "ext_landscape"
+            color_palette: "warm_white"
+            dimmer_preset: "night_glow"
+          - group: "ext_signage"
+            color_palette: "neutral_white"
+            dimmer_preset: "low"
+
+# =============================================================================
+# Chase Sequences - Animated lighting effects
+# =============================================================================
+chase_sequences:
+  # ---------------------------------------------------------------------------
+  # Rainbow Chase - Smooth color cycling through fixtures
+  # ---------------------------------------------------------------------------
+  - id: "rainbow_chase"
+    name: "Rainbow Chase"
+    description: "Sequential rainbow color cycling across fixture group"
+    type: "color_chase"
+    speed_bpm: 30                          # Beats per minute (step rate)
+    direction: "forward"                   # forward / reverse / bounce / random
+    fade_between_steps: true
+    step_fade_ms: 500                      # Crossfade between steps
+    loop: true
+
+    steps:
+      - color_palette: "fire_red"
+        hold_ms: 400
+      - color_palette: "sunset_amber"
+        hold_ms: 400
+      - color_palette: "corporate_gold"
+        hold_ms: 400
+      - color_palette: "emerald_green"
+        hold_ms: 400
+      - color_palette: "ice_cyan"
+        hold_ms: 400
+      - color_palette: "corporate_blue"
+        hold_ms: 400
+      - color_palette: "royal_purple"
+        hold_ms: 400
+      - color_palette: "soft_pink"
+        hold_ms: 400
+
+  # ---------------------------------------------------------------------------
+  # Moving Head Sweep - Pan sweep pattern
+  # ---------------------------------------------------------------------------
+  - id: "mover_sweep"
+    name: "Mover Sweep"
+    description: "Moving heads sweep in coordinated pattern"
+    type: "position_chase"
+    speed_bpm: 15
+    direction: "bounce"
+    fade_between_steps: true
+    step_fade_ms: 1500
+    loop: true
+
+    steps:
+      - channels:
+          0: 40                            # Pan left
+          2: 100                           # Tilt down
+        hold_ms: 2000
+      - channels:
+          0: 128                           # Pan center
+          2: 80                            # Tilt mid
+        hold_ms: 1000
+      - channels:
+          0: 216                           # Pan right
+          2: 100                           # Tilt down
+        hold_ms: 2000
+      - channels:
+          0: 128                           # Pan center
+          2: 60                            # Tilt up
+        hold_ms: 1000
+
+  # ---------------------------------------------------------------------------
+  # PAR Color Chase - Alternating color wash
+  # ---------------------------------------------------------------------------
+  - id: "par_color_chase"
+    name: "PAR Color Chase"
+    description: "Alternating colors across PAR fixture group"
+    type: "color_chase"
+    speed_bpm: 20
+    direction: "forward"
+    fade_between_steps: true
+    step_fade_ms: 800
+    loop: true
+    offset_per_fixture_ms: 200             # Stagger effect between fixtures
+
+    steps:
+      - color_palette: "corporate_blue"
+        hold_ms: 1500
+      - color_palette: "royal_purple"
+        hold_ms: 1500
+      - color_palette: "fire_red"
+        hold_ms: 1500
+      - color_palette: "corporate_gold"
+        hold_ms: 1500
+
+  # ---------------------------------------------------------------------------
+  # Facade Color Wave - Slow architectural color wash
+  # ---------------------------------------------------------------------------
+  - id: "facade_color_wave"
+    name: "Facade Color Wave"
+    description: "Slow rolling color wave across facade floods"
+    type: "color_chase"
+    speed_bpm: 6                           # Very slow for architectural
+    direction: "forward"
+    fade_between_steps: true
+    step_fade_ms: 3000                     # Very long crossfade
+    loop: true
+    offset_per_fixture_ms: 1500            # Large stagger for wave effect
+
+    steps:
+      - color_palette: "corporate_blue"
+        hold_ms: 5000
+      - color_palette: "royal_purple"
+        hold_ms: 5000
+      - color_palette: "corporate_gold"
+        hold_ms: 5000
+      - color_palette: "emerald_green"
+        hold_ms: 5000
+
+  # ---------------------------------------------------------------------------
+  # Pulse Effect - Gentle brightness pulsing
+  # ---------------------------------------------------------------------------
+  - id: "gentle_pulse"
+    name: "Gentle Pulse"
+    description: "Subtle brightness pulsing for ambient effect"
+    type: "intensity_chase"
+    speed_bpm: 12
+    direction: "bounce"
+    fade_between_steps: true
+    step_fade_ms: 2000
+    loop: true
+
+    steps:
+      - dimmer_preset: "medium"
+        hold_ms: 1000
+      - dimmer_preset: "bright"
+        hold_ms: 1000
+
+  # ---------------------------------------------------------------------------
+  # Strobe Burst - Quick strobe bursts for high energy moments
+  # ---------------------------------------------------------------------------
+  - id: "strobe_burst"
+    name: "Strobe Burst"
+    description: "Rapid strobe burst sequence - use sparingly"
+    type: "intensity_chase"
+    speed_bpm: 240                         # Fast!
+    direction: "forward"
+    fade_between_steps: false              # Hard cuts
+    loop: false                            # Single burst, must be re-triggered
+    repeat_count: 8                        # 8 flashes per burst
+
+    steps:
+      - dimmer_preset: "full"
+        hold_ms: 50
+      - dimmer_preset: "off"
+        hold_ms: 80
+
+# =============================================================================
+# Show Cue List - Timed sequence of scene transitions
+# =============================================================================
+cue_lists:
+  - id: "corporate_event"
+    name: "Corporate Event Cue List"
+    description: "Standard cue list for corporate events with presentations"
+    auto_follow: false                     # Manual cue advancement unless noted
+
+    cues:
+      - cue_number: 1
+        name: "Pre-Show / Guest Arrival"
+        scene_ref: "welcome"
+        fade_preset: "slow"
+        notes: "Standard welcome lighting - start 30 min before event"
+
+      - cue_number: 2
+        name: "Dim for Presentation"
+        scene_ref: "presentation"
+        fade_preset: "slow"
+        auto_follow: false
+        notes: "Cue on MC introduction"
+
+      - cue_number: 3
+        name: "Presenter Spotlight"
+        scene_ref: "presentation"
+        fade_preset: "normal"
+        overrides:
+          - universe: 2
+            fixture: "mh_spot_center"
+            channels: { 5: 255, 12: 60 }  # Tight spot on center stage
+        notes: "Tighten center spot for keynote"
+
+      - cue_number: 4
+        name: "Q&A - House Lights Up"
+        scene_ref: "welcome"
+        fade_preset: "normal"
+        overrides:
+          - universe: 2
+            group: "stage_movers"
+            channels: { 5: 180, 12: 200 } # Wider zoom, slightly dimmer
+        notes: "Bring up house for audience Q&A"
+
+      - cue_number: 5
+        name: "Transition to Party"
+        scene_ref: "party"
+        fade_preset: "slow"
+        auto_follow: true
+        auto_follow_delay_ms: 3000
+        notes: "Slow transition into party mode"
+
+      - cue_number: 6
+        name: "Party Full Effect"
+        scene_ref: "party"
+        fade_preset: "quick"
+        overrides:
+          - universe: 2
+            fixture: "fog_haze"
+            channels: { 0: 150, 1: 200 }  # More haze
+        notes: "Full party effects with increased haze"
+
+      - cue_number: 7
+        name: "Event End - Thank You"
+        scene_ref: "welcome"
+        fade_preset: "very_slow"
+        notes: "Gentle return to welcome lighting for guest departure"
+
+      - cue_number: 8
+        name: "Close Down"
+        scene_ref: "night_mode"
+        fade_preset: "glacial"
+        auto_follow: true
+        auto_follow_delay_ms: 1800000     # 30 minutes after event end
+        notes: "Auto-transition to night mode 30 min after last cue"
+
+  - id: "daily_auto"
+    name: "Daily Automated Schedule"
+    description: "Default daily lighting schedule with timed transitions"
+    auto_follow: true
+
+    cues:
+      - cue_number: 1
+        name: "Morning Startup"
+        scene_ref: "welcome"
+        trigger_time: "06:30"
+        fade_preset: "sunrise"             # 30 second sunrise fade-in
+        notes: "Gradual startup before building opens"
+
+      - cue_number: 2
+        name: "Business Hours"
+        scene_ref: "welcome"
+        trigger_time: "08:00"
+        fade_preset: "slow"
+        notes: "Full daytime lighting"
+
+      - cue_number: 3
+        name: "Evening Transition"
+        scene_ref: "welcome"
+        trigger_time: "17:00"
+        fade_preset: "glacial"
+        overrides:
+          # Warmer color temperature as day ends
+          - universe: 1
+            group: "lobby_pendants"
+            color_palette: "warm_white"
+          - universe: 3
+            group: "conf_all_panels"
+            channels:
+              1: 80                        # Warmer CCT: ~3200K
+          # Turn on exterior lighting
+          - universe: 4
+            group: "ext_facade_front"
+            color_palette: "corporate_blue"
+            dimmer_preset: "medium"
+          - universe: 4
+            group: "ext_outline"
+            color_palette: "corporate_blue"
+            dimmer_preset: "low"
+        notes: "Gradual transition to evening warmth, exterior lights on"
+
+      - cue_number: 4
+        name: "Close of Business"
+        scene_ref: "cleaning"
+        trigger_time: "21:00"
+        fade_preset: "normal"
+        notes: "Cleaning mode for maintenance crew"
+
+      - cue_number: 5
+        name: "Night Mode"
+        scene_ref: "night_mode"
+        trigger_time: "23:30"
+        fade_preset: "very_slow"
+        notes: "Overnight security lighting"

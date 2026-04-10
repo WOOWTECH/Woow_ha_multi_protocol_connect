@@ -1,0 +1,1087 @@
+# ============================================================================
+# KNX Automations - Smart Office Building (智能办公楼 KNX 自动化)
+# ============================================================================
+# 自动化规则配合 knx_main.yaml 使用
+# 所有 entity_id 引用 KNX integration 自动生成的实体名称
+#
+# 自动化分类:
+#   1. 运动感应照明 (Motion-based lighting)
+#   2. 温度联动空调 (Temperature-based HVAC)
+#   3. 遮阳自动控制 (Blind control - time/weather)
+#   4. 下班节能模式 (After-hours energy saving)
+#   5. 会议室预约集成 (Meeting room booking integration)
+#   6. 安全与紧急 (Safety & emergency)
+#   7. CO2通风联动 (CO2 ventilation control)
+# ============================================================================
+
+automation:
+
+  # ==========================================================================
+  #  1. 运动感应照明 (MOTION-BASED LIGHTING)
+  # ==========================================================================
+  # 策略: 有人时按需开灯, 无人后延时关灯
+  # 走廊: 5分钟无人关灯, 调光至60%
+  # 会议室: 15分钟无人关灯 (防止短暂离开误关)
+  # 卫生间: 10分钟无人关灯
+  # ==========================================================================
+
+  # --- 一楼走廊运动感应 (F1 Corridor motion lighting) ---
+  - id: knx_f1_corridor_motion_on
+    alias: "KNX 一楼走廊感应开灯"
+    description: "F1 corridor lights on when motion detected, 60% brightness"
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.knx_yi_lou_zou_lang_ren_ti_gan_ying
+        to: "on"
+    condition:
+      # 仅在工作时间或有人在楼内时触发 (非深夜模式)
+      - condition: or
+        conditions:
+          - condition: time
+            after: "06:00:00"
+            before: "23:00:00"
+          - condition: state
+            entity_id: input_boolean.building_occupied
+            state: "on"
+    action:
+      - service: light.turn_on
+        target:
+          entity_id: light.knx_yi_lou_zou_lang_deng
+        data:
+          brightness_pct: 60
+
+  - id: knx_f1_corridor_motion_off
+    alias: "KNX 一楼走廊无人关灯"
+    description: "F1 corridor lights off after 5 min no motion"
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.knx_yi_lou_zou_lang_ren_ti_gan_ying
+        to: "off"
+        for:
+          minutes: 5
+    action:
+      - service: light.turn_off
+        target:
+          entity_id: light.knx_yi_lou_zou_lang_deng
+
+  # --- 二楼走廊运动感应 (F2 Corridor motion lighting) ---
+  - id: knx_f2_corridor_motion_on
+    alias: "KNX 二楼走廊感应开灯"
+    description: "F2 corridor lights on when motion detected"
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.knx_er_lou_zou_lang_ren_ti_gan_ying
+        to: "on"
+    condition:
+      - condition: or
+        conditions:
+          - condition: time
+            after: "06:00:00"
+            before: "23:00:00"
+          - condition: state
+            entity_id: input_boolean.building_occupied
+            state: "on"
+    action:
+      - service: light.turn_on
+        target:
+          entity_id: light.knx_er_lou_zou_lang_deng
+        data:
+          brightness_pct: 60
+
+  - id: knx_f2_corridor_motion_off
+    alias: "KNX 二楼走廊无人关灯"
+    description: "F2 corridor lights off after 5 min no motion"
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.knx_er_lou_zou_lang_ren_ti_gan_ying
+        to: "off"
+        for:
+          minutes: 5
+    action:
+      - service: light.turn_off
+        target:
+          entity_id: light.knx_er_lou_zou_lang_deng
+
+  # --- 三楼走廊运动感应 (F3 Corridor motion lighting) ---
+  - id: knx_f3_corridor_motion_on
+    alias: "KNX 三楼走廊感应开灯"
+    description: "F3 corridor lights on when motion detected"
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.knx_san_lou_zou_lang_ren_ti_gan_ying
+        to: "on"
+    condition:
+      - condition: or
+        conditions:
+          - condition: time
+            after: "06:00:00"
+            before: "23:00:00"
+          - condition: state
+            entity_id: input_boolean.building_occupied
+            state: "on"
+    action:
+      - service: light.turn_on
+        target:
+          entity_id: light.knx_san_lou_zou_lang_deng
+        data:
+          brightness_pct: 60
+
+  - id: knx_f3_corridor_motion_off
+    alias: "KNX 三楼走廊无人关灯"
+    description: "F3 corridor lights off after 5 min no motion"
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.knx_san_lou_zou_lang_ren_ti_gan_ying
+        to: "off"
+        for:
+          minutes: 5
+    action:
+      - service: light.turn_off
+        target:
+          entity_id: light.knx_san_lou_zou_lang_deng
+
+  # --- 一楼大堂人体感应 (F1 Lobby presence lighting) ---
+  - id: knx_f1_lobby_presence_on
+    alias: "KNX 一楼大堂感应开灯"
+    description: "F1 lobby lights to welcoming brightness on presence"
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.knx_yi_lou_da_tang_ren_ti_gan_ying
+        to: "on"
+    condition:
+      - condition: time
+        after: "06:30:00"
+        before: "22:00:00"
+    action:
+      - service: light.turn_on
+        target:
+          entity_id: light.knx_yi_lou_da_tang_zhu_deng
+        data:
+          brightness_pct: 80
+      - service: light.turn_on
+        target:
+          entity_id: light.knx_yi_lou_qian_tai_jie_dai_deng
+        data:
+          brightness_pct: 100
+
+  # --- 会议室存在感应 (Meeting room presence control) ---
+  - id: knx_f1_meeting_a_presence_on
+    alias: "KNX 一楼小会议室A有人开灯开空调"
+    description: "F1 Meeting Room A - lights + HVAC on presence"
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.knx_yi_lou_xiao_hui_yi_shi_aren_ti_gan_ying
+        to: "on"
+    action:
+      - service: light.turn_on
+        target:
+          entity_id: light.knx_yi_lou_xiao_hui_yi_shi_adeng
+        data:
+          brightness_pct: 100
+      - service: climate.turn_on
+        target:
+          entity_id: climate.knx_yi_lou_xiao_hui_yi_shi_akong_tiao
+
+  - id: knx_f1_meeting_a_presence_off
+    alias: "KNX 一楼小会议室A无人关灯关空调"
+    description: "F1 Meeting Room A - lights + HVAC off after 15 min"
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.knx_yi_lou_xiao_hui_yi_shi_aren_ti_gan_ying
+        to: "off"
+        for:
+          minutes: 15
+    action:
+      - service: light.turn_off
+        target:
+          entity_id: light.knx_yi_lou_xiao_hui_yi_shi_adeng
+      - service: climate.turn_off
+        target:
+          entity_id: climate.knx_yi_lou_xiao_hui_yi_shi_akong_tiao
+      - service: switch.turn_off
+        target:
+          entity_id: switch.knx_yi_lou_da_hui_yi_shi_tou_ying_yi_dian_yuan
+        # 安全关闭投影仪 (如果在该房间)
+
+  - id: knx_f1_meeting_b_presence_off
+    alias: "KNX 一楼小会议室B无人关灯关空调"
+    description: "F1 Meeting Room B - auto-off after 15 min vacancy"
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.knx_yi_lou_xiao_hui_yi_shi_bren_ti_gan_ying
+        to: "off"
+        for:
+          minutes: 15
+    action:
+      - service: light.turn_off
+        target:
+          entity_id: light.knx_yi_lou_xiao_hui_yi_shi_bdeng
+      - service: climate.turn_off
+        target:
+          entity_id: climate.knx_yi_lou_xiao_hui_yi_shi_bkong_tiao
+
+  - id: knx_f1_large_conf_presence_off
+    alias: "KNX 一楼大会议室无人自动关闭"
+    description: "F1 Large conference room auto-off after 15 min vacancy"
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.knx_yi_lou_da_hui_yi_shi_ren_ti_gan_ying
+        to: "off"
+        for:
+          minutes: 15
+    action:
+      - service: light.turn_off
+        target:
+          entity_id: light.knx_yi_lou_da_hui_yi_shi_deng
+      - service: climate.turn_off
+        target:
+          entity_id: climate.knx_yi_lou_da_hui_yi_shi_kong_tiao
+      - service: switch.turn_off
+        target:
+          entity_id:
+            - switch.knx_yi_lou_da_hui_yi_shi_tou_ying_yi_dian_yuan
+            - switch.knx_yi_lou_da_hui_yi_shi_mu_bu
+
+  # --- 卫生间运动感应 (Restroom motion lighting) ---
+  - id: knx_restroom_f1_motion_on
+    alias: "KNX 一楼卫生间感应开灯开排风"
+    description: "F1 Restroom lights + exhaust fan on motion"
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.knx_wei_sheng_jian_yi_lou_ren_ti_gan_ying
+        to: "on"
+    action:
+      - service: light.turn_on
+        target:
+          entity_id: light.knx_wei_sheng_jian_deng_yi_lou
+      - service: switch.turn_on
+        target:
+          entity_id: switch.knx_yi_lou_wei_sheng_jian_pai_feng_shan
+
+  - id: knx_restroom_f1_motion_off
+    alias: "KNX 一楼卫生间无人关灯关排风"
+    description: "F1 Restroom auto-off after 10 min"
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.knx_wei_sheng_jian_yi_lou_ren_ti_gan_ying
+        to: "off"
+        for:
+          minutes: 10
+    action:
+      - service: light.turn_off
+        target:
+          entity_id: light.knx_wei_sheng_jian_deng_yi_lou
+      # 排风扇延迟2分钟后关闭 (换气)
+      - delay:
+          minutes: 2
+      - service: switch.turn_off
+        target:
+          entity_id: switch.knx_yi_lou_wei_sheng_jian_pai_feng_shan
+
+  # --- 地下车库运动感应 (Parking motion lighting) ---
+  - id: knx_parking_zone1_motion_on
+    alias: "KNX 地下车库区域1感应开灯"
+    description: "Basement parking zone 1 - lights on at 40% on motion"
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.knx_di_xia_che_ku_ren_ti_gan_ying_qu_yu_1
+        to: "on"
+    action:
+      - service: light.turn_on
+        target:
+          entity_id: light.knx_di_xia_che_ku_deng_qu_yu_1
+        data:
+          brightness_pct: 40
+
+  - id: knx_parking_zone1_motion_off
+    alias: "KNX 地下车库区域1无人降灯"
+    description: "Basement parking zone 1 - dim to 10% after 3 min"
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.knx_di_xia_che_ku_ren_ti_gan_ying_qu_yu_1
+        to: "off"
+        for:
+          minutes: 3
+    action:
+      - service: light.turn_on
+        target:
+          entity_id: light.knx_di_xia_che_ku_deng_qu_yu_1
+        data:
+          brightness_pct: 10  # 保持最低安全照明, 不完全关闭
+
+  # ==========================================================================
+  #  2. 温度联动空调 (TEMPERATURE-BASED HVAC CONTROL)
+  # ==========================================================================
+  # 策略: 根据实际温度偏差自动调节HVAC模式
+  # 夏季高温预冷 (Pre-cooling), 冬季低温预热 (Pre-heating)
+  # 开放办公区恒温控制在 22-26°C
+  # ==========================================================================
+
+  # --- 夏季预冷 (Summer pre-cooling before working hours) ---
+  - id: knx_summer_precool
+    alias: "KNX 夏季工作日预冷"
+    description: "Pre-cool office zones on summer weekday mornings"
+    mode: single
+    trigger:
+      - platform: time
+        at: "07:00:00"
+    condition:
+      - condition: state
+        entity_id: binary_sensor.workday_sensor
+        state: "on"
+      # 室外温度 > 28°C 时触发预冷
+      - condition: numeric_state
+        entity_id: sensor.knx_lou_ding_qi_xiang_zhan_temperature
+        above: 28
+    action:
+      # 开启二楼和三楼空调, 设定制冷模式, 目标温度24°C
+      - service: climate.set_temperature
+        target:
+          entity_id:
+            - climate.knx_er_lou_kai_fang_ban_gong_qu_kong_tiao_a
+            - climate.knx_er_lou_kai_fang_ban_gong_qu_kong_tiao_b
+            - climate.knx_er_lou_kai_fang_ban_gong_qu_kong_tiao_c
+            - climate.knx_san_lou_cai_wu_bu_kong_tiao
+            - climate.knx_san_lou_xing_zheng_bu_kong_tiao
+        data:
+          temperature: 24
+          hvac_mode: cool
+      - service: notify.building_management
+        data:
+          title: "KNX 预冷启动"
+          message: "室外温度 {{ states('sensor.knx_lou_ding_qi_xiang_zhan_temperature') }}°C, 办公区预冷已启动"
+
+  # --- 冬季预热 (Winter pre-heating) ---
+  - id: knx_winter_preheat
+    alias: "KNX 冬季工作日预热"
+    description: "Pre-heat office zones on winter weekday mornings"
+    mode: single
+    trigger:
+      - platform: time
+        at: "06:30:00"
+    condition:
+      - condition: state
+        entity_id: binary_sensor.workday_sensor
+        state: "on"
+      # 室外温度 < 10°C 时触发预热
+      - condition: numeric_state
+        entity_id: sensor.knx_lou_ding_qi_xiang_zhan_temperature
+        below: 10
+    action:
+      - service: climate.set_temperature
+        target:
+          entity_id:
+            - climate.knx_yi_lou_da_tang_kong_tiao
+            - climate.knx_er_lou_kai_fang_ban_gong_qu_kong_tiao_a
+            - climate.knx_er_lou_kai_fang_ban_gong_qu_kong_tiao_b
+            - climate.knx_er_lou_kai_fang_ban_gong_qu_kong_tiao_c
+            - climate.knx_san_lou_cai_wu_bu_kong_tiao
+            - climate.knx_san_lou_xing_zheng_bu_kong_tiao
+        data:
+          temperature: 22
+          hvac_mode: heat
+
+  # --- 办公区温度过高报警 (Office overtemperature alert) ---
+  - id: knx_f2_office_overheat_alert
+    alias: "KNX 二楼办公区高温报警"
+    description: "Alert when F2 office temperature exceeds 30°C"
+    mode: single
+    trigger:
+      - platform: numeric_state
+        entity_id:
+          - sensor.knx_er_lou_kai_fang_ban_gong_qu_wen_du_a
+          - sensor.knx_er_lou_kai_fang_ban_gong_qu_wen_du_b
+          - sensor.knx_er_lou_kai_fang_ban_gong_qu_wen_du_c
+        above: 30
+        for:
+          minutes: 5
+    action:
+      - service: notify.building_management
+        data:
+          title: "高温报警 - 二楼办公区"
+          message: >
+            二楼办公区温度异常偏高!
+            区域A: {{ states('sensor.knx_er_lou_kai_fang_ban_gong_qu_wen_du_a') }}°C
+            区域B: {{ states('sensor.knx_er_lou_kai_fang_ban_gong_qu_wen_du_b') }}°C
+            区域C: {{ states('sensor.knx_er_lou_kai_fang_ban_gong_qu_wen_du_c') }}°C
+            请检查空调系统运行状态。
+
+  # --- 窗户打开时关闭空调 (HVAC off when window open) ---
+  - id: knx_f2_east_window_hvac_off
+    alias: "KNX 二楼东侧窗户开启关空调"
+    description: "Turn off F2 east zone HVAC when windows are opened"
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.knx_er_lou_dong_ce_chuang_hu_zhuang_tai
+        to: "on"
+    action:
+      - service: climate.turn_off
+        target:
+          entity_id: climate.knx_er_lou_kai_fang_ban_gong_qu_kong_tiao_a
+      - service: notify.building_management
+        data:
+          title: "节能提醒"
+          message: "二楼东侧窗户已打开, 该区域空调已自动关闭以节约能源"
+
+  - id: knx_f2_east_window_hvac_restore
+    alias: "KNX 二楼东侧窗户关闭恢复空调"
+    description: "Restore F2 east zone HVAC when windows are closed"
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.knx_er_lou_dong_ce_chuang_hu_zhuang_tai
+        to: "off"
+        for:
+          minutes: 2
+    action:
+      - service: climate.turn_on
+        target:
+          entity_id: climate.knx_er_lou_kai_fang_ban_gong_qu_kong_tiao_a
+
+  # ==========================================================================
+  #  3. 遮阳自动控制 (BLIND CONTROL - TIME/WEATHER BASED)
+  # ==========================================================================
+  # 策略:
+  #   - 工作日早上自动打开百叶窗 (采光)
+  #   - 根据太阳方位和照度自动调整角度 (防眩光)
+  #   - 大风/下雨时自动收起外遮阳 (保护)
+  #   - 下班后自动关闭 (隐私/安全)
+  # ==========================================================================
+
+  # --- 工作日早上打开百叶窗 (Morning blind open) ---
+  - id: knx_morning_blinds_open
+    alias: "KNX 工作日早上开百叶窗"
+    description: "Open all office blinds on weekday mornings"
+    mode: single
+    trigger:
+      - platform: time
+        at: "08:00:00"
+    condition:
+      - condition: state
+        entity_id: binary_sensor.workday_sensor
+        state: "on"
+      # 确保无大风报警 (wind alarm from weather station)
+      - condition: state
+        entity_id: binary_sensor.knx_lou_ding_qi_xiang_zhan_wind_alarm
+        state: "off"
+    action:
+      - service: cover.set_cover_position
+        target:
+          entity_id:
+            - cover.knx_er_lou_dong_ce_bai_ye_chuang_zu
+            - cover.knx_er_lou_xi_ce_bai_ye_chuang_zu
+            - cover.knx_er_lou_nan_ce_bai_ye_chuang_zu
+            - cover.knx_san_lou_nan_ce_bai_ye_chuang_zu
+        data:
+          position: 100  # 完全打开
+
+  # --- 下午西晒防眩光 (Afternoon anti-glare on west facade) ---
+  - id: knx_afternoon_west_antiglare
+    alias: "KNX 下午西侧防眩光"
+    description: "Adjust west blinds angle to block afternoon sun glare"
+    mode: single
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.knx_lou_ding_qi_xiang_zhan_brightness_west
+        above: 40000   # 西向照度 > 40000 lux
+    condition:
+      - condition: time
+        after: "13:00:00"
+        before: "18:00:00"
+      - condition: state
+        entity_id: binary_sensor.workday_sensor
+        state: "on"
+    action:
+      - service: cover.set_cover_tilt_position
+        target:
+          entity_id: cover.knx_er_lou_xi_ce_bai_ye_chuang_zu
+        data:
+          tilt_position: 30  # 叶片角度30% - 遮挡直射但保留采光
+
+  # --- 东侧早晨防眩光 (Morning anti-glare on east facade) ---
+  - id: knx_morning_east_antiglare
+    alias: "KNX 早晨东侧防眩光"
+    description: "Adjust east blinds angle to block morning sun"
+    mode: single
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.knx_lou_ding_qi_xiang_zhan_brightness_east
+        above: 40000
+    condition:
+      - condition: time
+        after: "07:00:00"
+        before: "12:00:00"
+      - condition: state
+        entity_id: binary_sensor.workday_sensor
+        state: "on"
+    action:
+      - service: cover.set_cover_tilt_position
+        target:
+          entity_id: cover.knx_er_lou_dong_ce_bai_ye_chuang_zu
+        data:
+          tilt_position: 30
+
+  # --- 大风报警收起百叶窗 (Wind alarm - retract blinds) ---
+  - id: knx_wind_alarm_blinds_retract
+    alias: "KNX 大风报警收起百叶窗"
+    description: "Retract all external blinds on wind alarm for protection"
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.knx_lou_ding_qi_xiang_zhan_wind_alarm
+        to: "on"
+    action:
+      - service: cover.set_cover_position
+        target:
+          entity_id:
+            - cover.knx_yi_lou_da_tang_nan_ce_bai_ye_chuang
+            - cover.knx_er_lou_dong_ce_bai_ye_chuang_zu
+            - cover.knx_er_lou_xi_ce_bai_ye_chuang_zu
+            - cover.knx_er_lou_nan_ce_bai_ye_chuang_zu
+            - cover.knx_san_lou_nan_ce_bai_ye_chuang_zu
+        data:
+          position: 100  # 完全收起 (保护)
+      - service: notify.building_management
+        data:
+          title: "大风报警 - 百叶窗已收起"
+          message: "气象站检测到大风, 所有外百叶窗已自动收起保护"
+
+  # --- 下雨收起百叶窗 (Rain alarm - retract blinds) ---
+  - id: knx_rain_alarm_blinds_retract
+    alias: "KNX 下雨报警收起百叶窗"
+    description: "Retract blinds on rain alarm"
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.knx_lou_ding_qi_xiang_zhan_rain_alarm
+        to: "on"
+    action:
+      - service: cover.set_cover_position
+        target:
+          entity_id:
+            - cover.knx_yi_lou_da_tang_nan_ce_bai_ye_chuang
+            - cover.knx_er_lou_dong_ce_bai_ye_chuang_zu
+            - cover.knx_er_lou_xi_ce_bai_ye_chuang_zu
+            - cover.knx_er_lou_nan_ce_bai_ye_chuang_zu
+            - cover.knx_san_lou_nan_ce_bai_ye_chuang_zu
+        data:
+          position: 100
+
+  # --- 下班关闭百叶窗 (After-hours blind close) ---
+  - id: knx_evening_blinds_close
+    alias: "KNX 下班关闭百叶窗"
+    description: "Close all blinds after working hours for privacy/security"
+    mode: single
+    trigger:
+      - platform: time
+        at: "19:30:00"
+    condition:
+      - condition: state
+        entity_id: binary_sensor.workday_sensor
+        state: "on"
+    action:
+      - service: cover.set_cover_position
+        target:
+          entity_id:
+            - cover.knx_yi_lou_da_tang_nan_ce_bai_ye_chuang
+            - cover.knx_yi_lou_da_hui_yi_shi_bai_ye_chuang
+            - cover.knx_er_lou_dong_ce_bai_ye_chuang_zu
+            - cover.knx_er_lou_xi_ce_bai_ye_chuang_zu
+            - cover.knx_er_lou_nan_ce_bai_ye_chuang_zu
+            - cover.knx_er_lou_hui_yi_shi_cbai_ye_chuang
+            - cover.knx_san_lou_zong_jing_li_ban_gong_shi_bai_ye_chuang
+            - cover.knx_san_lou_fu_zong_ban_gong_shi_bai_ye_chuang
+            - cover.knx_san_lou_viphu_yi_shi_bai_ye_chuang
+            - cover.knx_san_lou_nan_ce_bai_ye_chuang_zu
+        data:
+          position: 0  # 完全关闭
+
+  # ==========================================================================
+  #  4. 下班节能模式 (AFTER-HOURS ENERGY SAVING)
+  # ==========================================================================
+  # 策略:
+  #   - 工作日 19:00 启动节能扫描
+  #   - 20:00 强制关闭非必要设备
+  #   - 保留安全照明和安防系统
+  #   - 周末/假日全天节能模式
+  # ==========================================================================
+
+  # --- 工作日19:00启动节能提醒 (Weekday energy saving reminder) ---
+  - id: knx_after_hours_reminder
+    alias: "KNX 下班节能提醒"
+    description: "Remind staff to turn off equipment at 19:00"
+    mode: single
+    trigger:
+      - platform: time
+        at: "19:00:00"
+    condition:
+      - condition: state
+        entity_id: binary_sensor.workday_sensor
+        state: "on"
+    action:
+      - service: notify.office_broadcast
+        data:
+          title: "节能提醒"
+          message: "已过下班时间, 请确认关闭不需要的灯光和设备。系统将在20:00自动执行节能模式。"
+
+  # --- 工作日20:00强制节能 (Weekday forced energy saving at 20:00) ---
+  - id: knx_after_hours_energy_save
+    alias: "KNX 下班强制节能模式"
+    description: "Force energy saving mode - turn off non-essential systems"
+    mode: single
+    trigger:
+      - platform: time
+        at: "20:00:00"
+    condition:
+      - condition: state
+        entity_id: binary_sensor.workday_sensor
+        state: "on"
+      # 不在紧急模式时执行
+      - condition: state
+        entity_id: input_boolean.emergency_mode
+        state: "off"
+    action:
+      # 标记下班模式
+      - service: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.after_hours_mode
+
+      # 关闭所有咖啡机和饮水机
+      - service: switch.turn_off
+        target:
+          entity_id:
+            - switch.knx_yi_lou_ka_fei_ji_dian_yuan
+            - switch.knx_er_lou_cha_shui_jian_ka_fei_ji_dian_yuan
+            - switch.knx_san_lou_ka_fei_ji_dian_yuan
+            - switch.knx_er_lou_yin_shui_ji_dian_yuan
+            - switch.knx_san_lou_yin_shui_ji_dian_yuan
+
+      # 关闭所有投影仪
+      - service: switch.turn_off
+        target:
+          entity_id:
+            - switch.knx_yi_lou_da_hui_yi_shi_tou_ying_yi_dian_yuan
+            - switch.knx_er_lou_hui_yi_shi_ctou_ying_yi_dian_yuan
+            - switch.knx_er_lou_hui_yi_shi_dtou_ying_yi_dian_yuan
+            - switch.knx_san_lou_viphu_yi_shi_tou_ying_yi_dian_yuan
+
+      # 空调设为待机温度 (冬季16°C / 夏季30°C)
+      - service: climate.set_temperature
+        target:
+          entity_id:
+            - climate.knx_er_lou_kai_fang_ban_gong_qu_kong_tiao_a
+            - climate.knx_er_lou_kai_fang_ban_gong_qu_kong_tiao_b
+            - climate.knx_er_lou_kai_fang_ban_gong_qu_kong_tiao_c
+            - climate.knx_san_lou_cai_wu_bu_kong_tiao
+            - climate.knx_san_lou_xing_zheng_bu_kong_tiao
+        data:
+          temperature: >
+            {% if states('sensor.knx_lou_ding_qi_xiang_zhan_temperature') | float < 15 %}
+              16
+            {% else %}
+              30
+            {% endif %}
+
+      # 关闭无人区域照明 (检查各区域存在传感器)
+      - service: light.turn_off
+        target:
+          entity_id:
+            - light.knx_er_lou_kai_fang_ban_gong_qu_adeng
+            - light.knx_er_lou_kai_fang_ban_gong_qu_bdeng
+            - light.knx_er_lou_kai_fang_ban_gong_qu_cdeng
+            - light.knx_er_lou_cha_shui_jian_deng
+            - light.knx_san_lou_cai_wu_bu_deng
+            - light.knx_san_lou_xing_zheng_bu_deng
+
+      # 走廊灯降至最低 (安全照明)
+      - service: light.turn_on
+        target:
+          entity_id:
+            - light.knx_yi_lou_zou_lang_deng
+            - light.knx_er_lou_zou_lang_deng
+            - light.knx_san_lou_zou_lang_deng
+        data:
+          brightness_pct: 15
+
+      # 开启外墙泛光灯 (夜间安全)
+      - service: light.turn_on
+        target:
+          entity_id: light.knx_wai_qiang_fan_guang_deng
+        data:
+          brightness_pct: 50
+
+      - service: notify.building_management
+        data:
+          title: "节能模式已启动"
+          message: "下班节能模式已于 {{ now().strftime('%H:%M') }} 执行完毕。非必要设备已关闭。"
+
+  # --- 工作日早上取消节能模式 (Morning energy mode deactivation) ---
+  - id: knx_morning_energy_restore
+    alias: "KNX 早上恢复正常模式"
+    description: "Deactivate after-hours mode and restore normal operation"
+    mode: single
+    trigger:
+      - platform: time
+        at: "07:30:00"
+    condition:
+      - condition: state
+        entity_id: binary_sensor.workday_sensor
+        state: "on"
+    action:
+      - service: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.after_hours_mode
+      # 开启咖啡机预热
+      - service: switch.turn_on
+        target:
+          entity_id:
+            - switch.knx_yi_lou_ka_fei_ji_dian_yuan
+            - switch.knx_er_lou_cha_shui_jian_ka_fei_ji_dian_yuan
+            - switch.knx_san_lou_ka_fei_ji_dian_yuan
+      # 开启饮水机
+      - service: switch.turn_on
+        target:
+          entity_id:
+            - switch.knx_er_lou_yin_shui_ji_dian_yuan
+            - switch.knx_san_lou_yin_shui_ji_dian_yuan
+      # 新风系统开启
+      - service: switch.turn_on
+        target:
+          entity_id:
+            - switch.knx_xin_feng_ji_zu_yi_lou
+            - switch.knx_xin_feng_ji_zu_er_lou
+            - switch.knx_xin_feng_ji_zu_san_lou
+      # 走廊恢复正常亮度
+      - service: light.turn_on
+        target:
+          entity_id:
+            - light.knx_yi_lou_zou_lang_deng
+            - light.knx_er_lou_zou_lang_deng
+            - light.knx_san_lou_zou_lang_deng
+        data:
+          brightness_pct: 80
+
+  # --- 周末全天节能 (Weekend all-day energy saving) ---
+  - id: knx_weekend_energy_save
+    alias: "KNX 周末节能模式"
+    description: "Activate energy saving for entire weekend"
+    mode: single
+    trigger:
+      - platform: time
+        at: "00:01:00"
+    condition:
+      - condition: state
+        entity_id: binary_sensor.workday_sensor
+        state: "off"
+    action:
+      - service: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.after_hours_mode
+      # 关闭所有非必要设备
+      - service: switch.turn_off
+        target:
+          entity_id:
+            - switch.knx_yi_lou_ka_fei_ji_dian_yuan
+            - switch.knx_er_lou_cha_shui_jian_ka_fei_ji_dian_yuan
+            - switch.knx_san_lou_ka_fei_ji_dian_yuan
+            - switch.knx_er_lou_yin_shui_ji_dian_yuan
+            - switch.knx_san_lou_yin_shui_ji_dian_yuan
+      # 关闭新风系统
+      - service: switch.turn_off
+        target:
+          entity_id:
+            - switch.knx_xin_feng_ji_zu_yi_lou
+            - switch.knx_xin_feng_ji_zu_er_lou
+            - switch.knx_xin_feng_ji_zu_san_lou
+
+  # ==========================================================================
+  #  5. 会议室预约集成 (MEETING ROOM BOOKING INTEGRATION)
+  # ==========================================================================
+  # 集成外部日历系统 (Google Calendar / Microsoft 365)
+  # 会议开始前10分钟自动准备房间
+  # 会议结束后自动关闭设备
+  # ==========================================================================
+
+  # --- 一楼大会议室预约开始 (F1 Large conference booking start) ---
+  - id: knx_f1_large_conf_booking_start
+    alias: "KNX 一楼大会议室预约准备"
+    description: "Prepare F1 large conference room 10 min before booking"
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: calendar.meeting_room_f1_large
+        to: "on"
+    action:
+      # 提前开灯+空调+新风
+      - service: light.turn_on
+        target:
+          entity_id: light.knx_yi_lou_da_hui_yi_shi_deng
+        data:
+          brightness_pct: 100
+      - service: climate.turn_on
+        target:
+          entity_id: climate.knx_yi_lou_da_hui_yi_shi_kong_tiao
+      - service: climate.set_temperature
+        target:
+          entity_id: climate.knx_yi_lou_da_hui_yi_shi_kong_tiao
+        data:
+          temperature: 24
+      # 百叶窗打开至50%
+      - service: cover.set_cover_position
+        target:
+          entity_id: cover.knx_yi_lou_da_hui_yi_shi_bai_ye_chuang
+        data:
+          position: 50
+
+  # --- 一楼大会议室预约结束 (F1 Large conference booking end) ---
+  - id: knx_f1_large_conf_booking_end
+    alias: "KNX 一楼大会议室预约结束清理"
+    description: "Clean up F1 large conference room after booking ends"
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: calendar.meeting_room_f1_large
+        to: "off"
+    action:
+      # 5分钟后检查是否还有人
+      - delay:
+          minutes: 5
+      - condition: state
+        entity_id: binary_sensor.knx_yi_lou_da_hui_yi_shi_ren_ti_gan_ying
+        state: "off"
+      # 无人则关闭所有设备
+      - service: light.turn_off
+        target:
+          entity_id: light.knx_yi_lou_da_hui_yi_shi_deng
+      - service: climate.turn_off
+        target:
+          entity_id: climate.knx_yi_lou_da_hui_yi_shi_kong_tiao
+      - service: switch.turn_off
+        target:
+          entity_id:
+            - switch.knx_yi_lou_da_hui_yi_shi_tou_ying_yi_dian_yuan
+            - switch.knx_yi_lou_da_hui_yi_shi_mu_bu
+
+  # --- 三楼VIP会议室预约开始 (F3 VIP boardroom booking start) ---
+  - id: knx_f3_vip_booking_start
+    alias: "KNX 三楼VIP会议室预约准备"
+    description: "Prepare F3 VIP boardroom 15 min before booking - VIP treatment"
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: calendar.meeting_room_f3_vip
+        to: "on"
+    action:
+      # VIP级别准备 - 灯光+空调+窗帘+咖啡机
+      - service: light.turn_on
+        target:
+          entity_id:
+            - light.knx_san_lou_viphu_yi_shi_deng
+            - light.knx_san_lou_viphu_yi_shi_she_deng
+        data:
+          brightness_pct: 90
+      - service: climate.set_temperature
+        target:
+          entity_id: climate.knx_san_lou_viphu_yi_shi_kong_tiao
+        data:
+          temperature: 23
+          hvac_mode: auto
+      - service: cover.set_cover_position
+        target:
+          entity_id: cover.knx_san_lou_viphu_yi_shi_bai_ye_chuang
+        data:
+          position: 70
+      # 确保三楼咖啡机开启
+      - service: switch.turn_on
+        target:
+          entity_id: switch.knx_san_lou_ka_fei_ji_dian_yuan
+      # 走廊灯提亮 (迎客)
+      - service: light.turn_on
+        target:
+          entity_id: light.knx_san_lou_zou_lang_deng
+        data:
+          brightness_pct: 100
+
+  # --- 二楼会议室C/D预约自动化 (F2 Meeting Rooms C/D booking) ---
+  - id: knx_f2_meeting_c_booking_start
+    alias: "KNX 二楼会议室C预约准备"
+    description: "Prepare F2 Meeting Room C before booking"
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: calendar.meeting_room_f2_c
+        to: "on"
+    action:
+      - service: light.turn_on
+        target:
+          entity_id: light.knx_er_lou_hui_yi_shi_cdeng
+        data:
+          brightness_pct: 100
+      - service: climate.turn_on
+        target:
+          entity_id: climate.knx_er_lou_hui_yi_shi_ckong_tiao
+      - service: climate.set_temperature
+        target:
+          entity_id: climate.knx_er_lou_hui_yi_shi_ckong_tiao
+        data:
+          temperature: 24
+
+  # ==========================================================================
+  #  6. 安全与紧急 (SAFETY & EMERGENCY)
+  # ==========================================================================
+
+  # --- 烟感报警紧急响应 (Smoke alarm emergency response) ---
+  - id: knx_smoke_alarm_emergency
+    alias: "KNX 烟感报警紧急模式"
+    description: "Emergency mode on any smoke detector alarm"
+    mode: single
+    trigger:
+      - platform: state
+        entity_id:
+          - binary_sensor.knx_yi_lou_da_tang_yan_gan
+          - binary_sensor.knx_yi_lou_zou_lang_yan_gan
+          - binary_sensor.knx_yi_lou_da_hui_yi_shi_yan_gan
+          - binary_sensor.knx_er_lou_kai_fang_ban_gong_qu_yan_gan
+          - binary_sensor.knx_er_lou_zou_lang_yan_gan
+          - binary_sensor.knx_san_lou_zou_lang_yan_gan
+          - binary_sensor.knx_san_lou_viphu_yi_shi_yan_gan
+          - binary_sensor.knx_di_xia_che_ku_yan_gan
+        to: "on"
+    action:
+      # 激活紧急模式
+      - service: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.emergency_mode
+      # 执行紧急脚本
+      - service: script.knx_emergency_mode
+      # 发送紧急通知
+      - service: notify.emergency_contacts
+        data:
+          title: "紧急报警 - 烟感探测器"
+          message: >
+            烟感报警触发!
+            触发传感器: {{ trigger.entity_id }}
+            时间: {{ now().strftime('%Y-%m-%d %H:%M:%S') }}
+            请立即检查并执行应急预案!
+
+  # --- 消防系统总报警 (Fire alarm system general alarm) ---
+  - id: knx_fire_alarm_system
+    alias: "KNX 消防系统总报警"
+    description: "Full emergency response on fire alarm system activation"
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.knx_xiao_fang_xi_tong_bao_jing
+        to: "on"
+    action:
+      - service: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.emergency_mode
+      - service: script.knx_emergency_mode
+      - service: notify.emergency_contacts
+        data:
+          title: "消防系统总报警已触发!"
+          message: "消防系统总报警触发! 时间: {{ now().strftime('%Y-%m-%d %H:%M:%S') }}, 请立即执行消防应急预案!"
+
+  # ==========================================================================
+  #  7. CO2 通风联动 (CO2 VENTILATION CONTROL)
+  # ==========================================================================
+  # 当 CO2 浓度超标时自动加大新风量
+  # 标准: CO2 < 800ppm 正常, 800-1200ppm 加大新风, >1200ppm 报警
+  # ==========================================================================
+
+  - id: knx_f2_co2_high_ventilation
+    alias: "KNX 二楼CO2超标加大新风"
+    description: "Increase F2 fresh air when CO2 exceeds 800ppm"
+    mode: single
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.knx_er_lou_kai_fang_ban_gong_qu_co2
+        above: 800
+    action:
+      - service: switch.turn_on
+        target:
+          entity_id: switch.knx_xin_feng_ji_zu_er_lou
+
+  - id: knx_f2_co2_critical_alert
+    alias: "KNX 二楼CO2严重超标报警"
+    description: "Alert when F2 CO2 exceeds 1200ppm"
+    mode: single
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.knx_er_lou_kai_fang_ban_gong_qu_co2
+        above: 1200
+        for:
+          minutes: 5
+    action:
+      - service: notify.building_management
+        data:
+          title: "CO2报警 - 二楼办公区"
+          message: >
+            二楼办公区CO2浓度已达 {{ states('sensor.knx_er_lou_kai_fang_ban_gong_qu_co2') }}ppm!
+            已超出安全标准 (1200ppm), 请检查新风系统运行状态或开窗通风。
+
+  - id: knx_f1_conf_co2_high_ventilation
+    alias: "KNX 一楼大会议室CO2超标通风"
+    description: "Increase F1 conference room ventilation on high CO2"
+    mode: single
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.knx_yi_lou_da_hui_yi_shi_co2
+        above: 800
+    action:
+      - service: switch.turn_on
+        target:
+          entity_id: switch.knx_xin_feng_ji_zu_yi_lou
+
+  # --- 恒照度控制 (Constant illuminance control) ---
+  - id: knx_f2_east_daylight_dimming
+    alias: "KNX 二楼东侧恒照度调光"
+    description: "Adjust F2 east zone lighting based on daylight to maintain 500 lux"
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: sensor.knx_er_lou_kai_fang_ban_gong_qu_dong_ce_zhao_du
+    condition:
+      - condition: state
+        entity_id: light.knx_er_lou_kai_fang_ban_gong_qu_adeng
+        state: "on"
+      - condition: time
+        after: "08:00:00"
+        before: "18:00:00"
+    action:
+      - service: light.turn_on
+        target:
+          entity_id: light.knx_er_lou_kai_fang_ban_gong_qu_adeng
+        data:
+          # 目标桌面照度500lux - 根据环境照度补偿
+          brightness_pct: >
+            {% set ambient = states('sensor.knx_er_lou_kai_fang_ban_gong_qu_dong_ce_zhao_du') | float(300) %}
+            {% if ambient > 500 %}
+              20
+            {% elif ambient > 300 %}
+              {{ (60 - ((ambient - 300) / 200 * 40)) | int }}
+            {% else %}
+              {{ (100 - (ambient / 300 * 40)) | int }}
+            {% endif %}
+
+# ============================================================================
+# End of KNX Automations
+# 自动化规则配置结束
+# ============================================================================

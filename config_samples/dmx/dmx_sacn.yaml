@@ -1,0 +1,431 @@
+# =============================================================================
+# sACN (E1.31) DMX Configuration - Commercial Venue Lighting System
+# Streaming Architecture for Control Networks
+# =============================================================================
+#
+# This configuration mirrors the same venue as the ArtNet config but uses
+# the sACN (E1.31) protocol for DMX transport. sACN is often preferred for
+# large installations due to its native multicast support and priority system.
+#
+# Protocol: ANSI E1.31-2018 (sACN / Streaming ACN)
+# Transport: UDP Multicast / Unicast
+# Last Updated: 2026-04-10
+# =============================================================================
+
+sacn:
+  # ---------------------------------------------------------------------------
+  # Global sACN Settings
+  # ---------------------------------------------------------------------------
+  protocol_version: "2018"                # E1.31-2018 standard
+  source_name: "Woow-HA-DMX-Controller"  # sACN Source Name (max 64 bytes UTF-8)
+  source_cid: "fb44a6b2-9373-4f1a-b830-cc75d487e2a8"  # Component Identifier (UUID)
+  priority: 100                           # sACN priority (0-200, default 100)
+                                          # Higher priority wins in merge scenarios
+  sync_universe: 63999                    # Synchronization universe for all outputs
+  sync_address: "239.255.252.255"         # Multicast sync address
+
+  # Network configuration
+  network:
+    bind_ip: "10.0.1.100"                 # Source IP address
+    multicast_ttl: 20                     # Multicast Time-To-Live (hops)
+                                          # 1 = local subnet only
+                                          # 20 = reasonable for campus network
+    multicast_loopback: false             # Disable loopback of own packets
+    per_address_priority: false           # Per-address priority (E1.31 DD)
+    force_unicast: false                  # Force unicast for all universes (override)
+
+  # ---------------------------------------------------------------------------
+  # Performance Settings
+  # ---------------------------------------------------------------------------
+  performance:
+    refresh_rate_hz: 40                   # Transmission rate (max 44Hz per E1.31)
+    keep_alive_interval_s: 0.8           # Keep-alive when no changes (< 2.5s required)
+    stream_terminated_wait_ms: 6500       # Wait time after sending terminated packets
+    terminated_packet_count: 3            # Number of Stream_Terminated packets to send
+    partial_universe: true                # Only send used portion of universe
+    merge_mode: "HTP"                     # HTP (Highest Takes Precedence) / LTP
+    output_delay_ms: 0                    # Inter-universe output delay
+
+  # ---------------------------------------------------------------------------
+  # Universe Definitions
+  # ---------------------------------------------------------------------------
+  universes:
+    # =========================================================================
+    # Universe 1 - Lobby Decorative Lighting
+    # sACN Multicast: 239.255.0.1
+    # =========================================================================
+    - universe: 1
+      name: "Lobby Decorative Lighting"
+      description: "Ground floor lobby - RGB strips, pendants, wall washers"
+      enabled: true
+      priority: 100
+      transport: "multicast"              # multicast / unicast
+      multicast_address: "239.255.0.1"    # Auto-calculated: 239.255.{hi}.{lo}
+      max_channels: 128
+      default_fade_ms: 1500
+
+      # Fixture assignments reference the same IDs as ArtNet config
+      fixture_assignments:
+        # RGB LED Strips (4x 3ch = 12 channels)
+        - fixture_ref: "lobby_strip_north"
+          start_channel: 1
+          channel_count: 3
+        - fixture_ref: "lobby_strip_east"
+          start_channel: 4
+          channel_count: 3
+        - fixture_ref: "lobby_strip_south"
+          start_channel: 7
+          channel_count: 3
+        - fixture_ref: "lobby_strip_west"
+          start_channel: 10
+          channel_count: 3
+
+        # RGBW Pendants (6x 5ch = 30 channels)
+        - fixture_ref: "lobby_pendant_1"
+          start_channel: 13
+          channel_count: 5
+        - fixture_ref: "lobby_pendant_2"
+          start_channel: 18
+          channel_count: 5
+        - fixture_ref: "lobby_pendant_3"
+          start_channel: 23
+          channel_count: 5
+        - fixture_ref: "lobby_pendant_4"
+          start_channel: 28
+          channel_count: 5
+        - fixture_ref: "lobby_pendant_5"
+          start_channel: 33
+          channel_count: 5
+        - fixture_ref: "lobby_pendant_6"
+          start_channel: 38
+          channel_count: 5
+
+        # RGBW Wall Washers (7x 4ch = 28 channels)
+        - fixture_ref: "lobby_wash_entrance_l"
+          start_channel: 43
+          channel_count: 4
+        - fixture_ref: "lobby_wash_entrance_r"
+          start_channel: 47
+          channel_count: 4
+        - fixture_ref: "lobby_wash_feature_1"
+          start_channel: 51
+          channel_count: 4
+        - fixture_ref: "lobby_wash_feature_2"
+          start_channel: 55
+          channel_count: 4
+        - fixture_ref: "lobby_wash_feature_3"
+          start_channel: 59
+          channel_count: 4
+        - fixture_ref: "lobby_wash_corridor_1"
+          start_channel: 63
+          channel_count: 4
+        - fixture_ref: "lobby_wash_corridor_2"
+          start_channel: 67
+          channel_count: 4
+
+        # Accent Lighting (4x 3ch = 12 channels)
+        - fixture_ref: "lobby_accent_reception"
+          start_channel: 71
+          channel_count: 3
+        - fixture_ref: "lobby_accent_stairs"
+          start_channel: 74
+          channel_count: 3
+        - fixture_ref: "lobby_accent_planter_1"
+          start_channel: 77
+          channel_count: 3
+        - fixture_ref: "lobby_accent_planter_2"
+          start_channel: 80
+          channel_count: 3
+
+    # =========================================================================
+    # Universe 2 - Main Hall Stage Lighting
+    # sACN Multicast: 239.255.0.2
+    # =========================================================================
+    - universe: 2
+      name: "Main Hall Stage Lighting"
+      description: "Main hall stage - Moving heads, PARs, strobes, fog machines"
+      enabled: true
+      priority: 110                       # Higher priority for stage (overrides backup)
+      transport: "unicast"                # Unicast for stage - lower latency, more reliable
+      unicast_addresses:
+        - ip: "10.0.1.20"                # Primary stage node
+          name: "Stage Node A (Primary)"
+        - ip: "10.0.1.21"                # Backup stage node (receives same stream)
+          name: "Stage Node B (Backup)"
+      max_channels: 256
+      default_fade_ms: 800
+
+      fixture_assignments:
+        # Moving Head Spots (7x 16ch = 112 channels)
+        - fixture_ref: "mh_spot_dsl"
+          start_channel: 1
+          channel_count: 16
+        - fixture_ref: "mh_spot_dsr"
+          start_channel: 17
+          channel_count: 16
+        - fixture_ref: "mh_spot_usl"
+          start_channel: 33
+          channel_count: 16
+        - fixture_ref: "mh_spot_usr"
+          start_channel: 49
+          channel_count: 16
+        - fixture_ref: "mh_spot_center"
+          start_channel: 65
+          channel_count: 16
+        - fixture_ref: "mh_spot_foh_l"
+          start_channel: 81
+          channel_count: 16
+        - fixture_ref: "mh_spot_foh_r"
+          start_channel: 97
+          channel_count: 16
+
+        # PAR LED Lights (8x 7ch = 56 channels)
+        - fixture_ref: "par_ds_1"
+          start_channel: 113
+          channel_count: 7
+        - fixture_ref: "par_ds_2"
+          start_channel: 120
+          channel_count: 7
+        - fixture_ref: "par_ds_3"
+          start_channel: 127
+          channel_count: 7
+        - fixture_ref: "par_ds_4"
+          start_channel: 134
+          channel_count: 7
+        - fixture_ref: "par_us_1"
+          start_channel: 141
+          channel_count: 7
+        - fixture_ref: "par_us_2"
+          start_channel: 148
+          channel_count: 7
+        - fixture_ref: "par_us_3"
+          start_channel: 155
+          channel_count: 7
+        - fixture_ref: "par_us_4"
+          start_channel: 162
+          channel_count: 7
+
+        # Strobes (3x 3ch = 9 channels)
+        - fixture_ref: "strobe_sl"
+          start_channel: 169
+          channel_count: 3
+        - fixture_ref: "strobe_sr"
+          start_channel: 172
+          channel_count: 3
+        - fixture_ref: "strobe_center"
+          start_channel: 175
+          channel_count: 3
+
+        # Fog Machines (2x 2ch = 4 channels)
+        - fixture_ref: "fog_main"
+          start_channel: 178
+          channel_count: 2
+        - fixture_ref: "fog_haze"
+          start_channel: 180
+          channel_count: 2
+
+    # =========================================================================
+    # Universe 3 - Conference Room Lighting
+    # sACN Multicast: 239.255.0.3
+    # =========================================================================
+    - universe: 3
+      name: "Conference Room Lighting"
+      description: "Conference rooms A/B/C - Tunable white panels, dimmer packs"
+      enabled: true
+      priority: 90                        # Lower priority - can be overridden by
+                                          # local wall panel controls (priority 100+)
+      transport: "multicast"
+      multicast_address: "239.255.0.3"
+      max_channels: 64
+      default_fade_ms: 2000
+
+      fixture_assignments:
+        # Conference Room A (Boardroom) - 4 panels + 1 dimmer pack
+        - fixture_ref: "conf_a_panel_1"
+          start_channel: 1
+          channel_count: 2
+        - fixture_ref: "conf_a_panel_2"
+          start_channel: 3
+          channel_count: 2
+        - fixture_ref: "conf_a_panel_3"
+          start_channel: 5
+          channel_count: 2
+        - fixture_ref: "conf_a_panel_4"
+          start_channel: 7
+          channel_count: 2
+        - fixture_ref: "conf_a_dimmer"
+          start_channel: 9
+          channel_count: 4
+
+        # Conference Room B (Medium) - 3 panels + 1 dimmer pack
+        - fixture_ref: "conf_b_panel_1"
+          start_channel: 13
+          channel_count: 2
+        - fixture_ref: "conf_b_panel_2"
+          start_channel: 15
+          channel_count: 2
+        - fixture_ref: "conf_b_panel_3"
+          start_channel: 17
+          channel_count: 2
+        - fixture_ref: "conf_b_dimmer"
+          start_channel: 19
+          channel_count: 4
+
+        # Conference Room C (Small) - 2 panels + 1 dimmer pack
+        - fixture_ref: "conf_c_panel_1"
+          start_channel: 23
+          channel_count: 2
+        - fixture_ref: "conf_c_panel_2"
+          start_channel: 25
+          channel_count: 2
+        - fixture_ref: "conf_c_dimmer"
+          start_channel: 27
+          channel_count: 4
+
+    # =========================================================================
+    # Universe 4 - Exterior Facade Lighting
+    # sACN Multicast: 239.255.0.4
+    # =========================================================================
+    - universe: 4
+      name: "Exterior Facade Lighting"
+      description: "Building exterior - RGBW floods, outline LEDs, landscape, signage"
+      enabled: true
+      priority: 100
+      transport: "unicast"                # Unicast to outdoor controller
+      unicast_addresses:
+        - ip: "10.0.1.40"
+          name: "Exterior Node (IP65)"
+      max_channels: 96
+      default_fade_ms: 3000
+
+      fixture_assignments:
+        # Front Facade Floods (4x 5ch = 20 channels)
+        - fixture_ref: "ext_flood_1"
+          start_channel: 1
+          channel_count: 5
+        - fixture_ref: "ext_flood_2"
+          start_channel: 6
+          channel_count: 5
+        - fixture_ref: "ext_flood_3"
+          start_channel: 11
+          channel_count: 5
+        - fixture_ref: "ext_flood_4"
+          start_channel: 16
+          channel_count: 5
+
+        # Side Facade Floods (4x 5ch = 20 channels)
+        - fixture_ref: "ext_flood_side_l1"
+          start_channel: 21
+          channel_count: 5
+        - fixture_ref: "ext_flood_side_l2"
+          start_channel: 26
+          channel_count: 5
+        - fixture_ref: "ext_flood_side_r1"
+          start_channel: 31
+          channel_count: 5
+        - fixture_ref: "ext_flood_side_r2"
+          start_channel: 36
+          channel_count: 5
+
+        # Outline LEDs (4x 3ch = 12 channels)
+        - fixture_ref: "ext_outline_roof"
+          start_channel: 41
+          channel_count: 3
+        - fixture_ref: "ext_outline_left"
+          start_channel: 44
+          channel_count: 3
+        - fixture_ref: "ext_outline_right"
+          start_channel: 47
+          channel_count: 3
+        - fixture_ref: "ext_outline_entrance"
+          start_channel: 50
+          channel_count: 3
+
+        # Landscape (4x 4ch + 1x 5ch = 21 channels)
+        - fixture_ref: "ext_landscape_path_1"
+          start_channel: 53
+          channel_count: 4
+        - fixture_ref: "ext_landscape_path_2"
+          start_channel: 57
+          channel_count: 4
+        - fixture_ref: "ext_landscape_tree_1"
+          start_channel: 61
+          channel_count: 4
+        - fixture_ref: "ext_landscape_tree_2"
+          start_channel: 65
+          channel_count: 4
+        - fixture_ref: "ext_landscape_fountain"
+          start_channel: 69
+          channel_count: 5
+
+        # Signage (1x 4ch + 1x 3ch = 7 channels)
+        - fixture_ref: "ext_sign_main"
+          start_channel: 74
+          channel_count: 4
+        - fixture_ref: "ext_sign_entrance"
+          start_channel: 78
+          channel_count: 3
+
+  # ---------------------------------------------------------------------------
+  # sACN Discovery (E1.31 Universe Discovery)
+  # ---------------------------------------------------------------------------
+  discovery:
+    enabled: true
+    universe_discovery_interval_s: 10     # Interval for E1.31 discovery packets
+    discovery_universe: 64214             # Standard discovery universe
+
+  # ---------------------------------------------------------------------------
+  # Multi-Source Merge Configuration
+  # ---------------------------------------------------------------------------
+  merge_policy:
+    # When multiple sACN sources send to the same universe, these rules apply
+    default_mode: "HTP"                   # HTP = Highest Takes Precedence
+    per_universe_overrides:
+      - universe: 2
+        mode: "LTP"                       # Stage uses Last Takes Precedence
+                                          # (lighting console has full control)
+      - universe: 3
+        mode: "HTP"                       # Conference rooms use HTP
+                                          # (local panels and central both work)
+
+    # Source priority table - higher priority source wins in HTP conflicts
+    # at the same channel level
+    source_priorities:
+      - source_name: "Woow-HA-DMX-Controller"
+        priority: 100                     # Central automation system
+      - source_name: "Lighting-Console-GrandMA3"
+        priority: 150                     # Lighting console overrides automation
+      - source_name: "Emergency-Controller"
+        priority: 200                     # Emergency system always wins
+
+  # ---------------------------------------------------------------------------
+  # Failover & Redundancy
+  # ---------------------------------------------------------------------------
+  failover:
+    source_loss_timeout_s: 2.5            # E1.31 standard: declare loss after 2.5s
+    action_on_source_loss: "hold_last"    # hold_last / blackout / default_scene
+    default_scene_on_loss: "night_mode"   # Scene to activate if action is default_scene
+    redundant_source:
+      enabled: true
+      backup_source_ip: "10.0.1.101"      # Backup controller IP
+      heartbeat_interval_ms: 500
+      takeover_delay_ms: 1000             # Delay before backup takes over
+
+  # ---------------------------------------------------------------------------
+  # Monitoring & Diagnostics
+  # ---------------------------------------------------------------------------
+  monitoring:
+    log_level: "info"
+    stats_reporting:
+      enabled: true
+      interval_s: 60
+      report_fields:
+        - "packets_sent"
+        - "packets_per_second"
+        - "sequence_errors"
+        - "universes_active"
+        - "bandwidth_kbps"
+    alerts:
+      sequence_error_threshold: 10        # Alert after N sequence errors
+      universe_timeout_alert: true        # Alert when universe goes offline
+      priority_conflict_alert: true       # Alert on priority conflicts

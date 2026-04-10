@@ -1,0 +1,785 @@
+# =============================================================================
+# Modbus RTU - RS-485 串行总线多设备配置
+# =============================================================================
+#
+# 系统概述 (System Overview):
+#   串口: /dev/ttyUSB0 (USB-RS485 转换器)
+#   通信参数: 9600 baud, 8 data bits, No parity, 1 stop bit (8N1)
+#   总线设备:
+#     Slave 1: 温湿度变送器 (Temperature/Humidity Transmitter)
+#     Slave 2: CO2/空气质量传感器 (CO2/Air Quality Sensor)
+#     Slave 3: 水流量计 (Water Flow Meter)
+#     Slave 4: 变频器 VFD (Variable Frequency Drive)
+#     Slave 5: PLC 数字 I/O 模块 (Digital I/O Module)
+#
+# RS-485 总线拓扑 (Bus Topology):
+#   HA Server (USB-RS485) ---[A/B]--- Slave1 --- Slave2 --- ... --- Slave5
+#   总线末端需安装 120 欧姆终端电阻 (120 Ohm termination resistor)
+#
+# 注意事项 (Notes):
+#   - RS-485 总线最大设备数: 32 台 (标准驱动能力)
+#   - 建议总线长度不超过 1200 米 (at 9600 baud)
+#   - 各设备之间通信需要间隔延迟, 防止总线冲突
+#   - 波特率需所有设备一致设置
+# =============================================================================
+
+modbus:
+  - name: "rs485_bus"
+    type: serial
+    port: /dev/ttyUSB0
+    baudrate: 9600
+    bytesize: 8
+    parity: N
+    stopbits: 1
+    timeout: 3
+    delay: 0.2                # RS-485 总线设备切换延迟 200ms
+    retries: 3
+    retry_on_empty: true
+    message_wait_milliseconds: 100   # Modbus RTU 3.5 字符间隔要求
+
+    # =========================================================================
+    # Slave 1: 温湿度变送器 (Temperature/Humidity Transmitter)
+    # =========================================================================
+    # 设备型号: XY-MD02 / SHT30 类壁挂式变送器
+    # 通信地址: Slave 1
+    # 寄存器映射:
+    #   40001 (0x0000): 温度值 (int16, scale 0.1, 单位 °C)
+    #   40002 (0x0001): 湿度值 (uint16, scale 0.1, 单位 %RH)
+    #   40003 (0x0002): 温度校准偏移 (int16, scale 0.1)
+    #   40004 (0x0003): 湿度校准偏移 (int16, scale 0.1)
+    #   40005 (0x0004): 通信地址设置
+    #   40006 (0x0005): 波特率设置 (0=2400, 1=4800, 2=9600, 3=19200)
+    # 采集间隔: 30 秒 (温湿度变化相对缓慢)
+    # =========================================================================
+    sensors:
+      - name: "rtu_slave1_temperature"
+        unique_id: "modbus_rtu_s1_temp"
+        slave: 1
+        address: 0            # 40001 - 当前温度
+        input_type: holding
+        data_type: int16      # 有符号, 支持负温度
+        scale: 0.1
+        offset: 0
+        precision: 1
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        scan_interval: 30
+
+      - name: "rtu_slave1_humidity"
+        unique_id: "modbus_rtu_s1_hum"
+        slave: 1
+        address: 1            # 40002 - 当前湿度
+        input_type: holding
+        data_type: uint16
+        scale: 0.1
+        offset: 0
+        precision: 1
+        unit_of_measurement: "%"
+        device_class: humidity
+        state_class: measurement
+        scan_interval: 30
+
+      - name: "rtu_slave1_dew_point"
+        unique_id: "modbus_rtu_s1_dewpoint"
+        slave: 1
+        address: 2            # 40003 - 露点温度 (部分设备支持)
+        input_type: holding
+        data_type: int16
+        scale: 0.1
+        offset: 0
+        precision: 1
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        scan_interval: 60
+
+    # =========================================================================
+    # Slave 2: CO2/空气质量传感器 (CO2/Air Quality Sensor)
+    # =========================================================================
+    # 设备型号: SenseAir S8 / MH-Z19C 类 NDIR CO2 传感器模块
+    # 通信地址: Slave 2
+    # 寄存器映射:
+    #   30001 (0x0000): CO2 浓度 (uint16, ppm)
+    #   30002 (0x0001): 温度 (int16, scale 0.1, °C)
+    #   30003 (0x0002): 湿度 (uint16, scale 0.1, %RH)
+    #   30004 (0x0003): PM2.5 (uint16, ug/m3) - 扩展型号
+    #   30005 (0x0004): PM10 (uint16, ug/m3) - 扩展型号
+    #   30006 (0x0005): TVOC (uint16, ppb) - 扩展型号
+    #   30007 (0x0006): 甲醛 HCHO (uint16, scale 0.01, mg/m3)
+    # 采集间隔: 60 秒 (空气质量变化相对缓慢)
+    # =========================================================================
+      - name: "rtu_slave2_co2"
+        unique_id: "modbus_rtu_s2_co2"
+        slave: 2
+        address: 0            # 30001 - CO2 浓度
+        input_type: input
+        data_type: uint16
+        scale: 1
+        offset: 0
+        precision: 0
+        unit_of_measurement: "ppm"
+        device_class: carbon_dioxide
+        state_class: measurement
+        scan_interval: 60
+
+      - name: "rtu_slave2_temperature"
+        unique_id: "modbus_rtu_s2_temp"
+        slave: 2
+        address: 1            # 30002 - 温度 (内置)
+        input_type: input
+        data_type: int16
+        scale: 0.1
+        offset: 0
+        precision: 1
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        scan_interval: 60
+
+      - name: "rtu_slave2_humidity"
+        unique_id: "modbus_rtu_s2_hum"
+        slave: 2
+        address: 2            # 30003 - 湿度 (内置)
+        input_type: input
+        data_type: uint16
+        scale: 0.1
+        offset: 0
+        precision: 1
+        unit_of_measurement: "%"
+        device_class: humidity
+        state_class: measurement
+        scan_interval: 60
+
+      - name: "rtu_slave2_pm25"
+        unique_id: "modbus_rtu_s2_pm25"
+        slave: 2
+        address: 3            # 30004 - PM2.5
+        input_type: input
+        data_type: uint16
+        scale: 1
+        offset: 0
+        precision: 0
+        unit_of_measurement: "ug/m3"
+        device_class: pm25
+        state_class: measurement
+        scan_interval: 60
+
+      - name: "rtu_slave2_pm10"
+        unique_id: "modbus_rtu_s2_pm10"
+        slave: 2
+        address: 4            # 30005 - PM10
+        input_type: input
+        data_type: uint16
+        scale: 1
+        offset: 0
+        precision: 0
+        unit_of_measurement: "ug/m3"
+        device_class: pm10
+        state_class: measurement
+        scan_interval: 60
+
+      - name: "rtu_slave2_tvoc"
+        unique_id: "modbus_rtu_s2_tvoc"
+        slave: 2
+        address: 5            # 30006 - TVOC 总挥发性有机化合物
+        input_type: input
+        data_type: uint16
+        scale: 1
+        offset: 0
+        precision: 0
+        unit_of_measurement: "ppb"
+        device_class: volatile_organic_compounds_parts
+        state_class: measurement
+        scan_interval: 60
+
+      - name: "rtu_slave2_hcho"
+        unique_id: "modbus_rtu_s2_hcho"
+        slave: 2
+        address: 6            # 30007 - 甲醛 (HCHO)
+        input_type: input
+        data_type: uint16
+        scale: 0.01
+        offset: 0
+        precision: 2
+        unit_of_measurement: "mg/m3"
+        state_class: measurement
+        scan_interval: 60
+
+    # =========================================================================
+    # Slave 3: 水流量计 (Water Flow Meter)
+    # =========================================================================
+    # 设备型号: 电磁流量计 (Electromagnetic Flow Meter)
+    # 通信地址: Slave 3
+    # 寄存器映射 (典型电磁流量计):
+    #   40001-40002 (0x0000): 瞬时流量 (float32, m3/h)
+    #   40003-40004 (0x0002): 累计正向流量 (float32, m3)
+    #   40005-40006 (0x0004): 累计反向流量 (float32, m3)
+    #   40007-40008 (0x0006): 流速 (float32, m/s)
+    #   40009      (0x0008): 信号强度 (uint16, %)
+    #   40010      (0x0009): 空管检测状态 (uint16)
+    #   40011-40012 (0x000A): 当日累计流量 (float32, m3)
+    # 采集间隔: 15 秒 (流量变化较快, 需要较高采集频率)
+    # =========================================================================
+      - name: "rtu_slave3_flow_rate"
+        unique_id: "modbus_rtu_s3_flow"
+        slave: 3
+        address: 0            # 40001-40002 - 瞬时流量
+        input_type: holding
+        data_type: float32
+        swap: word
+        precision: 2
+        unit_of_measurement: "m3/h"
+        state_class: measurement
+        scan_interval: 15
+
+      - name: "rtu_slave3_total_flow_forward"
+        unique_id: "modbus_rtu_s3_total_fwd"
+        slave: 3
+        address: 2            # 40003-40004 - 累计正向流量
+        input_type: holding
+        data_type: float32
+        swap: word
+        precision: 1
+        unit_of_measurement: "m3"
+        device_class: water
+        state_class: total_increasing
+        scan_interval: 60
+
+      - name: "rtu_slave3_total_flow_reverse"
+        unique_id: "modbus_rtu_s3_total_rev"
+        slave: 3
+        address: 4            # 40005-40006 - 累计反向流量
+        input_type: holding
+        data_type: float32
+        swap: word
+        precision: 1
+        unit_of_measurement: "m3"
+        state_class: total_increasing
+        scan_interval: 60
+
+      - name: "rtu_slave3_flow_velocity"
+        unique_id: "modbus_rtu_s3_velocity"
+        slave: 3
+        address: 6            # 40007-40008 - 流速
+        input_type: holding
+        data_type: float32
+        swap: word
+        precision: 2
+        unit_of_measurement: "m/s"
+        state_class: measurement
+        scan_interval: 15
+
+      - name: "rtu_slave3_signal_strength"
+        unique_id: "modbus_rtu_s3_signal"
+        slave: 3
+        address: 8            # 40009 - 信号强度 (%)
+        input_type: holding
+        data_type: uint16
+        scale: 1
+        offset: 0
+        precision: 0
+        unit_of_measurement: "%"
+        scan_interval: 60
+
+      - name: "rtu_slave3_daily_total"
+        unique_id: "modbus_rtu_s3_daily"
+        slave: 3
+        address: 10           # 40011-40012 - 当日累计流量
+        input_type: holding
+        data_type: float32
+        swap: word
+        precision: 2
+        unit_of_measurement: "m3"
+        device_class: water
+        state_class: total_increasing
+        scan_interval: 60
+
+    # =========================================================================
+    # Slave 3: 水流量计 - 二进制状态 (Binary Sensors)
+    # =========================================================================
+    binary_sensors:
+      - name: "rtu_slave3_empty_pipe"
+        unique_id: "modbus_rtu_s3_empty"
+        slave: 3
+        address: 9            # 40010 - 空管检测 (0=正常, 1=空管)
+        input_type: holding
+        device_class: problem
+        scan_interval: 30
+
+    # =========================================================================
+    # Slave 4: 变频器 VFD (Variable Frequency Drive)
+    # =========================================================================
+    # 设备型号: ABB ACS580 / Siemens G120 风格寄存器映射
+    # 通信地址: Slave 4
+    # 功能: 控制冷却水泵电机
+    # 寄存器映射 (标准 Modbus 参数):
+    #   40001 (0x0000): 控制字 (Control Word) - 详见下方位定义
+    #   40002 (0x0001): 频率设定 (uint16, scale 0.01, Hz)
+    #   30001 (0x0000): 状态字 (Status Word)
+    #   30002 (0x0001): 输出频率 (uint16, scale 0.01, Hz)
+    #   30003 (0x0002): 输出电流 (uint16, scale 0.01, A)
+    #   30004 (0x0003): 输出电压 (uint16, scale 0.1, V)
+    #   30005 (0x0004): 输出功率 (uint16, scale 0.1, kW)
+    #   30006 (0x0005): 电机转速 (uint16, RPM)
+    #   30007 (0x0006): 直流母线电压 (uint16, scale 0.1, V)
+    #   30008 (0x0007): 散热器温度 (int16, scale 0.1, °C)
+    #   30009 (0x0008): 运行时间 (uint32, hours)
+    #   30011 (0x000A): 故障代码 (uint16)
+    #   30012 (0x000B): 电机温度 (int16, scale 0.1, °C)
+    #
+    # 控制字位定义 (Control Word Bit Definition):
+    #   Bit 0: 启动/停止 (Start/Stop)
+    #   Bit 1: 正转/反转 (Forward/Reverse)
+    #   Bit 2: 紧急停止 (Emergency Stop)
+    #   Bit 3: 故障复位 (Fault Reset)
+    # =========================================================================
+      # --- VFD 输出参数 (Output Parameters via Input Registers) ---
+      - name: "rtu_slave4_vfd_output_freq"
+        unique_id: "modbus_rtu_s4_freq_out"
+        slave: 4
+        address: 1            # 30002 - 实际输出频率
+        input_type: input
+        data_type: uint16
+        scale: 0.01
+        offset: 0
+        precision: 1
+        unit_of_measurement: "Hz"
+        device_class: frequency
+        state_class: measurement
+        scan_interval: 10
+
+      - name: "rtu_slave4_vfd_output_current"
+        unique_id: "modbus_rtu_s4_current_out"
+        slave: 4
+        address: 2            # 30003 - 输出电流
+        input_type: input
+        data_type: uint16
+        scale: 0.01
+        offset: 0
+        precision: 2
+        unit_of_measurement: "A"
+        device_class: current
+        state_class: measurement
+        scan_interval: 10
+
+      - name: "rtu_slave4_vfd_output_voltage"
+        unique_id: "modbus_rtu_s4_voltage_out"
+        slave: 4
+        address: 3            # 30004 - 输出电压
+        input_type: input
+        data_type: uint16
+        scale: 0.1
+        offset: 0
+        precision: 1
+        unit_of_measurement: "V"
+        device_class: voltage
+        state_class: measurement
+        scan_interval: 10
+
+      - name: "rtu_slave4_vfd_output_power"
+        unique_id: "modbus_rtu_s4_power_out"
+        slave: 4
+        address: 4            # 30005 - 输出功率
+        input_type: input
+        data_type: uint16
+        scale: 0.1
+        offset: 0
+        precision: 1
+        unit_of_measurement: "kW"
+        device_class: power
+        state_class: measurement
+        scan_interval: 10
+
+      - name: "rtu_slave4_vfd_motor_speed"
+        unique_id: "modbus_rtu_s4_motor_rpm"
+        slave: 4
+        address: 5            # 30006 - 电机转速
+        input_type: input
+        data_type: uint16
+        scale: 1
+        offset: 0
+        precision: 0
+        unit_of_measurement: "RPM"
+        scan_interval: 10
+
+      - name: "rtu_slave4_vfd_dc_bus_voltage"
+        unique_id: "modbus_rtu_s4_dc_bus"
+        slave: 4
+        address: 6            # 30007 - 直流母线电压
+        input_type: input
+        data_type: uint16
+        scale: 0.1
+        offset: 0
+        precision: 1
+        unit_of_measurement: "V"
+        device_class: voltage
+        state_class: measurement
+        scan_interval: 30
+
+      - name: "rtu_slave4_vfd_heatsink_temp"
+        unique_id: "modbus_rtu_s4_heatsink_temp"
+        slave: 4
+        address: 7            # 30008 - 散热器温度
+        input_type: input
+        data_type: int16
+        scale: 0.1
+        offset: 0
+        precision: 1
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        scan_interval: 30
+
+      - name: "rtu_slave4_vfd_run_hours"
+        unique_id: "modbus_rtu_s4_run_hours"
+        slave: 4
+        address: 8            # 30009-30010 - 累计运行时间 (uint32)
+        input_type: input
+        data_type: uint32
+        swap: word
+        scale: 1
+        offset: 0
+        precision: 0
+        unit_of_measurement: "h"
+        device_class: duration
+        state_class: total_increasing
+        scan_interval: 3600
+
+      - name: "rtu_slave4_vfd_fault_code"
+        unique_id: "modbus_rtu_s4_fault"
+        slave: 4
+        address: 10           # 30011 - 故障代码 (0=正常)
+        input_type: input
+        data_type: uint16
+        scale: 1
+        offset: 0
+        precision: 0
+        scan_interval: 10
+
+      - name: "rtu_slave4_vfd_motor_temp"
+        unique_id: "modbus_rtu_s4_motor_temp"
+        slave: 4
+        address: 11           # 30012 - 电机温度 (需 PTC/PT100 输入)
+        input_type: input
+        data_type: int16
+        scale: 0.1
+        offset: 0
+        precision: 1
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        scan_interval: 30
+
+      - name: "rtu_slave4_vfd_status_word"
+        unique_id: "modbus_rtu_s4_status"
+        slave: 4
+        address: 0            # 30001 - 状态字
+        input_type: input
+        data_type: uint16
+        scale: 1
+        offset: 0
+        precision: 0
+        scan_interval: 10
+
+    # --- VFD 控制 (Control via Holding Registers and Switches) ---
+    switches:
+      # VFD 启停控制 (通过 Holding Register 写入控制字)
+      - name: "rtu_slave4_vfd_run"
+        unique_id: "modbus_rtu_s4_vfd_run_sw"
+        slave: 4
+        address: 0            # 40001 - 控制字 Bit 0 (启动/停止)
+        write_type: coil
+        command_on: 1
+        command_off: 0
+        verify_state: true
+        scan_interval: 5
+
+    numbers:
+      # VFD 频率设定 (Frequency Setpoint)
+      - name: "rtu_slave4_vfd_freq_setpoint"
+        unique_id: "modbus_rtu_s4_freq_sp"
+        slave: 4
+        address: 1            # 40002 - 频率设定值 (0.01 Hz)
+        min_value: 0
+        max_value: 5000       # 50.00 Hz (scale 0.01)
+        step: 10              # 0.10 Hz 步进
+        write_type: holding
+        data_type: uint16
+        scan_interval: 10
+
+    # =========================================================================
+    # Slave 5: PLC 数字 I/O 模块 (Digital I/O Module)
+    # =========================================================================
+    # 设备型号: Advantech ADAM-4050 / Siemens ET200 类
+    # 通信地址: Slave 5
+    # I/O 配置:
+    #   8 路数字输入 (DI) - Discrete Input 10001-10008
+    #   8 路数字输出 (DO) - Coil 00001-00008
+    #   4 路模拟输入 (AI) - Input Register 30001-30004
+    #   2 路模拟输出 (AO) - Holding Register 40001-40002
+    #
+    # DI 通道分配:
+    #   DI0: 水泵运行反馈 (Pump Run Feedback)
+    #   DI1: 水泵故障信号 (Pump Fault)
+    #   DI2: 水箱高液位 (Tank High Level)
+    #   DI3: 水箱低液位 (Tank Low Level)
+    #   DI4: 门禁状态-机房门 (Door Status - Equipment Room)
+    #   DI5: 门禁状态-配电间 (Door Status - Electrical Room)
+    #   DI6: 漏水检测 (Water Leak Detection)
+    #   DI7: 烟雾检测 (Smoke Detection)
+    #
+    # DO 通道分配:
+    #   DO0: 水泵启停 (Pump Start/Stop)
+    #   DO1: 电磁阀-补水 (Solenoid Valve - Make-up Water)
+    #   DO2: 排风扇 (Exhaust Fan)
+    #   DO3: 警报灯 (Warning Light)
+    #   DO4-DO7: 备用 (Reserved)
+    #
+    # AI 通道分配 (4-20mA / 0-10V):
+    #   AI0: 水箱液位 (Tank Level, 0-100%)
+    #   AI1: 管道压力 (Pipe Pressure, 0-1.6 MPa)
+    #   AI2: 水温 (Water Temperature, 0-100 °C)
+    #   AI3: 备用
+    # =========================================================================
+
+    # --- PLC 数字输入 (Digital Inputs) ---
+    binary_sensors:
+      - name: "rtu_slave5_pump_running"
+        unique_id: "modbus_rtu_s5_di0_pump_run"
+        slave: 5
+        address: 0            # Discrete Input 10001 - 水泵运行反馈
+        input_type: discrete_input
+        device_class: running
+        scan_interval: 5
+
+      - name: "rtu_slave5_pump_fault"
+        unique_id: "modbus_rtu_s5_di1_pump_fault"
+        slave: 5
+        address: 1            # Discrete Input 10002 - 水泵故障
+        input_type: discrete_input
+        device_class: problem
+        scan_interval: 5
+
+      - name: "rtu_slave5_tank_high_level"
+        unique_id: "modbus_rtu_s5_di2_tank_hi"
+        slave: 5
+        address: 2            # Discrete Input 10003 - 水箱高液位
+        input_type: discrete_input
+        device_class: problem
+        scan_interval: 10
+
+      - name: "rtu_slave5_tank_low_level"
+        unique_id: "modbus_rtu_s5_di3_tank_lo"
+        slave: 5
+        address: 3            # Discrete Input 10004 - 水箱低液位
+        input_type: discrete_input
+        device_class: problem
+        scan_interval: 10
+
+      - name: "rtu_slave5_door_equipment_room"
+        unique_id: "modbus_rtu_s5_di4_door_equip"
+        slave: 5
+        address: 4            # Discrete Input 10005 - 机房门状态
+        input_type: discrete_input
+        device_class: door
+        scan_interval: 5
+
+      - name: "rtu_slave5_door_electrical_room"
+        unique_id: "modbus_rtu_s5_di5_door_elec"
+        slave: 5
+        address: 5            # Discrete Input 10006 - 配电间门状态
+        input_type: discrete_input
+        device_class: door
+        scan_interval: 5
+
+      - name: "rtu_slave5_water_leak"
+        unique_id: "modbus_rtu_s5_di6_leak"
+        slave: 5
+        address: 6            # Discrete Input 10007 - 漏水检测
+        input_type: discrete_input
+        device_class: moisture
+        scan_interval: 5
+
+      - name: "rtu_slave5_smoke_detector"
+        unique_id: "modbus_rtu_s5_di7_smoke"
+        slave: 5
+        address: 7            # Discrete Input 10008 - 烟雾检测
+        input_type: discrete_input
+        device_class: smoke
+        scan_interval: 5
+
+    # --- PLC 数字输出 (Digital Outputs via Coils) ---
+    switches:
+      - name: "rtu_slave5_pump_control"
+        unique_id: "modbus_rtu_s5_do0_pump"
+        slave: 5
+        address: 0            # Coil 00001 - 水泵启停
+        write_type: coil
+        command_on: 1
+        command_off: 0
+        verify_state: true
+        scan_interval: 5
+
+      - name: "rtu_slave5_makeup_water_valve"
+        unique_id: "modbus_rtu_s5_do1_valve"
+        slave: 5
+        address: 1            # Coil 00002 - 补水电磁阀
+        write_type: coil
+        command_on: 1
+        command_off: 0
+        verify_state: true
+        scan_interval: 5
+
+      - name: "rtu_slave5_exhaust_fan"
+        unique_id: "modbus_rtu_s5_do2_exhaust"
+        slave: 5
+        address: 2            # Coil 00003 - 排风扇
+        write_type: coil
+        command_on: 1
+        command_off: 0
+        verify_state: true
+        scan_interval: 5
+
+      - name: "rtu_slave5_warning_light"
+        unique_id: "modbus_rtu_s5_do3_warning"
+        slave: 5
+        address: 3            # Coil 00004 - 警报灯
+        write_type: coil
+        command_on: 1
+        command_off: 0
+        verify_state: true
+        scan_interval: 5
+
+    # --- PLC 模拟输入 (Analog Inputs via Input Registers) ---
+    sensors:
+      - name: "rtu_slave5_tank_level"
+        unique_id: "modbus_rtu_s5_ai0_level"
+        slave: 5
+        address: 0            # Input Register 30001 - 水箱液位
+        input_type: input
+        data_type: uint16
+        scale: 0.1            # 0-1000 -> 0-100.0%
+        offset: 0
+        precision: 1
+        unit_of_measurement: "%"
+        scan_interval: 15
+
+      - name: "rtu_slave5_pipe_pressure"
+        unique_id: "modbus_rtu_s5_ai1_pressure"
+        slave: 5
+        address: 1            # Input Register 30002 - 管道压力
+        input_type: input
+        data_type: uint16
+        scale: 0.001          # 0-1600 -> 0-1.600 MPa
+        offset: 0
+        precision: 3
+        unit_of_measurement: "MPa"
+        device_class: pressure
+        state_class: measurement
+        scan_interval: 15
+
+      - name: "rtu_slave5_water_temperature"
+        unique_id: "modbus_rtu_s5_ai2_water_temp"
+        slave: 5
+        address: 2            # Input Register 30003 - 水温
+        input_type: input
+        data_type: uint16
+        scale: 0.1            # 0-1000 -> 0-100.0 °C
+        offset: 0
+        precision: 1
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        scan_interval: 30
+
+    # --- PLC 模拟输出 (Analog Outputs via Holding Registers) ---
+    numbers:
+      - name: "rtu_slave5_valve_position"
+        unique_id: "modbus_rtu_s5_ao0_valve"
+        slave: 5
+        address: 0            # Holding Register 40001 - 调节阀开度 (0-100%)
+        min_value: 0
+        max_value: 1000       # 0-100.0% (scale 0.1)
+        step: 10              # 1.0% 步进
+        write_type: holding
+        data_type: uint16
+        scan_interval: 15
+
+      - name: "rtu_slave5_pump_speed_setpoint"
+        unique_id: "modbus_rtu_s5_ao1_pump_sp"
+        slave: 5
+        address: 1            # Holding Register 40002 - 水泵转速设定 (%)
+        min_value: 0
+        max_value: 1000       # 0-100.0%
+        step: 10
+        write_type: holding
+        data_type: uint16
+        scan_interval: 15
+
+# =============================================================================
+# 模板传感器 - RTU 设备状态转换和计算
+# =============================================================================
+template:
+  - sensor:
+      # VFD 故障代码文本映射 (ABB ACS 风格故障代码)
+      - name: "VFD Fault Description"
+        unique_id: "rtu_vfd_fault_desc"
+        state: >-
+          {% set code = states('sensor.rtu_slave4_vfd_fault_code') | int(0) %}
+          {% if code == 0 %}正常运行 (Normal)
+          {% elif code == 1 %}过电流 (Overcurrent)
+          {% elif code == 2 %}过电压 (DC Overvoltage)
+          {% elif code == 3 %}欠电压 (DC Undervoltage)
+          {% elif code == 4 %}过温 (Overtemperature)
+          {% elif code == 5 %}电机过载 (Motor Overload)
+          {% elif code == 6 %}接地故障 (Earth Fault)
+          {% elif code == 7 %}短路 (Short Circuit)
+          {% elif code == 8 %}通信超时 (Communication Timeout)
+          {% elif code == 9 %}外部故障 (External Fault)
+          {% elif code == 10 %}PTC 热敏电阻 (PTC Thermistor)
+          {% else %}未知故障 #{{ code }} (Unknown Fault)
+          {% endif %}
+
+      # VFD 实际频率 (换算后)
+      - name: "VFD Actual Frequency"
+        unique_id: "rtu_vfd_actual_freq_hz"
+        unit_of_measurement: "Hz"
+        device_class: frequency
+        state: >-
+          {{ states('sensor.rtu_slave4_vfd_output_freq') | float(0) }}
+
+      # 空气质量指数 (简易 AQI 计算基于 PM2.5)
+      - name: "Indoor Air Quality Index"
+        unique_id: "rtu_indoor_aqi"
+        state: >-
+          {% set pm25 = states('sensor.rtu_slave2_pm25') | float(0) %}
+          {% if pm25 <= 35 %}优 (Excellent)
+          {% elif pm25 <= 75 %}良 (Good)
+          {% elif pm25 <= 115 %}轻度污染 (Light)
+          {% elif pm25 <= 150 %}中度污染 (Moderate)
+          {% elif pm25 <= 250 %}重度污染 (Heavy)
+          {% else %}严重污染 (Severe)
+          {% endif %}
+
+      # 水箱液位百分比 (缩放后)
+      - name: "Water Tank Level"
+        unique_id: "rtu_tank_level_pct"
+        unit_of_measurement: "%"
+        state: >-
+          {{ states('sensor.rtu_slave5_tank_level') | float(0) | round(1) }}
+
+  - binary_sensor:
+      # VFD 运行中 (基于状态字)
+      - name: "VFD Running"
+        unique_id: "rtu_vfd_is_running"
+        device_class: running
+        state: >-
+          {{ states('sensor.rtu_slave4_vfd_output_freq') | float(0) > 0 }}
+
+      # VFD 故障 (任何非零故障代码)
+      - name: "VFD Fault Active"
+        unique_id: "rtu_vfd_has_fault"
+        device_class: problem
+        state: >-
+          {{ states('sensor.rtu_slave4_vfd_fault_code') | int(0) > 0 }}

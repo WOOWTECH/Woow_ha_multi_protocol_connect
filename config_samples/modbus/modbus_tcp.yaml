@@ -1,0 +1,1527 @@
+# =============================================================================
+# Modbus TCP - 商业建筑管理系统 (Commercial Building Management System)
+# =============================================================================
+#
+# 系统概述 (System Overview):
+#   Hub 1: HVAC 空调控制器 - Honeywell Excel Web II 风格寄存器映射
+#   Hub 2: 电力仪表 (Energy Meter) - Schneider PM5500 风格寄存器映射
+#   Hub 3: 照明控制器 (Lighting Controller) - DALI 网关 via Modbus
+#
+# 网络拓扑 (Network Topology):
+#   HA Server (192.168.1.10) --> Ethernet Switch --> 各设备
+#   所有设备使用标准 Modbus TCP 端口 502
+#
+# 注意事项 (Notes):
+#   - float32 数据使用 big-endian word order (data_type: float32, swap: word)
+#   - uint32 计数器使用 big-endian (高位在前)
+#   - 所有温度单位为摄氏度 (Celsius)
+#   - 寄存器地址基于 0 偏移 (0-based addressing)
+# =============================================================================
+
+modbus:
+  # ===========================================================================
+  # Hub 1: HVAC 空调控制器 (HVAC Controller)
+  # ===========================================================================
+  # 设备: Honeywell Excel Web II 风格 DDC 控制器
+  # IP: 192.168.1.20, Port: 502, Slave ID: 1
+  # 管理 4 个空调区域 (Zone 1-4)
+  # 支持 VAV (Variable Air Volume) 控制
+  # ===========================================================================
+  - name: "hvac_controller"
+    type: tcp
+    host: 192.168.1.20
+    port: 502
+    timeout: 5
+    delay: 0.1               # 请求间延迟100ms, 防止设备过载
+    retries: 3
+    retry_on_empty: true
+    close_comm_on_error: true
+    message_wait_milliseconds: 50
+
+    # =========================================================================
+    # 传感器 - 温度 (Temperature Sensors)
+    # =========================================================================
+    # 寄存器说明: Holding Registers 40001-40020
+    # 数据格式: float32 (2个寄存器), 实际值 = 寄存器值 * 0.1
+    # 范围: -40.0 ~ 80.0 C
+    # =========================================================================
+    sensors:
+      # --- Zone 1: 大堂 (Lobby) ---
+      - name: "hvac_zone1_temperature"
+        unique_id: "modbus_hvac_zone1_temp"
+        slave: 1
+        address: 0            # 40001 (Holding Register)
+        input_type: holding
+        data_type: float32
+        swap: word             # big-endian word order
+        scale: 0.1
+        offset: 0
+        precision: 1
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        scan_interval: 30
+
+      - name: "hvac_zone1_humidity"
+        unique_id: "modbus_hvac_zone1_hum"
+        slave: 1
+        address: 2            # 40003
+        input_type: holding
+        data_type: uint16
+        scale: 0.1
+        offset: 0
+        precision: 1
+        unit_of_measurement: "%"
+        device_class: humidity
+        state_class: measurement
+        scan_interval: 30
+
+      - name: "hvac_zone1_co2"
+        unique_id: "modbus_hvac_zone1_co2"
+        slave: 1
+        address: 3            # 40004
+        input_type: holding
+        data_type: uint16
+        scale: 1
+        offset: 0
+        precision: 0
+        unit_of_measurement: "ppm"
+        device_class: carbon_dioxide
+        state_class: measurement
+        scan_interval: 60
+
+      # --- Zone 2: 办公区 A (Office Area A) ---
+      - name: "hvac_zone2_temperature"
+        unique_id: "modbus_hvac_zone2_temp"
+        slave: 1
+        address: 10           # 40011
+        input_type: holding
+        data_type: float32
+        swap: word
+        scale: 0.1
+        offset: 0
+        precision: 1
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        scan_interval: 30
+
+      - name: "hvac_zone2_humidity"
+        unique_id: "modbus_hvac_zone2_hum"
+        slave: 1
+        address: 12           # 40013
+        input_type: holding
+        data_type: uint16
+        scale: 0.1
+        offset: 0
+        precision: 1
+        unit_of_measurement: "%"
+        device_class: humidity
+        state_class: measurement
+        scan_interval: 30
+
+      - name: "hvac_zone2_co2"
+        unique_id: "modbus_hvac_zone2_co2"
+        slave: 1
+        address: 13           # 40014
+        input_type: holding
+        data_type: uint16
+        scale: 1
+        offset: 0
+        precision: 0
+        unit_of_measurement: "ppm"
+        device_class: carbon_dioxide
+        state_class: measurement
+        scan_interval: 60
+
+      # --- Zone 3: 办公区 B (Office Area B) ---
+      - name: "hvac_zone3_temperature"
+        unique_id: "modbus_hvac_zone3_temp"
+        slave: 1
+        address: 20           # 40021
+        input_type: holding
+        data_type: float32
+        swap: word
+        scale: 0.1
+        offset: 0
+        precision: 1
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        scan_interval: 30
+
+      - name: "hvac_zone3_humidity"
+        unique_id: "modbus_hvac_zone3_hum"
+        slave: 1
+        address: 22           # 40023
+        input_type: holding
+        data_type: uint16
+        scale: 0.1
+        offset: 0
+        precision: 1
+        unit_of_measurement: "%"
+        device_class: humidity
+        state_class: measurement
+        scan_interval: 30
+
+      # --- Zone 4: 会议室 (Conference Room) ---
+      - name: "hvac_zone4_temperature"
+        unique_id: "modbus_hvac_zone4_temp"
+        slave: 1
+        address: 30           # 40031
+        input_type: holding
+        data_type: float32
+        swap: word
+        scale: 0.1
+        offset: 0
+        precision: 1
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        scan_interval: 30
+
+      - name: "hvac_zone4_humidity"
+        unique_id: "modbus_hvac_zone4_hum"
+        slave: 1
+        address: 32           # 40033
+        input_type: holding
+        data_type: uint16
+        scale: 0.1
+        offset: 0
+        precision: 1
+        unit_of_measurement: "%"
+        device_class: humidity
+        state_class: measurement
+        scan_interval: 30
+
+      # -----------------------------------------------------------------------
+      # 送风/回风温度 (Supply/Return Air Temperature)
+      # -----------------------------------------------------------------------
+      - name: "hvac_supply_air_temp"
+        unique_id: "modbus_hvac_supply_temp"
+        slave: 1
+        address: 100          # 40101
+        input_type: holding
+        data_type: float32
+        swap: word
+        scale: 0.1
+        offset: 0
+        precision: 1
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        scan_interval: 15
+
+      - name: "hvac_return_air_temp"
+        unique_id: "modbus_hvac_return_temp"
+        slave: 1
+        address: 102          # 40103
+        input_type: holding
+        data_type: float32
+        swap: word
+        scale: 0.1
+        offset: 0
+        precision: 1
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        scan_interval: 15
+
+      - name: "hvac_outdoor_temp"
+        unique_id: "modbus_hvac_outdoor_temp"
+        slave: 1
+        address: 104          # 40105
+        input_type: holding
+        data_type: float32
+        swap: word
+        scale: 0.1
+        offset: 0
+        precision: 1
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        scan_interval: 60
+
+      # -----------------------------------------------------------------------
+      # 风阀开度 / 风速 (Damper Position / Fan Speed Feedback)
+      # 寄存器 40201-40220
+      # -----------------------------------------------------------------------
+      - name: "hvac_zone1_damper_position"
+        unique_id: "modbus_hvac_zone1_damper"
+        slave: 1
+        address: 200          # 40201
+        input_type: holding
+        data_type: uint16
+        scale: 1
+        offset: 0
+        precision: 0
+        unit_of_measurement: "%"
+        scan_interval: 30
+
+      - name: "hvac_zone2_damper_position"
+        unique_id: "modbus_hvac_zone2_damper"
+        slave: 1
+        address: 201          # 40202
+        input_type: holding
+        data_type: uint16
+        scale: 1
+        offset: 0
+        precision: 0
+        unit_of_measurement: "%"
+        scan_interval: 30
+
+      - name: "hvac_zone3_damper_position"
+        unique_id: "modbus_hvac_zone3_damper"
+        slave: 1
+        address: 202          # 40203
+        input_type: holding
+        data_type: uint16
+        scale: 1
+        offset: 0
+        precision: 0
+        unit_of_measurement: "%"
+        scan_interval: 30
+
+      - name: "hvac_zone4_damper_position"
+        unique_id: "modbus_hvac_zone4_damper"
+        slave: 1
+        address: 203          # 40204
+        input_type: holding
+        data_type: uint16
+        scale: 1
+        offset: 0
+        precision: 0
+        unit_of_measurement: "%"
+        scan_interval: 30
+
+      - name: "hvac_supply_fan_speed"
+        unique_id: "modbus_hvac_supply_fan_rpm"
+        slave: 1
+        address: 210          # 40211
+        input_type: holding
+        data_type: uint16
+        scale: 1
+        offset: 0
+        precision: 0
+        unit_of_measurement: "RPM"
+        scan_interval: 15
+
+      - name: "hvac_return_fan_speed"
+        unique_id: "modbus_hvac_return_fan_rpm"
+        slave: 1
+        address: 211          # 40212
+        input_type: holding
+        data_type: uint16
+        scale: 1
+        offset: 0
+        precision: 0
+        unit_of_measurement: "RPM"
+        scan_interval: 15
+
+      # -----------------------------------------------------------------------
+      # HVAC 运行模式 (Operating Mode Readback)
+      # 0=Off, 1=Heat, 2=Cool, 3=Auto, 4=Fan Only, 5=Dehumidify
+      # -----------------------------------------------------------------------
+      - name: "hvac_zone1_mode"
+        unique_id: "modbus_hvac_zone1_mode"
+        slave: 1
+        address: 300          # 40301
+        input_type: holding
+        data_type: uint16
+        scan_interval: 30
+
+      - name: "hvac_zone2_mode"
+        unique_id: "modbus_hvac_zone2_mode"
+        slave: 1
+        address: 301          # 40302
+        input_type: holding
+        data_type: uint16
+        scan_interval: 30
+
+      - name: "hvac_zone3_mode"
+        unique_id: "modbus_hvac_zone3_mode"
+        slave: 1
+        address: 302          # 40303
+        input_type: holding
+        data_type: uint16
+        scan_interval: 30
+
+      - name: "hvac_zone4_mode"
+        unique_id: "modbus_hvac_zone4_mode"
+        slave: 1
+        address: 303          # 40304
+        input_type: holding
+        data_type: uint16
+        scan_interval: 30
+
+      # -----------------------------------------------------------------------
+      # 设定点读回 (Setpoint Readback)
+      # -----------------------------------------------------------------------
+      - name: "hvac_zone1_setpoint_readback"
+        unique_id: "modbus_hvac_zone1_sp_rb"
+        slave: 1
+        address: 400          # 40401
+        input_type: holding
+        data_type: float32
+        swap: word
+        scale: 0.1
+        offset: 0
+        precision: 1
+        unit_of_measurement: "°C"
+        device_class: temperature
+        scan_interval: 30
+
+      - name: "hvac_zone2_setpoint_readback"
+        unique_id: "modbus_hvac_zone2_sp_rb"
+        slave: 1
+        address: 402          # 40403
+        input_type: holding
+        data_type: float32
+        swap: word
+        scale: 0.1
+        offset: 0
+        precision: 1
+        unit_of_measurement: "°C"
+        device_class: temperature
+        scan_interval: 30
+
+      - name: "hvac_zone3_setpoint_readback"
+        unique_id: "modbus_hvac_zone3_sp_rb"
+        slave: 1
+        address: 404          # 40405
+        input_type: holding
+        data_type: float32
+        swap: word
+        scale: 0.1
+        offset: 0
+        precision: 1
+        unit_of_measurement: "°C"
+        device_class: temperature
+        scan_interval: 30
+
+      - name: "hvac_zone4_setpoint_readback"
+        unique_id: "modbus_hvac_zone4_sp_rb"
+        slave: 1
+        address: 406          # 40407
+        input_type: holding
+        data_type: float32
+        swap: word
+        scale: 0.1
+        offset: 0
+        precision: 1
+        unit_of_measurement: "°C"
+        device_class: temperature
+        scan_interval: 30
+
+      # -----------------------------------------------------------------------
+      # 滤网压差报警 (Filter Differential Pressure)
+      # -----------------------------------------------------------------------
+      - name: "hvac_filter_dp"
+        unique_id: "modbus_hvac_filter_dp"
+        slave: 1
+        address: 500          # 40501
+        input_type: holding
+        data_type: uint16
+        scale: 1
+        offset: 0
+        precision: 0
+        unit_of_measurement: "Pa"
+        device_class: pressure
+        state_class: measurement
+        scan_interval: 60
+
+    # =========================================================================
+    # 开关 - 风机和设备使能 (Switches - Fan and Equipment Enable)
+    # =========================================================================
+    # Coil 寄存器: 00001-00020
+    # =========================================================================
+    switches:
+      # --- 送风机/回风机启停 (Supply/Return Fan Start/Stop) ---
+      - name: "hvac_supply_fan_enable"
+        unique_id: "modbus_hvac_supply_fan_sw"
+        slave: 1
+        address: 0            # Coil 00001
+        write_type: coil
+        command_on: 1
+        command_off: 0
+        verify_state: true
+        scan_interval: 10
+
+      - name: "hvac_return_fan_enable"
+        unique_id: "modbus_hvac_return_fan_sw"
+        slave: 1
+        address: 1            # Coil 00002
+        write_type: coil
+        command_on: 1
+        command_off: 0
+        verify_state: true
+        scan_interval: 10
+
+      # --- 冷水阀启停 (Chilled Water Valve Enable) ---
+      - name: "hvac_chw_valve_enable"
+        unique_id: "modbus_hvac_chw_valve_sw"
+        slave: 1
+        address: 2            # Coil 00003
+        write_type: coil
+        command_on: 1
+        command_off: 0
+        verify_state: true
+        scan_interval: 10
+
+      # --- 热水阀启停 (Hot Water Valve Enable) ---
+      - name: "hvac_hw_valve_enable"
+        unique_id: "modbus_hvac_hw_valve_sw"
+        slave: 1
+        address: 3            # Coil 00004
+        write_type: coil
+        command_on: 1
+        command_off: 0
+        verify_state: true
+        scan_interval: 10
+
+      # --- 各区域使能 (Zone Enable) ---
+      - name: "hvac_zone1_enable"
+        unique_id: "modbus_hvac_zone1_enable"
+        slave: 1
+        address: 10           # Coil 00011
+        write_type: coil
+        command_on: 1
+        command_off: 0
+        verify_state: true
+        scan_interval: 10
+
+      - name: "hvac_zone2_enable"
+        unique_id: "modbus_hvac_zone2_enable"
+        slave: 1
+        address: 11           # Coil 00012
+        write_type: coil
+        command_on: 1
+        command_off: 0
+        verify_state: true
+        scan_interval: 10
+
+      - name: "hvac_zone3_enable"
+        unique_id: "modbus_hvac_zone3_enable"
+        slave: 1
+        address: 12           # Coil 00013
+        write_type: coil
+        command_on: 1
+        command_off: 0
+        verify_state: true
+        scan_interval: 10
+
+      - name: "hvac_zone4_enable"
+        unique_id: "modbus_hvac_zone4_enable"
+        slave: 1
+        address: 13           # Coil 00014
+        write_type: coil
+        command_on: 1
+        command_off: 0
+        verify_state: true
+        scan_interval: 10
+
+    # =========================================================================
+    # 二进制传感器 - 报警和状态 (Binary Sensors - Alarms and Status)
+    # =========================================================================
+    # Discrete Input 寄存器: 10001-10020
+    # =========================================================================
+    binary_sensors:
+      - name: "hvac_supply_fan_status"
+        unique_id: "modbus_hvac_supply_fan_st"
+        slave: 1
+        address: 0            # Discrete Input 10001
+        input_type: discrete_input
+        scan_interval: 10
+
+      - name: "hvac_return_fan_status"
+        unique_id: "modbus_hvac_return_fan_st"
+        slave: 1
+        address: 1            # Discrete Input 10002
+        input_type: discrete_input
+        scan_interval: 10
+
+      - name: "hvac_compressor_status"
+        unique_id: "modbus_hvac_compressor_st"
+        slave: 1
+        address: 2            # Discrete Input 10003
+        input_type: discrete_input
+        scan_interval: 10
+
+      - name: "hvac_freeze_alarm"
+        unique_id: "modbus_hvac_freeze_alm"
+        slave: 1
+        address: 10           # Discrete Input 10011
+        input_type: discrete_input
+        device_class: problem
+        scan_interval: 10
+
+      - name: "hvac_high_temp_alarm"
+        unique_id: "modbus_hvac_high_temp_alm"
+        slave: 1
+        address: 11           # Discrete Input 10012
+        input_type: discrete_input
+        device_class: problem
+        scan_interval: 10
+
+      - name: "hvac_filter_alarm"
+        unique_id: "modbus_hvac_filter_alm"
+        slave: 1
+        address: 12           # Discrete Input 10013 - 滤网堵塞报警
+        input_type: discrete_input
+        device_class: problem
+        scan_interval: 60
+
+      - name: "hvac_fire_alarm_input"
+        unique_id: "modbus_hvac_fire_alm"
+        slave: 1
+        address: 15           # Discrete Input 10016 - 消防联动信号
+        input_type: discrete_input
+        device_class: safety
+        scan_interval: 5
+
+    # =========================================================================
+    # 恒温器 / 气候实体 (Climate Entities)
+    # =========================================================================
+    # 使用 Modbus climate 实体实现温度设定和模式控制
+    # 模式映射 (Mode Mapping):
+    #   0 = Off (关闭)
+    #   1 = Heat (制热)
+    #   2 = Cool (制冷)
+    #   3 = Auto (自动)
+    # =========================================================================
+    climates:
+      - name: "hvac_zone1_thermostat"
+        unique_id: "modbus_hvac_zone1_climate"
+        slave: 1
+        address: 400                 # 设定温度写入寄存器 40401
+        input_type: holding
+        data_type: float32
+        swap: word
+        scale: 0.1
+        offset: 0
+        precision: 1
+        target_temp_register: 400    # 目标温度设定寄存器
+        current_temp_register: 0     # 当前温度读取寄存器
+        current_temp_register_type: holding
+        data_count: 2
+        max_temp: 30
+        min_temp: 16
+        temp_step: 0.5
+        temperature_unit: C
+        hvac_mode_register:
+          address: 300               # 模式控制寄存器 40301
+          values:
+            state_off: 0
+            state_heat: 1
+            state_cool: 2
+            state_auto: 3
+        scan_interval: 30
+
+      - name: "hvac_zone2_thermostat"
+        unique_id: "modbus_hvac_zone2_climate"
+        slave: 1
+        address: 402                 # 设定温度写入寄存器 40403
+        input_type: holding
+        data_type: float32
+        swap: word
+        scale: 0.1
+        offset: 0
+        precision: 1
+        target_temp_register: 402
+        current_temp_register: 10
+        current_temp_register_type: holding
+        data_count: 2
+        max_temp: 30
+        min_temp: 16
+        temp_step: 0.5
+        temperature_unit: C
+        hvac_mode_register:
+          address: 301
+          values:
+            state_off: 0
+            state_heat: 1
+            state_cool: 2
+            state_auto: 3
+        scan_interval: 30
+
+      - name: "hvac_zone3_thermostat"
+        unique_id: "modbus_hvac_zone3_climate"
+        slave: 1
+        address: 404
+        input_type: holding
+        data_type: float32
+        swap: word
+        scale: 0.1
+        offset: 0
+        precision: 1
+        target_temp_register: 404
+        current_temp_register: 20
+        current_temp_register_type: holding
+        data_count: 2
+        max_temp: 30
+        min_temp: 16
+        temp_step: 0.5
+        temperature_unit: C
+        hvac_mode_register:
+          address: 302
+          values:
+            state_off: 0
+            state_heat: 1
+            state_cool: 2
+            state_auto: 3
+        scan_interval: 30
+
+      - name: "hvac_zone4_thermostat"
+        unique_id: "modbus_hvac_zone4_climate"
+        slave: 1
+        address: 406
+        input_type: holding
+        data_type: float32
+        swap: word
+        scale: 0.1
+        offset: 0
+        precision: 1
+        target_temp_register: 406
+        current_temp_register: 30
+        current_temp_register_type: holding
+        data_count: 2
+        max_temp: 30
+        min_temp: 16
+        temp_step: 0.5
+        temperature_unit: C
+        hvac_mode_register:
+          address: 303
+          values:
+            state_off: 0
+            state_heat: 1
+            state_cool: 2
+            state_auto: 3
+        scan_interval: 30
+
+  # ===========================================================================
+  # Hub 2: 电力仪表 (Energy Meter)
+  # ===========================================================================
+  # 设备: Schneider Electric PM5500 风格三相电力仪表
+  # IP: 192.168.1.21, Port: 502, Slave ID: 1
+  # 寄存器映射参照 Schneider PM5500 Modbus Register Map
+  # 所有电气参数使用 float32 (IEEE 754)
+  # ===========================================================================
+  - name: "energy_meter"
+    type: tcp
+    host: 192.168.1.21
+    port: 502
+    timeout: 5
+    delay: 0.1
+    retries: 3
+    retry_on_empty: true
+    close_comm_on_error: true
+    message_wait_milliseconds: 50
+
+    sensors:
+      # -----------------------------------------------------------------------
+      # 三相电压 (3-Phase Voltage) - Input Registers 30001+
+      # PM5500 风格: 电压从寄存器 3000 开始
+      # -----------------------------------------------------------------------
+      - name: "energy_voltage_l1"
+        unique_id: "modbus_energy_voltage_l1"
+        slave: 1
+        address: 3000         # Input Register 33001 - V_L1-N
+        input_type: input
+        data_type: float32
+        swap: word
+        precision: 1
+        unit_of_measurement: "V"
+        device_class: voltage
+        state_class: measurement
+        scan_interval: 10
+
+      - name: "energy_voltage_l2"
+        unique_id: "modbus_energy_voltage_l2"
+        slave: 1
+        address: 3002         # Input Register 33003 - V_L2-N
+        input_type: input
+        data_type: float32
+        swap: word
+        precision: 1
+        unit_of_measurement: "V"
+        device_class: voltage
+        state_class: measurement
+        scan_interval: 10
+
+      - name: "energy_voltage_l3"
+        unique_id: "modbus_energy_voltage_l3"
+        slave: 1
+        address: 3004         # Input Register 33005 - V_L3-N
+        input_type: input
+        data_type: float32
+        swap: word
+        precision: 1
+        unit_of_measurement: "V"
+        device_class: voltage
+        state_class: measurement
+        scan_interval: 10
+
+      # 线电压 (Line-to-Line Voltage)
+      - name: "energy_voltage_l1_l2"
+        unique_id: "modbus_energy_voltage_l1l2"
+        slave: 1
+        address: 3006         # Input Register 33007 - V_L1-L2
+        input_type: input
+        data_type: float32
+        swap: word
+        precision: 1
+        unit_of_measurement: "V"
+        device_class: voltage
+        state_class: measurement
+        scan_interval: 10
+
+      - name: "energy_voltage_l2_l3"
+        unique_id: "modbus_energy_voltage_l2l3"
+        slave: 1
+        address: 3008         # Input Register 33009 - V_L2-L3
+        input_type: input
+        data_type: float32
+        swap: word
+        precision: 1
+        unit_of_measurement: "V"
+        device_class: voltage
+        state_class: measurement
+        scan_interval: 10
+
+      - name: "energy_voltage_l3_l1"
+        unique_id: "modbus_energy_voltage_l3l1"
+        slave: 1
+        address: 3010         # Input Register 33011 - V_L3-L1
+        input_type: input
+        data_type: float32
+        swap: word
+        precision: 1
+        unit_of_measurement: "V"
+        device_class: voltage
+        state_class: measurement
+        scan_interval: 10
+
+      # -----------------------------------------------------------------------
+      # 三相电流 (3-Phase Current)
+      # -----------------------------------------------------------------------
+      - name: "energy_current_l1"
+        unique_id: "modbus_energy_current_l1"
+        slave: 1
+        address: 3012         # Input Register 33013 - I_L1
+        input_type: input
+        data_type: float32
+        swap: word
+        precision: 2
+        unit_of_measurement: "A"
+        device_class: current
+        state_class: measurement
+        scan_interval: 10
+
+      - name: "energy_current_l2"
+        unique_id: "modbus_energy_current_l2"
+        slave: 1
+        address: 3014         # Input Register 33015 - I_L2
+        input_type: input
+        data_type: float32
+        swap: word
+        precision: 2
+        unit_of_measurement: "A"
+        device_class: current
+        state_class: measurement
+        scan_interval: 10
+
+      - name: "energy_current_l3"
+        unique_id: "modbus_energy_current_l3"
+        slave: 1
+        address: 3016         # Input Register 33017 - I_L3
+        input_type: input
+        data_type: float32
+        swap: word
+        precision: 2
+        unit_of_measurement: "A"
+        device_class: current
+        state_class: measurement
+        scan_interval: 10
+
+      - name: "energy_current_neutral"
+        unique_id: "modbus_energy_current_n"
+        slave: 1
+        address: 3018         # Input Register 33019 - I_N (中性线电流)
+        input_type: input
+        data_type: float32
+        swap: word
+        precision: 2
+        unit_of_measurement: "A"
+        device_class: current
+        state_class: measurement
+        scan_interval: 10
+
+      # -----------------------------------------------------------------------
+      # 功率 (Power)
+      # -----------------------------------------------------------------------
+      - name: "energy_active_power_total"
+        unique_id: "modbus_energy_active_pwr"
+        slave: 1
+        address: 3020         # Input Register 33021 - 总有功功率 (kW)
+        input_type: input
+        data_type: float32
+        swap: word
+        precision: 2
+        unit_of_measurement: "kW"
+        device_class: power
+        state_class: measurement
+        scan_interval: 10
+
+      - name: "energy_active_power_l1"
+        unique_id: "modbus_energy_active_pwr_l1"
+        slave: 1
+        address: 3022         # Input Register 33023 - L1有功功率
+        input_type: input
+        data_type: float32
+        swap: word
+        precision: 2
+        unit_of_measurement: "kW"
+        device_class: power
+        state_class: measurement
+        scan_interval: 10
+
+      - name: "energy_active_power_l2"
+        unique_id: "modbus_energy_active_pwr_l2"
+        slave: 1
+        address: 3024         # Input Register 33025 - L2有功功率
+        input_type: input
+        data_type: float32
+        swap: word
+        precision: 2
+        unit_of_measurement: "kW"
+        device_class: power
+        state_class: measurement
+        scan_interval: 10
+
+      - name: "energy_active_power_l3"
+        unique_id: "modbus_energy_active_pwr_l3"
+        slave: 1
+        address: 3026         # Input Register 33027 - L3有功功率
+        input_type: input
+        data_type: float32
+        swap: word
+        precision: 2
+        unit_of_measurement: "kW"
+        device_class: power
+        state_class: measurement
+        scan_interval: 10
+
+      - name: "energy_reactive_power_total"
+        unique_id: "modbus_energy_reactive_pwr"
+        slave: 1
+        address: 3028         # Input Register 33029 - 总无功功率 (kVAR)
+        input_type: input
+        data_type: float32
+        swap: word
+        precision: 2
+        unit_of_measurement: "kVAR"
+        state_class: measurement
+        scan_interval: 10
+
+      - name: "energy_apparent_power_total"
+        unique_id: "modbus_energy_apparent_pwr"
+        slave: 1
+        address: 3030         # Input Register 33031 - 总视在功率 (kVA)
+        input_type: input
+        data_type: float32
+        swap: word
+        precision: 2
+        unit_of_measurement: "kVA"
+        device_class: apparent_power
+        state_class: measurement
+        scan_interval: 10
+
+      # -----------------------------------------------------------------------
+      # 功率因数 (Power Factor)
+      # -----------------------------------------------------------------------
+      - name: "energy_power_factor_total"
+        unique_id: "modbus_energy_pf_total"
+        slave: 1
+        address: 3032         # Input Register 33033 - 总功率因数
+        input_type: input
+        data_type: float32
+        swap: word
+        precision: 3
+        unit_of_measurement: ""
+        device_class: power_factor
+        state_class: measurement
+        scan_interval: 10
+
+      - name: "energy_power_factor_l1"
+        unique_id: "modbus_energy_pf_l1"
+        slave: 1
+        address: 3034         # Input Register 33035
+        input_type: input
+        data_type: float32
+        swap: word
+        precision: 3
+        unit_of_measurement: ""
+        device_class: power_factor
+        state_class: measurement
+        scan_interval: 30
+
+      - name: "energy_power_factor_l2"
+        unique_id: "modbus_energy_pf_l2"
+        slave: 1
+        address: 3036         # Input Register 33037
+        input_type: input
+        data_type: float32
+        swap: word
+        precision: 3
+        unit_of_measurement: ""
+        device_class: power_factor
+        state_class: measurement
+        scan_interval: 30
+
+      - name: "energy_power_factor_l3"
+        unique_id: "modbus_energy_pf_l3"
+        slave: 1
+        address: 3038         # Input Register 33039
+        input_type: input
+        data_type: float32
+        swap: word
+        precision: 3
+        unit_of_measurement: ""
+        device_class: power_factor
+        state_class: measurement
+        scan_interval: 30
+
+      # -----------------------------------------------------------------------
+      # 频率 (Frequency)
+      # -----------------------------------------------------------------------
+      - name: "energy_frequency"
+        unique_id: "modbus_energy_frequency"
+        slave: 1
+        address: 3040         # Input Register 33041 - 电网频率
+        input_type: input
+        data_type: float32
+        swap: word
+        precision: 2
+        unit_of_measurement: "Hz"
+        device_class: frequency
+        state_class: measurement
+        scan_interval: 10
+
+      # -----------------------------------------------------------------------
+      # 累计电能 (Energy Counters) - uint32 / float32
+      # 寄存器从 45001 开始 (Holding Register 用于可复位计数器)
+      # -----------------------------------------------------------------------
+      - name: "energy_total_active_import"
+        unique_id: "modbus_energy_kwh_import"
+        slave: 1
+        address: 3100         # Input Register 33101 - 总正向有功电能 (kWh)
+        input_type: input
+        data_type: float32
+        swap: word
+        precision: 1
+        unit_of_measurement: "kWh"
+        device_class: energy
+        state_class: total_increasing
+        scan_interval: 60
+
+      - name: "energy_total_active_export"
+        unique_id: "modbus_energy_kwh_export"
+        slave: 1
+        address: 3102         # Input Register 33103 - 总反向有功电能 (kWh)
+        input_type: input
+        data_type: float32
+        swap: word
+        precision: 1
+        unit_of_measurement: "kWh"
+        device_class: energy
+        state_class: total_increasing
+        scan_interval: 60
+
+      - name: "energy_total_reactive_import"
+        unique_id: "modbus_energy_kvarh_import"
+        slave: 1
+        address: 3104         # Input Register 33105 - 总正向无功电能 (kVARh)
+        input_type: input
+        data_type: float32
+        swap: word
+        precision: 1
+        unit_of_measurement: "kVARh"
+        state_class: total_increasing
+        scan_interval: 60
+
+      - name: "energy_total_reactive_export"
+        unique_id: "modbus_energy_kvarh_export"
+        slave: 1
+        address: 3106         # Input Register 33107 - 总反向无功电能 (kVARh)
+        input_type: input
+        data_type: float32
+        swap: word
+        precision: 1
+        unit_of_measurement: "kVARh"
+        state_class: total_increasing
+        scan_interval: 60
+
+      # -----------------------------------------------------------------------
+      # 需量 (Demand) - 最大需量和当前需量
+      # -----------------------------------------------------------------------
+      - name: "energy_current_demand"
+        unique_id: "modbus_energy_demand_now"
+        slave: 1
+        address: 3200         # Input Register 33201 - 当前需量 (kW)
+        input_type: input
+        data_type: float32
+        swap: word
+        precision: 2
+        unit_of_measurement: "kW"
+        device_class: power
+        state_class: measurement
+        scan_interval: 30
+
+      - name: "energy_max_demand"
+        unique_id: "modbus_energy_demand_max"
+        slave: 1
+        address: 3202         # Input Register 33203 - 最大需量 (kW)
+        input_type: input
+        data_type: float32
+        swap: word
+        precision: 2
+        unit_of_measurement: "kW"
+        device_class: power
+        state_class: measurement
+        scan_interval: 300
+
+      # -----------------------------------------------------------------------
+      # 谐波 (THD - Total Harmonic Distortion)
+      # -----------------------------------------------------------------------
+      - name: "energy_thd_voltage_l1"
+        unique_id: "modbus_energy_thd_v_l1"
+        slave: 1
+        address: 3300         # Input Register 33301 - L1电压 THD (%)
+        input_type: input
+        data_type: float32
+        swap: word
+        precision: 1
+        unit_of_measurement: "%"
+        scan_interval: 60
+
+      - name: "energy_thd_current_l1"
+        unique_id: "modbus_energy_thd_i_l1"
+        slave: 1
+        address: 3302         # Input Register 33303 - L1电流 THD (%)
+        input_type: input
+        data_type: float32
+        swap: word
+        precision: 1
+        unit_of_measurement: "%"
+        scan_interval: 60
+
+  # ===========================================================================
+  # Hub 3: 照明控制器 (Lighting Controller)
+  # ===========================================================================
+  # 设备: DALI 转 Modbus 网关 (例如 Philips/Signify SpaceLYnk)
+  # IP: 192.168.1.22, Port: 502, Slave ID: 1
+  # 控制 8 个照明区域 (Lighting Zone 1-8)
+  # Coil 寄存器控制开关, Holding Register 控制调光级别
+  # ===========================================================================
+  - name: "lighting_controller"
+    type: tcp
+    host: 192.168.1.22
+    port: 502
+    timeout: 5
+    delay: 0.1
+    retries: 3
+    retry_on_empty: true
+    close_comm_on_error: true
+    message_wait_milliseconds: 50
+
+    # =========================================================================
+    # 照明开关 (Lighting Switches via Coils)
+    # =========================================================================
+    # Coil 寄存器 00001-00008: 各区域照明开关
+    # 1 = 开灯 (ON), 0 = 关灯 (OFF)
+    # =========================================================================
+    switches:
+      - name: "lighting_zone1_lobby"
+        unique_id: "modbus_light_z1_sw"
+        slave: 1
+        address: 0            # Coil 00001 - 大堂照明
+        write_type: coil
+        command_on: 1
+        command_off: 0
+        verify_state: true
+        scan_interval: 10
+
+      - name: "lighting_zone2_office_a"
+        unique_id: "modbus_light_z2_sw"
+        slave: 1
+        address: 1            # Coil 00002 - 办公区A照明
+        write_type: coil
+        command_on: 1
+        command_off: 0
+        verify_state: true
+        scan_interval: 10
+
+      - name: "lighting_zone3_office_b"
+        unique_id: "modbus_light_z3_sw"
+        slave: 1
+        address: 2            # Coil 00003 - 办公区B照明
+        write_type: coil
+        command_on: 1
+        command_off: 0
+        verify_state: true
+        scan_interval: 10
+
+      - name: "lighting_zone4_conference"
+        unique_id: "modbus_light_z4_sw"
+        slave: 1
+        address: 3            # Coil 00004 - 会议室照明
+        write_type: coil
+        command_on: 1
+        command_off: 0
+        verify_state: true
+        scan_interval: 10
+
+      - name: "lighting_zone5_corridor"
+        unique_id: "modbus_light_z5_sw"
+        slave: 1
+        address: 4            # Coil 00005 - 走廊照明
+        write_type: coil
+        command_on: 1
+        command_off: 0
+        verify_state: true
+        scan_interval: 10
+
+      - name: "lighting_zone6_parking"
+        unique_id: "modbus_light_z6_sw"
+        slave: 1
+        address: 5            # Coil 00006 - 停车场照明
+        write_type: coil
+        command_on: 1
+        command_off: 0
+        verify_state: true
+        scan_interval: 10
+
+      - name: "lighting_zone7_restroom"
+        unique_id: "modbus_light_z7_sw"
+        slave: 1
+        address: 6            # Coil 00007 - 卫生间照明
+        write_type: coil
+        command_on: 1
+        command_off: 0
+        verify_state: true
+        scan_interval: 10
+
+      - name: "lighting_zone8_emergency"
+        unique_id: "modbus_light_z8_sw"
+        slave: 1
+        address: 7            # Coil 00008 - 应急照明
+        write_type: coil
+        command_on: 1
+        command_off: 0
+        verify_state: true
+        scan_interval: 10
+
+    # =========================================================================
+    # 调光级别传感器 (Dimming Level Sensors)
+    # =========================================================================
+    # Holding Register 40001-40008: 各区域调光级别 (0-100%)
+    # 用于读取当前调光状态
+    # =========================================================================
+    sensors:
+      - name: "lighting_zone1_brightness"
+        unique_id: "modbus_light_z1_brightness"
+        slave: 1
+        address: 0            # Holding Register 40001
+        input_type: holding
+        data_type: uint16
+        scale: 1
+        offset: 0
+        precision: 0
+        unit_of_measurement: "%"
+        scan_interval: 10
+
+      - name: "lighting_zone2_brightness"
+        unique_id: "modbus_light_z2_brightness"
+        slave: 1
+        address: 1            # Holding Register 40002
+        input_type: holding
+        data_type: uint16
+        scale: 1
+        offset: 0
+        precision: 0
+        unit_of_measurement: "%"
+        scan_interval: 10
+
+      - name: "lighting_zone3_brightness"
+        unique_id: "modbus_light_z3_brightness"
+        slave: 1
+        address: 2            # Holding Register 40003
+        input_type: holding
+        data_type: uint16
+        scale: 1
+        offset: 0
+        precision: 0
+        unit_of_measurement: "%"
+        scan_interval: 10
+
+      - name: "lighting_zone4_brightness"
+        unique_id: "modbus_light_z4_brightness"
+        slave: 1
+        address: 3            # Holding Register 40004
+        input_type: holding
+        data_type: uint16
+        scale: 1
+        offset: 0
+        precision: 0
+        unit_of_measurement: "%"
+        scan_interval: 10
+
+      - name: "lighting_zone5_brightness"
+        unique_id: "modbus_light_z5_brightness"
+        slave: 1
+        address: 4            # Holding Register 40005
+        input_type: holding
+        data_type: uint16
+        scale: 1
+        offset: 0
+        precision: 0
+        unit_of_measurement: "%"
+        scan_interval: 10
+
+      - name: "lighting_zone6_brightness"
+        unique_id: "modbus_light_z6_brightness"
+        slave: 1
+        address: 5            # Holding Register 40006
+        input_type: holding
+        data_type: uint16
+        scale: 1
+        offset: 0
+        precision: 0
+        unit_of_measurement: "%"
+        scan_interval: 10
+
+      # -----------------------------------------------------------------------
+      # 照度传感器 (Ambient Light Sensors via Input Registers)
+      # Input Register 30001-30008: 各区域照度 (lux)
+      # -----------------------------------------------------------------------
+      - name: "lighting_zone1_ambient_lux"
+        unique_id: "modbus_light_z1_lux"
+        slave: 1
+        address: 100          # Input Register 30101
+        input_type: input
+        data_type: uint16
+        scale: 1
+        offset: 0
+        precision: 0
+        unit_of_measurement: "lx"
+        device_class: illuminance
+        state_class: measurement
+        scan_interval: 30
+
+      - name: "lighting_zone2_ambient_lux"
+        unique_id: "modbus_light_z2_lux"
+        slave: 1
+        address: 101          # Input Register 30102
+        input_type: input
+        data_type: uint16
+        scale: 1
+        offset: 0
+        precision: 0
+        unit_of_measurement: "lx"
+        device_class: illuminance
+        state_class: measurement
+        scan_interval: 30
+
+      - name: "lighting_zone4_ambient_lux"
+        unique_id: "modbus_light_z4_lux"
+        slave: 1
+        address: 103          # Input Register 30104 - 会议室照度
+        input_type: input
+        data_type: uint16
+        scale: 1
+        offset: 0
+        precision: 0
+        unit_of_measurement: "lx"
+        device_class: illuminance
+        state_class: measurement
+        scan_interval: 30
+
+    # =========================================================================
+    # 占位传感器 (Occupancy Sensors via Discrete Inputs)
+    # =========================================================================
+    # Discrete Input 10001-10008: 各区域人体存在检测
+    # 1 = 有人 (Occupied), 0 = 无人 (Unoccupied)
+    # =========================================================================
+    binary_sensors:
+      - name: "lighting_zone1_occupancy"
+        unique_id: "modbus_light_z1_occ"
+        slave: 1
+        address: 0            # Discrete Input 10001 - 大堂
+        input_type: discrete_input
+        device_class: occupancy
+        scan_interval: 10
+
+      - name: "lighting_zone2_occupancy"
+        unique_id: "modbus_light_z2_occ"
+        slave: 1
+        address: 1            # Discrete Input 10002 - 办公区A
+        input_type: discrete_input
+        device_class: occupancy
+        scan_interval: 10
+
+      - name: "lighting_zone3_occupancy"
+        unique_id: "modbus_light_z3_occ"
+        slave: 1
+        address: 2            # Discrete Input 10003 - 办公区B
+        input_type: discrete_input
+        device_class: occupancy
+        scan_interval: 10
+
+      - name: "lighting_zone4_occupancy"
+        unique_id: "modbus_light_z4_occ"
+        slave: 1
+        address: 3            # Discrete Input 10004 - 会议室
+        input_type: discrete_input
+        device_class: occupancy
+        scan_interval: 10
+
+      - name: "lighting_zone5_occupancy"
+        unique_id: "modbus_light_z5_occ"
+        slave: 1
+        address: 4            # Discrete Input 10005 - 走廊
+        input_type: discrete_input
+        device_class: occupancy
+        scan_interval: 10
+
+      - name: "lighting_zone7_occupancy"
+        unique_id: "modbus_light_z7_occ"
+        slave: 1
+        address: 6            # Discrete Input 10007 - 卫生间
+        input_type: discrete_input
+        device_class: occupancy
+        scan_interval: 10
+
+    # =========================================================================
+    # 灯光实体 (Light Entities with Brightness via Modbus)
+    # =========================================================================
+    # 使用 number 平台实现调光控制
+    # 写入 Holding Register 调整亮度 (0-100)
+    # 配合 switch 实体控制开关
+    # =========================================================================
+    numbers:
+      - name: "lighting_zone1_dimmer"
+        unique_id: "modbus_light_z1_dimmer"
+        slave: 1
+        address: 0            # Holding Register 40001 - 大堂调光
+        min_value: 0
+        max_value: 100
+        step: 1
+        write_type: holding
+        data_type: uint16
+        scan_interval: 10
+
+      - name: "lighting_zone2_dimmer"
+        unique_id: "modbus_light_z2_dimmer"
+        slave: 1
+        address: 1            # Holding Register 40002 - 办公区A调光
+        min_value: 0
+        max_value: 100
+        step: 1
+        write_type: holding
+        data_type: uint16
+        scan_interval: 10
+
+      - name: "lighting_zone3_dimmer"
+        unique_id: "modbus_light_z3_dimmer"
+        slave: 1
+        address: 2            # Holding Register 40003 - 办公区B调光
+        min_value: 0
+        max_value: 100
+        step: 1
+        write_type: holding
+        data_type: uint16
+        scan_interval: 10
+
+      - name: "lighting_zone4_dimmer"
+        unique_id: "modbus_light_z4_dimmer"
+        slave: 1
+        address: 3            # Holding Register 40004 - 会议室调光
+        min_value: 0
+        max_value: 100
+        step: 1
+        write_type: holding
+        data_type: uint16
+        scan_interval: 10
+
+      - name: "lighting_zone5_dimmer"
+        unique_id: "modbus_light_z5_dimmer"
+        slave: 1
+        address: 4            # Holding Register 40005 - 走廊调光
+        min_value: 0
+        max_value: 100
+        step: 1
+        write_type: holding
+        data_type: uint16
+        scan_interval: 10
+
+      - name: "lighting_zone6_dimmer"
+        unique_id: "modbus_light_z6_dimmer"
+        slave: 1
+        address: 5            # Holding Register 40006 - 停车场调光
+        min_value: 0
+        max_value: 100
+        step: 1
+        write_type: holding
+        data_type: uint16
+        scan_interval: 10
+
+# =============================================================================
+# 模板传感器 - HVAC 模式文本转换
+# =============================================================================
+# 将数字模式代码转换为可读文本
+# =============================================================================
+template:
+  - sensor:
+      - name: "HVAC Zone 1 Mode Text"
+        unique_id: "hvac_zone1_mode_text"
+        state: >-
+          {% set mode = states('sensor.hvac_zone1_mode') | int(0) %}
+          {% if mode == 0 %}关闭 (Off)
+          {% elif mode == 1 %}制热 (Heat)
+          {% elif mode == 2 %}制冷 (Cool)
+          {% elif mode == 3 %}自动 (Auto)
+          {% elif mode == 4 %}送风 (Fan Only)
+          {% elif mode == 5 %}除湿 (Dehumidify)
+          {% else %}未知 (Unknown)
+          {% endif %}
+
+      - name: "HVAC Zone 2 Mode Text"
+        unique_id: "hvac_zone2_mode_text"
+        state: >-
+          {% set mode = states('sensor.hvac_zone2_mode') | int(0) %}
+          {% if mode == 0 %}关闭 (Off)
+          {% elif mode == 1 %}制热 (Heat)
+          {% elif mode == 2 %}制冷 (Cool)
+          {% elif mode == 3 %}自动 (Auto)
+          {% elif mode == 4 %}送风 (Fan Only)
+          {% elif mode == 5 %}除湿 (Dehumidify)
+          {% else %}未知 (Unknown)
+          {% endif %}
+
+      # 总用电量计算 (合计三相功率)
+      - name: "Building Total Power"
+        unique_id: "building_total_power_calc"
+        unit_of_measurement: "kW"
+        device_class: power
+        state_class: measurement
+        state: >-
+          {{ states('sensor.energy_active_power_total') | float(0) }}
+
+      # 电力负载率 (假设变压器容量 500kVA)
+      - name: "Building Load Percentage"
+        unique_id: "building_load_pct"
+        unit_of_measurement: "%"
+        state: >-
+          {% set power = states('sensor.energy_apparent_power_total') | float(0) %}
+          {% set capacity = 500 %}
+          {{ ((power / capacity) * 100) | round(1) }}

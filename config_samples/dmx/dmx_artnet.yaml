@@ -1,0 +1,963 @@
+# =============================================================================
+# ArtNet DMX 配置文件 - 商业综合场馆照明系统
+# ArtNet Protocol Configuration for Multi-Zone Commercial Venue
+# =============================================================================
+#
+# 场馆概述 (Venue Overview):
+#   - 大堂装饰照明 (Lobby Decorative Lighting) ........... Universe 1
+#   - 主厅舞台照明 (Main Hall Stage Lighting) ............ Universe 2
+#   - 会议室照明 (Conference Room Lighting) .............. Universe 3
+#   - 外立面建筑照明 (Exterior Facade Lighting) .......... Universe 4
+#
+# 协议版本: ArtNet 4 (Art-Net 4 Protocol)
+# 最后更新: 2026-04-10
+# =============================================================================
+
+artnet:
+  # ---------------------------------------------------------------------------
+  # 全局 ArtNet 网络设置 (Global Network Configuration)
+  # ---------------------------------------------------------------------------
+  protocol_version: 4                    # ArtNet 4 - 支持 RDM 和高级功能
+  bind_ip: "10.0.1.100"                  # 控制器绑定 IP (Controller bind address)
+  broadcast_ip: "10.0.1.255"             # ArtNet 广播地址 (Broadcast address)
+  port: 6454                             # 标准 ArtNet UDP 端口 (Standard port)
+  subnet: 0                              # ArtNet Subnet
+  net: 0                                 # ArtNet Net (0-127)
+
+  # OEM 信息 - 用于设备识别 (OEM identification)
+  oem_code: 0x2908                       # 注册 OEM 代码
+  esta_manufacturer: "WOOW"              # ESTA 制造商 ID
+  short_name: "WOOW-DMX"                 # 节点短名称 (max 18 chars)
+  long_name: "Woow HA Multi-Protocol DMX Controller - 综合场馆系统"
+
+  # ---------------------------------------------------------------------------
+  # 性能与传输设置 (Performance & Transmission Settings)
+  # ---------------------------------------------------------------------------
+  performance:
+    refresh_rate: 44                      # DMX 刷新率 Hz (标准范围 1-44Hz)
+    rate_limit_ms: 23                     # 最小帧间隔 ms (1000/44 ≈ 23ms)
+    partial_universe: true                # 启用部分 Universe 传输以减少带宽
+    merge_mode: "HTP"                     # 合并模式: HTP (最高优先) / LTP (最后优先)
+    rdm_enabled: true                     # 启用 RDM (Remote Device Management)
+    rdm_discovery_interval: 30            # RDM 设备发现间隔 (秒)
+    sync_mode: true                       # ArtSync 同步模式 - 确保多 Universe 同步输出
+    sync_timeout_ms: 4000                 # ArtSync 超时时间
+
+  # ---------------------------------------------------------------------------
+  # ArtNet 节点定义 (Node Definitions)
+  # ---------------------------------------------------------------------------
+  nodes:
+    - id: "node_lobby"
+      name: "大堂照明节点 (Lobby Node)"
+      ip: "10.0.1.10"
+      mac: "AA:BB:CC:01:10:01"
+      type: "artnet_node"                 # artnet_node / artnet_controller
+      firmware_version: "3.2.1"
+      num_ports: 1
+      universes: [1]
+      status: "active"
+
+    - id: "node_stage_a"
+      name: "主厅舞台节点A (Stage Node A)"
+      ip: "10.0.1.20"
+      mac: "AA:BB:CC:01:20:01"
+      type: "artnet_node"
+      firmware_version: "3.2.1"
+      num_ports: 2
+      universes: [2]
+      status: "active"
+
+    - id: "node_stage_b"
+      name: "主厅舞台节点B - 备用 (Stage Node B - Backup)"
+      ip: "10.0.1.21"
+      mac: "AA:BB:CC:01:21:01"
+      type: "artnet_node"
+      firmware_version: "3.2.1"
+      num_ports: 2
+      universes: [2]
+      status: "standby"                   # 热备用节点
+
+    - id: "node_conference"
+      name: "会议室照明节点 (Conference Node)"
+      ip: "10.0.1.30"
+      mac: "AA:BB:CC:01:30:01"
+      type: "artnet_node"
+      firmware_version: "2.8.5"
+      num_ports: 1
+      universes: [3]
+      status: "active"
+
+    - id: "node_exterior"
+      name: "外立面照明节点 (Exterior Node)"
+      ip: "10.0.1.40"
+      mac: "AA:BB:CC:01:40:01"
+      type: "artnet_node"
+      firmware_version: "3.2.1"
+      num_ports: 1
+      universes: [4]
+      status: "active"
+      # 室外节点特殊配置 (Outdoor node settings)
+      outdoor_rated: true
+      enclosure_rating: "IP65"
+
+  # ===========================================================================
+  # Universe 1 - 大堂装饰照明 (Lobby Decorative Lighting)
+  # 通道范围: 1-128
+  # ===========================================================================
+  universes:
+    - universe: 1
+      name: "大堂装饰照明 (Lobby Decorative)"
+      description: "一楼大堂区域 - RGB LED灯带、装饰吊灯、洗墙灯"
+      artnet_universe: 0                  # ArtNet Universe (Subnet 0, Universe 0)
+      output_node: "node_lobby"
+      max_channels: 128
+      default_fade_ms: 1500              # 默认淡入淡出时间 (大堂用较慢的渐变)
+      enabled: true
+
+      fixtures:
+        # --- RGB LED 灯带 (RGB LED Strips) ---
+        # 大堂天花板周圈灯带, 分4段控制 (Ceiling perimeter strips, 4 segments)
+        - id: "lobby_strip_north"
+          name: "大堂北侧灯带 (North Strip)"
+          fixture_type: "generic_rgb"      # 参考 fixture library
+          start_channel: 1
+          channel_count: 3                 # R(1), G(2), B(3)
+          location: "大堂北侧天花板 (Lobby north ceiling)"
+          group: "lobby_strips"
+
+        - id: "lobby_strip_east"
+          name: "大堂东侧灯带 (East Strip)"
+          fixture_type: "generic_rgb"
+          start_channel: 4
+          channel_count: 3
+          location: "大堂东侧天花板 (Lobby east ceiling)"
+          group: "lobby_strips"
+
+        - id: "lobby_strip_south"
+          name: "大堂南侧灯带 (South Strip)"
+          fixture_type: "generic_rgb"
+          start_channel: 7
+          channel_count: 3
+          location: "大堂南侧天花板 (Lobby south ceiling)"
+          group: "lobby_strips"
+
+        - id: "lobby_strip_west"
+          name: "大堂西侧灯带 (West Strip)"
+          fixture_type: "generic_rgb"
+          start_channel: 10
+          channel_count: 3
+          location: "大堂西侧天花板 (Lobby west ceiling)"
+          group: "lobby_strips"
+
+        # --- 装饰吊灯 (Decorative Pendant Lights) ---
+        # RGBW 吊灯, 带独立调光通道 (RGBW pendants with dimmer channel)
+        - id: "lobby_pendant_1"
+          name: "中央吊灯 #1 (Central Pendant #1)"
+          fixture_type: "rgbw_5ch"         # RGBW + Master Dimmer
+          start_channel: 13
+          channel_count: 5                 # R(13), G(14), B(15), W(16), Dim(17)
+          location: "大堂中央区域 (Lobby center area)"
+          group: "lobby_pendants"
+
+        - id: "lobby_pendant_2"
+          name: "中央吊灯 #2 (Central Pendant #2)"
+          fixture_type: "rgbw_5ch"
+          start_channel: 18
+          channel_count: 5
+          location: "大堂中央区域 (Lobby center area)"
+          group: "lobby_pendants"
+
+        - id: "lobby_pendant_3"
+          name: "中央吊灯 #3 (Central Pendant #3)"
+          fixture_type: "rgbw_5ch"
+          start_channel: 23
+          channel_count: 5
+          location: "大堂中央区域 (Lobby center area)"
+          group: "lobby_pendants"
+
+        - id: "lobby_pendant_4"
+          name: "接待区吊灯 (Reception Pendant)"
+          fixture_type: "rgbw_5ch"
+          start_channel: 28
+          channel_count: 5
+          location: "接待台上方 (Above reception desk)"
+          group: "lobby_pendants"
+
+        - id: "lobby_pendant_5"
+          name: "电梯厅吊灯 (Elevator Lobby Pendant)"
+          fixture_type: "rgbw_5ch"
+          start_channel: 33
+          channel_count: 5
+          location: "电梯厅 (Elevator lobby)"
+          group: "lobby_pendants"
+
+        - id: "lobby_pendant_6"
+          name: "VIP入口吊灯 (VIP Entrance Pendant)"
+          fixture_type: "rgbw_5ch"
+          start_channel: 38
+          channel_count: 5
+          location: "VIP通道入口 (VIP corridor entrance)"
+          group: "lobby_pendants"
+
+        # --- 洗墙灯 (Wall Washers) ---
+        # RGBW 大功率洗墙灯 (High-power RGBW wall washers)
+        - id: "lobby_wash_entrance_l"
+          name: "正门洗墙灯-左 (Main Entrance Wash L)"
+          fixture_type: "rgbw_4ch"
+          start_channel: 43
+          channel_count: 4                 # R(43), G(44), B(45), W(46)
+          location: "正门左侧墙面 (Main entrance left wall)"
+          group: "lobby_washers"
+
+        - id: "lobby_wash_entrance_r"
+          name: "正门洗墙灯-右 (Main Entrance Wash R)"
+          fixture_type: "rgbw_4ch"
+          start_channel: 47
+          channel_count: 4
+          location: "正门右侧墙面 (Main entrance right wall)"
+          group: "lobby_washers"
+
+        - id: "lobby_wash_feature_1"
+          name: "特色墙洗墙灯 #1 (Feature Wall Wash #1)"
+          fixture_type: "rgbw_4ch"
+          start_channel: 51
+          channel_count: 4
+          location: "品牌展示墙 (Brand display wall)"
+          group: "lobby_washers"
+
+        - id: "lobby_wash_feature_2"
+          name: "特色墙洗墙灯 #2 (Feature Wall Wash #2)"
+          fixture_type: "rgbw_4ch"
+          start_channel: 55
+          channel_count: 4
+          location: "品牌展示墙 (Brand display wall)"
+          group: "lobby_washers"
+
+        - id: "lobby_wash_feature_3"
+          name: "特色墙洗墙灯 #3 (Feature Wall Wash #3)"
+          fixture_type: "rgbw_4ch"
+          start_channel: 59
+          channel_count: 4
+          location: "品牌展示墙 (Brand display wall)"
+          group: "lobby_washers"
+
+        - id: "lobby_wash_corridor_1"
+          name: "走廊洗墙灯 #1 (Corridor Wash #1)"
+          fixture_type: "rgbw_4ch"
+          start_channel: 63
+          channel_count: 4
+          location: "通往主厅走廊 (Corridor to main hall)"
+          group: "lobby_washers"
+
+        - id: "lobby_wash_corridor_2"
+          name: "走廊洗墙灯 #2 (Corridor Wash #2)"
+          fixture_type: "rgbw_4ch"
+          start_channel: 67
+          channel_count: 4
+          location: "通往主厅走廊 (Corridor to main hall)"
+          group: "lobby_washers"
+
+        # --- 大堂辅助灯光 (Lobby Auxiliary Lighting) ---
+        - id: "lobby_accent_reception"
+          name: "接待台重点照明 (Reception Accent)"
+          fixture_type: "generic_rgb"
+          start_channel: 71
+          channel_count: 3
+          location: "接待台下方 (Under reception desk)"
+          group: "lobby_accents"
+
+        - id: "lobby_accent_stairs"
+          name: "楼梯台阶灯 (Stair Step Lights)"
+          fixture_type: "generic_rgb"
+          start_channel: 74
+          channel_count: 3
+          location: "主楼梯 (Main staircase)"
+          group: "lobby_accents"
+
+        - id: "lobby_accent_planter_1"
+          name: "花坛照明 #1 (Planter Light #1)"
+          fixture_type: "generic_rgb"
+          start_channel: 77
+          channel_count: 3
+          location: "大堂花坛 (Lobby planter)"
+          group: "lobby_accents"
+
+        - id: "lobby_accent_planter_2"
+          name: "花坛照明 #2 (Planter Light #2)"
+          fixture_type: "generic_rgb"
+          start_channel: 80
+          channel_count: 3
+          location: "大堂花坛 (Lobby planter)"
+          group: "lobby_accents"
+
+      # 大堂灯具分组 (Lobby fixture groups)
+      groups:
+        - id: "lobby_strips"
+          name: "大堂灯带组 (Lobby Strip Group)"
+          fixture_ids:
+            - "lobby_strip_north"
+            - "lobby_strip_east"
+            - "lobby_strip_south"
+            - "lobby_strip_west"
+
+        - id: "lobby_pendants"
+          name: "大堂吊灯组 (Lobby Pendant Group)"
+          fixture_ids:
+            - "lobby_pendant_1"
+            - "lobby_pendant_2"
+            - "lobby_pendant_3"
+            - "lobby_pendant_4"
+            - "lobby_pendant_5"
+            - "lobby_pendant_6"
+
+        - id: "lobby_washers"
+          name: "大堂洗墙灯组 (Lobby Washer Group)"
+          fixture_ids:
+            - "lobby_wash_entrance_l"
+            - "lobby_wash_entrance_r"
+            - "lobby_wash_feature_1"
+            - "lobby_wash_feature_2"
+            - "lobby_wash_feature_3"
+            - "lobby_wash_corridor_1"
+            - "lobby_wash_corridor_2"
+
+        - id: "lobby_accents"
+          name: "大堂重点照明组 (Lobby Accent Group)"
+          fixture_ids:
+            - "lobby_accent_reception"
+            - "lobby_accent_stairs"
+            - "lobby_accent_planter_1"
+            - "lobby_accent_planter_2"
+
+        - id: "lobby_all"
+          name: "大堂全部灯具 (All Lobby Fixtures)"
+          include_groups:
+            - "lobby_strips"
+            - "lobby_pendants"
+            - "lobby_washers"
+            - "lobby_accents"
+
+    # =========================================================================
+    # Universe 2 - 主厅舞台照明 (Main Hall Stage Lighting)
+    # 通道范围: 1-256 (使用扩展模式支持 512 通道)
+    # =========================================================================
+    - universe: 2
+      name: "主厅舞台照明 (Main Hall Stage)"
+      description: "主厅舞台 - 摇头灯、PAR灯、频闪、烟雾机、效果灯"
+      artnet_universe: 1
+      output_node: "node_stage_a"
+      backup_node: "node_stage_b"          # 热备用节点自动切换
+      failover_timeout_ms: 500             # 主节点失联后切换延迟
+      max_channels: 256
+      default_fade_ms: 800                 # 舞台灯光用较快的渐变
+      enabled: true
+
+      fixtures:
+        # --- 摇头光束灯 (Moving Head Spots) ---
+        # 16 通道扩展模式 (16ch Extended Mode)
+        - id: "mh_spot_dsl"
+          name: "摇头灯-下舞台左 (MH Spot DSL)"
+          fixture_type: "moving_head_16ch"
+          start_channel: 1
+          channel_count: 16
+          location: "下舞台左侧桁架 (Downstage left truss)"
+          group: "stage_movers"
+          # 通道映射 (Channel Map):
+          # 1:Pan粗调, 2:Pan细调, 3:Tilt粗调, 4:Tilt细调,
+          # 5:速度, 6:调光, 7:频闪, 8:颜色轮,
+          # 9:图案轮, 10:图案旋转, 11:棱镜, 12:聚焦,
+          # 13:变焦, 14:R, 15:G, 16:B
+
+        - id: "mh_spot_dsr"
+          name: "摇头灯-下舞台右 (MH Spot DSR)"
+          fixture_type: "moving_head_16ch"
+          start_channel: 17
+          channel_count: 16
+          location: "下舞台右侧桁架 (Downstage right truss)"
+          group: "stage_movers"
+
+        - id: "mh_spot_usl"
+          name: "摇头灯-上舞台左 (MH Spot USL)"
+          fixture_type: "moving_head_16ch"
+          start_channel: 33
+          channel_count: 16
+          location: "上舞台左侧桁架 (Upstage left truss)"
+          group: "stage_movers"
+
+        - id: "mh_spot_usr"
+          name: "摇头灯-上舞台右 (MH Spot USR)"
+          fixture_type: "moving_head_16ch"
+          start_channel: 49
+          channel_count: 16
+          location: "上舞台右侧桁架 (Upstage right truss)"
+          group: "stage_movers"
+
+        - id: "mh_spot_center"
+          name: "摇头灯-舞台中央 (MH Spot Center)"
+          fixture_type: "moving_head_16ch"
+          start_channel: 65
+          channel_count: 16
+          location: "中央桁架 (Center truss)"
+          group: "stage_movers"
+
+        - id: "mh_spot_foh_l"
+          name: "摇头灯-前区左 (MH Spot FOH L)"
+          fixture_type: "moving_head_16ch"
+          start_channel: 81
+          channel_count: 16
+          location: "前台左侧灯杆 (FOH left pipe)"
+          group: "stage_movers"
+
+        - id: "mh_spot_foh_r"
+          name: "摇头灯-前区右 (MH Spot FOH R)"
+          fixture_type: "moving_head_16ch"
+          start_channel: 97
+          channel_count: 16
+          location: "前台右侧灯杆 (FOH right pipe)"
+          group: "stage_movers"
+
+        # --- PAR LED 灯 (LED PAR Lights) ---
+        # 7 通道模式 (7ch Mode): Dim, R, G, B, Strobe, Color Macro, Mode
+        - id: "par_ds_1"
+          name: "PAR灯-下舞台 #1 (PAR DS #1)"
+          fixture_type: "par_led_7ch"
+          start_channel: 113
+          channel_count: 7
+          location: "下舞台地排 (Downstage floor)"
+          group: "stage_pars"
+
+        - id: "par_ds_2"
+          name: "PAR灯-下舞台 #2 (PAR DS #2)"
+          fixture_type: "par_led_7ch"
+          start_channel: 120
+          channel_count: 7
+          location: "下舞台地排 (Downstage floor)"
+          group: "stage_pars"
+
+        - id: "par_ds_3"
+          name: "PAR灯-下舞台 #3 (PAR DS #3)"
+          fixture_type: "par_led_7ch"
+          start_channel: 127
+          channel_count: 7
+          location: "下舞台地排 (Downstage floor)"
+          group: "stage_pars"
+
+        - id: "par_ds_4"
+          name: "PAR灯-下舞台 #4 (PAR DS #4)"
+          fixture_type: "par_led_7ch"
+          start_channel: 134
+          channel_count: 7
+          location: "下舞台地排 (Downstage floor)"
+          group: "stage_pars"
+
+        - id: "par_us_1"
+          name: "PAR灯-上舞台 #1 (PAR US #1)"
+          fixture_type: "par_led_7ch"
+          start_channel: 141
+          channel_count: 7
+          location: "上舞台桁架 (Upstage truss)"
+          group: "stage_pars"
+
+        - id: "par_us_2"
+          name: "PAR灯-上舞台 #2 (PAR US #2)"
+          fixture_type: "par_led_7ch"
+          start_channel: 148
+          channel_count: 7
+          location: "上舞台桁架 (Upstage truss)"
+          group: "stage_pars"
+
+        - id: "par_us_3"
+          name: "PAR灯-上舞台 #3 (PAR US #3)"
+          fixture_type: "par_led_7ch"
+          start_channel: 155
+          channel_count: 7
+          location: "上舞台桁架 (Upstage truss)"
+          group: "stage_pars"
+
+        - id: "par_us_4"
+          name: "PAR灯-上舞台 #4 (PAR US #4)"
+          fixture_type: "par_led_7ch"
+          start_channel: 162
+          channel_count: 7
+          location: "上舞台桁架 (Upstage truss)"
+          group: "stage_pars"
+
+        # --- 频闪灯 (Strobe Lights) ---
+        - id: "strobe_sl"
+          name: "频闪灯-舞台左 (Strobe SL)"
+          fixture_type: "generic_rgb"
+          start_channel: 169
+          channel_count: 3                 # 简单 RGB 控制
+          location: "舞台左侧 (Stage left)"
+          group: "stage_effects"
+
+        - id: "strobe_sr"
+          name: "频闪灯-舞台右 (Strobe SR)"
+          fixture_type: "generic_rgb"
+          start_channel: 172
+          channel_count: 3
+          location: "舞台右侧 (Stage right)"
+          group: "stage_effects"
+
+        - id: "strobe_center"
+          name: "频闪灯-舞台中 (Strobe Center)"
+          fixture_type: "generic_rgb"
+          start_channel: 175
+          channel_count: 3
+          location: "舞台中央上方 (Center above stage)"
+          group: "stage_effects"
+
+        # --- 烟雾机 (Fog Machines) ---
+        - id: "fog_main"
+          name: "主烟雾机 (Main Fog Machine)"
+          fixture_type: "fog_machine_2ch"
+          start_channel: 178
+          channel_count: 2                 # 输出量(178), 风扇速度(179)
+          location: "舞台左后方 (Upstage left wing)"
+          group: "stage_effects"
+
+        - id: "fog_haze"
+          name: "薄雾机 (Haze Machine)"
+          fixture_type: "fog_machine_2ch"
+          start_channel: 180
+          channel_count: 2
+          location: "舞台右后方 (Upstage right wing)"
+          group: "stage_effects"
+
+      # 主厅灯具分组 (Main hall fixture groups)
+      groups:
+        - id: "stage_movers"
+          name: "舞台摇头灯组 (Stage Moving Heads)"
+          fixture_ids:
+            - "mh_spot_dsl"
+            - "mh_spot_dsr"
+            - "mh_spot_usl"
+            - "mh_spot_usr"
+            - "mh_spot_center"
+            - "mh_spot_foh_l"
+            - "mh_spot_foh_r"
+
+        - id: "stage_pars"
+          name: "舞台PAR灯组 (Stage PAR Group)"
+          fixture_ids:
+            - "par_ds_1"
+            - "par_ds_2"
+            - "par_ds_3"
+            - "par_ds_4"
+            - "par_us_1"
+            - "par_us_2"
+            - "par_us_3"
+            - "par_us_4"
+
+        - id: "stage_effects"
+          name: "舞台效果设备组 (Stage Effects)"
+          fixture_ids:
+            - "strobe_sl"
+            - "strobe_sr"
+            - "strobe_center"
+            - "fog_main"
+            - "fog_haze"
+
+        - id: "stage_all"
+          name: "舞台全部灯具 (All Stage Fixtures)"
+          include_groups:
+            - "stage_movers"
+            - "stage_pars"
+            - "stage_effects"
+
+    # =========================================================================
+    # Universe 3 - 会议室照明 (Conference Room Lighting)
+    # 通道范围: 1-64
+    # =========================================================================
+    - universe: 3
+      name: "会议室照明 (Conference Rooms)"
+      description: "3间会议室 - 色温可调面板灯、调光器组"
+      artnet_universe: 2
+      output_node: "node_conference"
+      max_channels: 64
+      default_fade_ms: 2000               # 会议室用柔和渐变 (soft transitions)
+      enabled: true
+
+      fixtures:
+        # --- 会议室 A: 董事会议室 (Conference Room A: Boardroom) ---
+        # 色温可调 LED 面板 (Tunable White LED Panels)
+        # 2通道: 亮度 + 色温 (2ch: Brightness + CCT)
+        - id: "conf_a_panel_1"
+          name: "董事会议室面板灯 #1 (Boardroom Panel #1)"
+          fixture_type: "tunable_white_2ch"
+          start_channel: 1
+          channel_count: 2                 # 亮度(1), 色温(2) [2700K-6500K]
+          location: "会议室A天花板 (Room A ceiling)"
+          group: "conf_a_panels"
+
+        - id: "conf_a_panel_2"
+          name: "董事会议室面板灯 #2 (Boardroom Panel #2)"
+          fixture_type: "tunable_white_2ch"
+          start_channel: 3
+          channel_count: 2
+          location: "会议室A天花板 (Room A ceiling)"
+          group: "conf_a_panels"
+
+        - id: "conf_a_panel_3"
+          name: "董事会议室面板灯 #3 (Boardroom Panel #3)"
+          fixture_type: "tunable_white_2ch"
+          start_channel: 5
+          channel_count: 2
+          location: "会议室A天花板 (Room A ceiling)"
+          group: "conf_a_panels"
+
+        - id: "conf_a_panel_4"
+          name: "董事会议室面板灯 #4 (Boardroom Panel #4)"
+          fixture_type: "tunable_white_2ch"
+          start_channel: 7
+          channel_count: 2
+          location: "会议室A天花板 (Room A ceiling)"
+          group: "conf_a_panels"
+
+        # 调光器组 - 射灯和台灯 (Dimmer pack for spots and table lamps)
+        - id: "conf_a_dimmer"
+          name: "董事会议室调光器组 (Boardroom Dimmer Pack)"
+          fixture_type: "dimmer_pack_4ch"
+          start_channel: 9
+          channel_count: 4                 # 通道: 桌面射灯(9), 墙面射灯(10), 台灯(11), 备用(12)
+          location: "会议室A配电箱 (Room A panel box)"
+          group: "conf_a_aux"
+
+        # --- 会议室 B: 中型会议室 (Conference Room B: Medium Room) ---
+        - id: "conf_b_panel_1"
+          name: "中型会议室面板灯 #1 (Medium Room Panel #1)"
+          fixture_type: "tunable_white_2ch"
+          start_channel: 13
+          channel_count: 2
+          location: "会议室B天花板 (Room B ceiling)"
+          group: "conf_b_panels"
+
+        - id: "conf_b_panel_2"
+          name: "中型会议室面板灯 #2 (Medium Room Panel #2)"
+          fixture_type: "tunable_white_2ch"
+          start_channel: 15
+          channel_count: 2
+          location: "会议室B天花板 (Room B ceiling)"
+          group: "conf_b_panels"
+
+        - id: "conf_b_panel_3"
+          name: "中型会议室面板灯 #3 (Medium Room Panel #3)"
+          fixture_type: "tunable_white_2ch"
+          start_channel: 17
+          channel_count: 2
+          location: "会议室B天花板 (Room B ceiling)"
+          group: "conf_b_panels"
+
+        - id: "conf_b_dimmer"
+          name: "中型会议室调光器组 (Medium Room Dimmer Pack)"
+          fixture_type: "dimmer_pack_4ch"
+          start_channel: 19
+          channel_count: 4
+          location: "会议室B配电箱 (Room B panel box)"
+          group: "conf_b_aux"
+
+        # --- 会议室 C: 小型讨论室 (Conference Room C: Small Meeting Room) ---
+        - id: "conf_c_panel_1"
+          name: "小型讨论室面板灯 #1 (Small Room Panel #1)"
+          fixture_type: "tunable_white_2ch"
+          start_channel: 23
+          channel_count: 2
+          location: "会议室C天花板 (Room C ceiling)"
+          group: "conf_c_panels"
+
+        - id: "conf_c_panel_2"
+          name: "小型讨论室面板灯 #2 (Small Room Panel #2)"
+          fixture_type: "tunable_white_2ch"
+          start_channel: 25
+          channel_count: 2
+          location: "会议室C天花板 (Room C ceiling)"
+          group: "conf_c_panels"
+
+        - id: "conf_c_dimmer"
+          name: "小型讨论室调光器组 (Small Room Dimmer Pack)"
+          fixture_type: "dimmer_pack_4ch"
+          start_channel: 27
+          channel_count: 4
+          location: "会议室C配电箱 (Room C panel box)"
+          group: "conf_c_aux"
+
+      groups:
+        - id: "conf_a_panels"
+          name: "会议室A面板灯组 (Room A Panel Group)"
+          fixture_ids:
+            - "conf_a_panel_1"
+            - "conf_a_panel_2"
+            - "conf_a_panel_3"
+            - "conf_a_panel_4"
+
+        - id: "conf_a_aux"
+          name: "会议室A辅助照明组 (Room A Auxiliary)"
+          fixture_ids:
+            - "conf_a_dimmer"
+
+        - id: "conf_b_panels"
+          name: "会议室B面板灯组 (Room B Panel Group)"
+          fixture_ids:
+            - "conf_b_panel_1"
+            - "conf_b_panel_2"
+            - "conf_b_panel_3"
+
+        - id: "conf_b_aux"
+          name: "会议室B辅助照明组 (Room B Auxiliary)"
+          fixture_ids:
+            - "conf_b_dimmer"
+
+        - id: "conf_c_panels"
+          name: "会议室C面板灯组 (Room C Panel Group)"
+          fixture_ids:
+            - "conf_c_panel_1"
+            - "conf_c_panel_2"
+
+        - id: "conf_c_aux"
+          name: "会议室C辅助照明组 (Room C Auxiliary)"
+          fixture_ids:
+            - "conf_c_dimmer"
+
+        - id: "conf_all_panels"
+          name: "所有会议室面板灯 (All Conference Panels)"
+          include_groups:
+            - "conf_a_panels"
+            - "conf_b_panels"
+            - "conf_c_panels"
+
+    # =========================================================================
+    # Universe 4 - 外立面建筑照明 (Exterior Facade Lighting)
+    # 通道范围: 1-96
+    # =========================================================================
+    - universe: 4
+      name: "外立面建筑照明 (Exterior Facade)"
+      description: "建筑外立面 - RGBW泛光灯、建筑轮廓LED、景观照明"
+      artnet_universe: 3
+      output_node: "node_exterior"
+      max_channels: 96
+      default_fade_ms: 3000               # 建筑照明用较慢的渐变效果
+      enabled: true
+
+      fixtures:
+        # --- RGBW 泛光灯 (RGBW Flood Lights) ---
+        # 照射建筑正立面 (Illuminating main facade)
+        - id: "ext_flood_1"
+          name: "正立面泛光灯 #1 (Front Facade Flood #1)"
+          fixture_type: "rgbw_5ch"
+          start_channel: 1
+          channel_count: 5
+          location: "正立面地面 (Front facade ground)"
+          group: "ext_facade_front"
+
+        - id: "ext_flood_2"
+          name: "正立面泛光灯 #2 (Front Facade Flood #2)"
+          fixture_type: "rgbw_5ch"
+          start_channel: 6
+          channel_count: 5
+          location: "正立面地面 (Front facade ground)"
+          group: "ext_facade_front"
+
+        - id: "ext_flood_3"
+          name: "正立面泛光灯 #3 (Front Facade Flood #3)"
+          fixture_type: "rgbw_5ch"
+          start_channel: 11
+          channel_count: 5
+          location: "正立面地面 (Front facade ground)"
+          group: "ext_facade_front"
+
+        - id: "ext_flood_4"
+          name: "正立面泛光灯 #4 (Front Facade Flood #4)"
+          fixture_type: "rgbw_5ch"
+          start_channel: 16
+          channel_count: 5
+          location: "正立面地面 (Front facade ground)"
+          group: "ext_facade_front"
+
+        - id: "ext_flood_side_l1"
+          name: "左侧面泛光灯 #1 (Left Side Flood #1)"
+          fixture_type: "rgbw_5ch"
+          start_channel: 21
+          channel_count: 5
+          location: "左侧立面 (Left side facade)"
+          group: "ext_facade_sides"
+
+        - id: "ext_flood_side_l2"
+          name: "左侧面泛光灯 #2 (Left Side Flood #2)"
+          fixture_type: "rgbw_5ch"
+          start_channel: 26
+          channel_count: 5
+          location: "左侧立面 (Left side facade)"
+          group: "ext_facade_sides"
+
+        - id: "ext_flood_side_r1"
+          name: "右侧面泛光灯 #1 (Right Side Flood #1)"
+          fixture_type: "rgbw_5ch"
+          start_channel: 31
+          channel_count: 5
+          location: "右侧立面 (Right side facade)"
+          group: "ext_facade_sides"
+
+        - id: "ext_flood_side_r2"
+          name: "右侧面泛光灯 #2 (Right Side Flood #2)"
+          fixture_type: "rgbw_5ch"
+          start_channel: 36
+          channel_count: 5
+          location: "右侧立面 (Right side facade)"
+          group: "ext_facade_sides"
+
+        # --- 建筑轮廓 LED (Architectural Outline LEDs) ---
+        # RGB LED 线条灯勾勒建筑轮廓 (RGB linear LEDs tracing building outline)
+        - id: "ext_outline_roof"
+          name: "屋顶轮廓灯 (Roofline Outline)"
+          fixture_type: "generic_rgb"
+          start_channel: 41
+          channel_count: 3
+          location: "屋顶边缘 (Roofline edge)"
+          group: "ext_outline"
+
+        - id: "ext_outline_left"
+          name: "左侧轮廓灯 (Left Outline)"
+          fixture_type: "generic_rgb"
+          start_channel: 44
+          channel_count: 3
+          location: "建筑左侧边缘 (Left building edge)"
+          group: "ext_outline"
+
+        - id: "ext_outline_right"
+          name: "右侧轮廓灯 (Right Outline)"
+          fixture_type: "generic_rgb"
+          start_channel: 47
+          channel_count: 3
+          location: "建筑右侧边缘 (Right building edge)"
+          group: "ext_outline"
+
+        - id: "ext_outline_entrance"
+          name: "入口轮廓灯 (Entrance Outline)"
+          fixture_type: "generic_rgb"
+          start_channel: 50
+          channel_count: 3
+          location: "正门入口框架 (Main entrance frame)"
+          group: "ext_outline"
+
+        # --- 景观照明 (Landscape Lighting) ---
+        - id: "ext_landscape_path_1"
+          name: "通道景观灯 #1 (Pathway Light #1)"
+          fixture_type: "rgbw_4ch"
+          start_channel: 53
+          channel_count: 4
+          location: "正门通道 (Front pathway)"
+          group: "ext_landscape"
+
+        - id: "ext_landscape_path_2"
+          name: "通道景观灯 #2 (Pathway Light #2)"
+          fixture_type: "rgbw_4ch"
+          start_channel: 57
+          channel_count: 4
+          location: "正门通道 (Front pathway)"
+          group: "ext_landscape"
+
+        - id: "ext_landscape_tree_1"
+          name: "树木照明 #1 (Tree Uplighter #1)"
+          fixture_type: "rgbw_4ch"
+          start_channel: 61
+          channel_count: 4
+          location: "正门左侧绿化带 (Front left garden)"
+          group: "ext_landscape"
+
+        - id: "ext_landscape_tree_2"
+          name: "树木照明 #2 (Tree Uplighter #2)"
+          fixture_type: "rgbw_4ch"
+          start_channel: 65
+          channel_count: 4
+          location: "正门右侧绿化带 (Front right garden)"
+          group: "ext_landscape"
+
+        - id: "ext_landscape_fountain"
+          name: "喷泉照明 (Fountain Light)"
+          fixture_type: "rgbw_5ch"
+          start_channel: 69
+          channel_count: 5
+          location: "正门喷泉 (Front fountain)"
+          group: "ext_landscape"
+
+        # --- 标识照明 (Signage Lighting) ---
+        - id: "ext_sign_main"
+          name: "主标识灯 (Main Sign Backlight)"
+          fixture_type: "rgbw_4ch"
+          start_channel: 74
+          channel_count: 4
+          location: "建筑正面标识 (Front building sign)"
+          group: "ext_signage"
+
+        - id: "ext_sign_entrance"
+          name: "入口标识灯 (Entrance Sign)"
+          fixture_type: "generic_rgb"
+          start_channel: 78
+          channel_count: 3
+          location: "正门上方标识 (Above main entrance)"
+          group: "ext_signage"
+
+      groups:
+        - id: "ext_facade_front"
+          name: "正立面泛光组 (Front Facade Floods)"
+          fixture_ids:
+            - "ext_flood_1"
+            - "ext_flood_2"
+            - "ext_flood_3"
+            - "ext_flood_4"
+
+        - id: "ext_facade_sides"
+          name: "侧立面泛光组 (Side Facade Floods)"
+          fixture_ids:
+            - "ext_flood_side_l1"
+            - "ext_flood_side_l2"
+            - "ext_flood_side_r1"
+            - "ext_flood_side_r2"
+
+        - id: "ext_outline"
+          name: "建筑轮廓灯组 (Building Outline Group)"
+          fixture_ids:
+            - "ext_outline_roof"
+            - "ext_outline_left"
+            - "ext_outline_right"
+            - "ext_outline_entrance"
+
+        - id: "ext_landscape"
+          name: "景观照明组 (Landscape Group)"
+          fixture_ids:
+            - "ext_landscape_path_1"
+            - "ext_landscape_path_2"
+            - "ext_landscape_tree_1"
+            - "ext_landscape_tree_2"
+            - "ext_landscape_fountain"
+
+        - id: "ext_signage"
+          name: "标识照明组 (Signage Group)"
+          fixture_ids:
+            - "ext_sign_main"
+            - "ext_sign_entrance"
+
+        - id: "ext_all"
+          name: "外立面全部灯具 (All Exterior Fixtures)"
+          include_groups:
+            - "ext_facade_front"
+            - "ext_facade_sides"
+            - "ext_outline"
+            - "ext_landscape"
+            - "ext_signage"
+
+  # ===========================================================================
+  # 诊断与监控 (Diagnostics & Monitoring)
+  # ===========================================================================
+  diagnostics:
+    artpoll_enabled: true                 # 启用 ArtPoll 设备发现
+    artpoll_interval_s: 10                # ArtPoll 发送间隔
+    node_timeout_s: 30                    # 节点超时判定 (seconds)
+    log_level: "info"                     # debug / info / warn / error
+    stats_interval_s: 60                  # 统计数据上报间隔
+    health_check:
+      enabled: true
+      interval_s: 15
+      alert_on_node_loss: true            # 节点掉线时告警
+      alert_on_frame_drop: true           # 丢帧时告警
+      frame_drop_threshold_pct: 5         # 丢帧率阈值 (%)

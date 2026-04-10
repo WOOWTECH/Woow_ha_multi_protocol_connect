@@ -1,0 +1,1006 @@
+# ============================================================================
+# KNX Scripts - Smart Office Building (智能办公楼 KNX 脚本)
+# ============================================================================
+# 常用操作脚本, 供自动化和 UI 面板调用
+# 配合 knx_main.yaml 和 knx_automations.yaml 使用
+#
+# 脚本列表:
+#   1. 全楼关灯 (All lights off)
+#   2. 会议室预设 (Meeting room presets)
+#   3. 紧急模式 (Emergency mode)
+#   4. 迎宾序列 (Welcome sequence)
+#   5. 节能模式 (Energy saving mode)
+#   6. 演示模式 (Presentation mode)
+#   7. 清洁模式 (Cleaning mode)
+#   8. 设备巡检 (Equipment status check)
+# ============================================================================
+
+script:
+
+  # ==========================================================================
+  #  1. 全楼关灯 (ALL LIGHTS OFF)
+  # ==========================================================================
+  # 关闭大楼内所有照明设备, 仅保留安全出口指示灯和楼梯间应急灯
+  # 通常在确认全楼无人后由保安或值班人员执行
+  # ==========================================================================
+
+  knx_all_lights_off:
+    alias: "KNX 全楼关灯"
+    description: "关闭大楼所有照明, 仅保留安全照明 (楼梯间应急灯常亮)"
+    icon: mdi:lightbulb-off
+    mode: single
+    sequence:
+      # --- 一楼照明关闭 (Floor 1 lights off) ---
+      - service: light.turn_off
+        target:
+          entity_id:
+            - light.knx_yi_lou_da_tang_zhu_deng
+            - light.knx_yi_lou_da_tang_zhuang_shi_deng_dai
+            - light.knx_yi_lou_qian_tai_jie_dai_deng
+            - light.knx_yi_lou_zou_lang_deng
+            - light.knx_yi_lou_xiao_hui_yi_shi_adeng
+            - light.knx_yi_lou_xiao_hui_yi_shi_bdeng
+            - light.knx_yi_lou_da_hui_yi_shi_deng
+
+      # --- 二楼照明关闭 (Floor 2 lights off) ---
+      - service: light.turn_off
+        target:
+          entity_id:
+            - light.knx_er_lou_kai_fang_ban_gong_qu_adeng
+            - light.knx_er_lou_kai_fang_ban_gong_qu_bdeng
+            - light.knx_er_lou_kai_fang_ban_gong_qu_cdeng
+            - light.knx_er_lou_zou_lang_deng
+            - light.knx_er_lou_hui_yi_shi_cdeng
+            - light.knx_er_lou_hui_yi_shi_ddeng
+            - light.knx_er_lou_cha_shui_jian_deng
+
+      # --- 三楼照明关闭 (Floor 3 lights off) ---
+      - service: light.turn_off
+        target:
+          entity_id:
+            - light.knx_san_lou_zong_jing_li_ban_gong_shi_deng
+            - light.knx_san_lou_fu_zong_ban_gong_shi_deng
+            - light.knx_san_lou_cai_wu_bu_deng
+            - light.knx_san_lou_xing_zheng_bu_deng
+            - light.knx_san_lou_zou_lang_deng
+            - light.knx_san_lou_viphu_yi_shi_deng
+            - light.knx_san_lou_viphu_yi_shi_she_deng
+
+      # --- 公共区域照明关闭 (Common area lights off) ---
+      - service: light.turn_off
+        target:
+          entity_id:
+            - light.knx_di_xia_che_ku_deng_qu_yu_1
+            - light.knx_di_xia_che_ku_deng_qu_yu_2
+            - light.knx_wei_sheng_jian_deng_yi_lou
+            - light.knx_wei_sheng_jian_deng_er_lou
+            - light.knx_wei_sheng_jian_deng_san_lou
+
+      # 楼梯间应急灯保持 (Stairwell emergency lights stay on - handled by hardware)
+      # 外墙泛光灯降至最低安全亮度
+      - service: light.turn_on
+        target:
+          entity_id: light.knx_wai_qiang_fan_guang_deng
+        data:
+          brightness_pct: 20
+
+      - delay:
+          seconds: 2
+
+      # 记录日志
+      - service: logbook.log
+        data:
+          name: "KNX Building Control"
+          message: "全楼关灯脚本已执行 - {{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+          entity_id: script.knx_all_lights_off
+
+  # ==========================================================================
+  #  2. 会议室预设 (MEETING ROOM PRESETS)
+  # ==========================================================================
+  # 提供多种会议场景预设, 通过 KNX 面板按键或 HA 面板一键切换
+  # ==========================================================================
+
+  # --- 一楼大会议室: 标准会议模式 ---
+  knx_f1_large_conf_meeting_preset:
+    alias: "KNX 一楼大会议室 - 会议模式"
+    description: "标准会议: 灯光100%, 空调24°C, 百叶窗半开, 投影仪待命"
+    icon: mdi:presentation
+    mode: single
+    sequence:
+      # 灯光全亮
+      - service: light.turn_on
+        target:
+          entity_id: light.knx_yi_lou_da_hui_yi_shi_deng
+        data:
+          brightness_pct: 100
+          # 白光色温 (如支持)
+      # 空调设定
+      - service: climate.set_temperature
+        target:
+          entity_id: climate.knx_yi_lou_da_hui_yi_shi_kong_tiao
+        data:
+          temperature: 24
+          hvac_mode: auto
+      # 百叶窗半开 (采光但减少眩光)
+      - service: cover.set_cover_position
+        target:
+          entity_id: cover.knx_yi_lou_da_hui_yi_shi_bai_ye_chuang
+        data:
+          position: 50
+      - service: cover.set_cover_tilt_position
+        target:
+          entity_id: cover.knx_yi_lou_da_hui_yi_shi_bai_ye_chuang
+        data:
+          tilt_position: 50
+      # 新风开启
+      - service: switch.turn_on
+        target:
+          entity_id: switch.knx_xin_feng_ji_zu_yi_lou
+      # 标记会议模式激活
+      - service: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.meeting_mode_active
+      - service: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.presentation_mode_active
+
+  # --- 一楼大会议室: 演示模式 ---
+  knx_f1_large_conf_presentation_preset:
+    alias: "KNX 一楼大会议室 - 演示模式"
+    description: "演示模式: 灯光调暗, 投影仪开, 幕布降下, 百叶窗全关"
+    icon: mdi:projector
+    mode: single
+    sequence:
+      # 灯光调暗至20%
+      - service: light.turn_on
+        target:
+          entity_id: light.knx_yi_lou_da_hui_yi_shi_deng
+        data:
+          brightness_pct: 20
+      # 投影仪开启
+      - service: switch.turn_on
+        target:
+          entity_id: switch.knx_yi_lou_da_hui_yi_shi_tou_ying_yi_dian_yuan
+      # 等待投影仪启动
+      - delay:
+          seconds: 5
+      # 幕布降下
+      - service: switch.turn_on
+        target:
+          entity_id: switch.knx_yi_lou_da_hui_yi_shi_mu_bu
+      # 百叶窗全关 (遮光)
+      - service: cover.set_cover_position
+        target:
+          entity_id: cover.knx_yi_lou_da_hui_yi_shi_bai_ye_chuang
+        data:
+          position: 0
+      # 空调保持
+      - service: climate.set_temperature
+        target:
+          entity_id: climate.knx_yi_lou_da_hui_yi_shi_kong_tiao
+        data:
+          temperature: 24
+          hvac_mode: auto
+      # 标记演示模式
+      - service: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.presentation_mode_active
+      - service: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.meeting_mode_active
+
+  # --- 三楼VIP会议室: VIP接待模式 ---
+  knx_f3_vip_reception_preset:
+    alias: "KNX 三楼VIP会议室 - VIP接待模式"
+    description: "VIP接待: 暖色灯光90%, 空调23°C, 百叶窗70%, 走廊灯全亮, 咖啡机开"
+    icon: mdi:account-star
+    mode: single
+    sequence:
+      # 主灯暖色调
+      - service: light.turn_on
+        target:
+          entity_id: light.knx_san_lou_viphu_yi_shi_deng
+        data:
+          brightness_pct: 90
+          rgb_color: [255, 220, 180]  # 暖白色
+      # 射灯开启
+      - service: light.turn_on
+        target:
+          entity_id: light.knx_san_lou_viphu_yi_shi_she_deng
+        data:
+          brightness_pct: 60
+      # 空调舒适温度
+      - service: climate.set_temperature
+        target:
+          entity_id: climate.knx_san_lou_viphu_yi_shi_kong_tiao
+        data:
+          temperature: 23
+          hvac_mode: auto
+      # 百叶窗70% (采光+景观)
+      - service: cover.set_cover_position
+        target:
+          entity_id: cover.knx_san_lou_viphu_yi_shi_bai_ye_chuang
+        data:
+          position: 70
+      # 走廊灯全亮 (迎客氛围)
+      - service: light.turn_on
+        target:
+          entity_id: light.knx_san_lou_zou_lang_deng
+        data:
+          brightness_pct: 100
+      # 咖啡机开启
+      - service: switch.turn_on
+        target:
+          entity_id: switch.knx_san_lou_ka_fei_ji_dian_yuan
+      # 新风开启
+      - service: switch.turn_on
+        target:
+          entity_id: switch.knx_xin_feng_ji_zu_san_lou
+
+  # --- 三楼VIP会议室: 董事会模式 ---
+  knx_f3_vip_boardmeeting_preset:
+    alias: "KNX 三楼VIP会议室 - 董事会模式"
+    description: "董事会: 灯光全亮白色, 空调22°C, 百叶窗半关, 投影仪准备"
+    icon: mdi:account-group
+    mode: single
+    sequence:
+      # 主灯全亮白光
+      - service: light.turn_on
+        target:
+          entity_id: light.knx_san_lou_viphu_yi_shi_deng
+        data:
+          brightness_pct: 100
+          rgb_color: [255, 255, 255]
+      # 射灯全亮
+      - service: light.turn_on
+        target:
+          entity_id: light.knx_san_lou_viphu_yi_shi_she_deng
+        data:
+          brightness_pct: 100
+      # 空调
+      - service: climate.set_temperature
+        target:
+          entity_id: climate.knx_san_lou_viphu_yi_shi_kong_tiao
+        data:
+          temperature: 22
+          hvac_mode: auto
+      # 百叶窗半关 (减少外部干扰)
+      - service: cover.set_cover_position
+        target:
+          entity_id: cover.knx_san_lou_viphu_yi_shi_bai_ye_chuang
+        data:
+          position: 30
+      # 投影仪预热
+      - service: switch.turn_on
+        target:
+          entity_id: switch.knx_san_lou_viphu_yi_shi_tou_ying_yi_dian_yuan
+
+  # --- 二楼会议室C: 标准会议模式 ---
+  knx_f2_meeting_c_preset:
+    alias: "KNX 二楼会议室C - 标准会议模式"
+    description: "二楼会议室C标准设置: 灯光100%, 空调24°C, 百叶窗半开"
+    icon: mdi:presentation
+    mode: single
+    sequence:
+      - service: light.turn_on
+        target:
+          entity_id: light.knx_er_lou_hui_yi_shi_cdeng
+        data:
+          brightness_pct: 100
+      - service: climate.set_temperature
+        target:
+          entity_id: climate.knx_er_lou_hui_yi_shi_ckong_tiao
+        data:
+          temperature: 24
+          hvac_mode: auto
+      - service: cover.set_cover_position
+        target:
+          entity_id: cover.knx_er_lou_hui_yi_shi_cbai_ye_chuang
+        data:
+          position: 50
+
+  # ==========================================================================
+  #  3. 紧急模式 (EMERGENCY MODE)
+  # ==========================================================================
+  # 消防/烟感报警触发时执行
+  # 所有照明100%, 百叶窗全开, 新风关闭, 电梯锁定
+  # 确保疏散通道畅通
+  # ==========================================================================
+
+  knx_emergency_mode:
+    alias: "KNX 紧急模式"
+    description: "紧急疏散模式 - 全部灯光100%, 百叶窗全开, 新风关闭"
+    icon: mdi:alert
+    mode: single
+    sequence:
+      # ========== 所有灯光全亮 (All lights 100%) ==========
+      # 一楼
+      - service: light.turn_on
+        target:
+          entity_id:
+            - light.knx_yi_lou_da_tang_zhu_deng
+            - light.knx_yi_lou_da_tang_zhuang_shi_deng_dai
+            - light.knx_yi_lou_qian_tai_jie_dai_deng
+            - light.knx_yi_lou_zou_lang_deng
+            - light.knx_yi_lou_xiao_hui_yi_shi_adeng
+            - light.knx_yi_lou_xiao_hui_yi_shi_bdeng
+            - light.knx_yi_lou_da_hui_yi_shi_deng
+        data:
+          brightness_pct: 100
+      # 二楼
+      - service: light.turn_on
+        target:
+          entity_id:
+            - light.knx_er_lou_kai_fang_ban_gong_qu_adeng
+            - light.knx_er_lou_kai_fang_ban_gong_qu_bdeng
+            - light.knx_er_lou_kai_fang_ban_gong_qu_cdeng
+            - light.knx_er_lou_zou_lang_deng
+            - light.knx_er_lou_hui_yi_shi_cdeng
+            - light.knx_er_lou_hui_yi_shi_ddeng
+            - light.knx_er_lou_cha_shui_jian_deng
+        data:
+          brightness_pct: 100
+      # 三楼
+      - service: light.turn_on
+        target:
+          entity_id:
+            - light.knx_san_lou_zong_jing_li_ban_gong_shi_deng
+            - light.knx_san_lou_fu_zong_ban_gong_shi_deng
+            - light.knx_san_lou_cai_wu_bu_deng
+            - light.knx_san_lou_xing_zheng_bu_deng
+            - light.knx_san_lou_zou_lang_deng
+            - light.knx_san_lou_viphu_yi_shi_deng
+            - light.knx_san_lou_viphu_yi_shi_she_deng
+        data:
+          brightness_pct: 100
+      # 公共区域
+      - service: light.turn_on
+        target:
+          entity_id:
+            - light.knx_di_xia_che_ku_deng_qu_yu_1
+            - light.knx_di_xia_che_ku_deng_qu_yu_2
+            - light.knx_lou_ti_jian_deng
+            - light.knx_wei_sheng_jian_deng_yi_lou
+            - light.knx_wei_sheng_jian_deng_er_lou
+            - light.knx_wei_sheng_jian_deng_san_lou
+            - light.knx_wai_qiang_fan_guang_deng
+        data:
+          brightness_pct: 100
+
+      # ========== 百叶窗全开 (All blinds fully open) ==========
+      - service: cover.set_cover_position
+        target:
+          entity_id:
+            - cover.knx_yi_lou_da_tang_nan_ce_bai_ye_chuang
+            - cover.knx_yi_lou_da_hui_yi_shi_bai_ye_chuang
+            - cover.knx_er_lou_dong_ce_bai_ye_chuang_zu
+            - cover.knx_er_lou_xi_ce_bai_ye_chuang_zu
+            - cover.knx_er_lou_nan_ce_bai_ye_chuang_zu
+            - cover.knx_er_lou_hui_yi_shi_cbai_ye_chuang
+            - cover.knx_san_lou_zong_jing_li_ban_gong_shi_bai_ye_chuang
+            - cover.knx_san_lou_fu_zong_ban_gong_shi_bai_ye_chuang
+            - cover.knx_san_lou_viphu_yi_shi_bai_ye_chuang
+            - cover.knx_san_lou_nan_ce_bai_ye_chuang_zu
+        data:
+          position: 100  # 完全打开/收起
+
+      # ========== 新风系统关闭 (Fresh air off - prevent smoke spread) ==========
+      - service: switch.turn_off
+        target:
+          entity_id:
+            - switch.knx_xin_feng_ji_zu_yi_lou
+            - switch.knx_xin_feng_ji_zu_er_lou
+            - switch.knx_xin_feng_ji_zu_san_lou
+
+      # ========== HVAC关闭 (HVAC off - prevent smoke spread) ==========
+      - service: climate.turn_off
+        target:
+          entity_id:
+            - climate.knx_yi_lou_da_tang_kong_tiao
+            - climate.knx_yi_lou_da_hui_yi_shi_kong_tiao
+            - climate.knx_yi_lou_xiao_hui_yi_shi_akong_tiao
+            - climate.knx_yi_lou_xiao_hui_yi_shi_bkong_tiao
+            - climate.knx_er_lou_kai_fang_ban_gong_qu_kong_tiao_a
+            - climate.knx_er_lou_kai_fang_ban_gong_qu_kong_tiao_b
+            - climate.knx_er_lou_kai_fang_ban_gong_qu_kong_tiao_c
+            - climate.knx_er_lou_hui_yi_shi_ckong_tiao
+            - climate.knx_er_lou_hui_yi_shi_dkong_tiao
+            - climate.knx_san_lou_zong_jing_li_ban_gong_shi_kong_tiao
+            - climate.knx_san_lou_fu_zong_ban_gong_shi_kong_tiao
+            - climate.knx_san_lou_cai_wu_bu_kong_tiao
+            - climate.knx_san_lou_xing_zheng_bu_kong_tiao
+            - climate.knx_san_lou_viphu_yi_shi_kong_tiao
+
+      # ========== 电动门解锁 (Unlock electric doors for evacuation) ==========
+      - service: switch.turn_on
+        target:
+          entity_id: switch.knx_yi_lou_da_men_dian_dong_kai_qi
+
+      # ========== 关闭非必要设备 (Turn off non-essential equipment) ==========
+      - service: switch.turn_off
+        target:
+          entity_id:
+            - switch.knx_yi_lou_da_hui_yi_shi_tou_ying_yi_dian_yuan
+            - switch.knx_er_lou_hui_yi_shi_ctou_ying_yi_dian_yuan
+            - switch.knx_er_lou_hui_yi_shi_dtou_ying_yi_dian_yuan
+            - switch.knx_san_lou_viphu_yi_shi_tou_ying_yi_dian_yuan
+            - switch.knx_yi_lou_ka_fei_ji_dian_yuan
+            - switch.knx_er_lou_cha_shui_jian_ka_fei_ji_dian_yuan
+            - switch.knx_san_lou_ka_fei_ji_dian_yuan
+
+      # 记录紧急事件
+      - service: logbook.log
+        data:
+          name: "KNX EMERGENCY"
+          message: "紧急模式已激活! 所有灯光100%, 百叶窗全开, HVAC/新风已关闭, 电动门已解锁 - {{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+          entity_id: script.knx_emergency_mode
+
+  # --- 紧急模式解除 (Emergency mode deactivation) ---
+  knx_emergency_mode_off:
+    alias: "KNX 紧急模式解除"
+    description: "解除紧急模式, 恢复正常运行状态"
+    icon: mdi:shield-check
+    mode: single
+    sequence:
+      - service: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.emergency_mode
+      # 恢复正常照明
+      - service: light.turn_on
+        target:
+          entity_id:
+            - light.knx_yi_lou_zou_lang_deng
+            - light.knx_er_lou_zou_lang_deng
+            - light.knx_san_lou_zou_lang_deng
+        data:
+          brightness_pct: 80
+      # 恢复新风
+      - service: switch.turn_on
+        target:
+          entity_id:
+            - switch.knx_xin_feng_ji_zu_yi_lou
+            - switch.knx_xin_feng_ji_zu_er_lou
+            - switch.knx_xin_feng_ji_zu_san_lou
+      # 记录日志
+      - service: logbook.log
+        data:
+          name: "KNX EMERGENCY"
+          message: "紧急模式已解除, 恢复正常运行 - {{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+          entity_id: script.knx_emergency_mode_off
+      - service: notify.building_management
+        data:
+          title: "紧急模式已解除"
+          message: "紧急模式已于 {{ now().strftime('%H:%M') }} 解除, 大楼恢复正常运行模式。请物业人员进行安全巡检。"
+
+  # ==========================================================================
+  #  4. 迎宾序列 (WELCOME SEQUENCE)
+  # ==========================================================================
+  # 工作日早晨或VIP来访时执行的迎宾灯光和设备序列
+  # 灯光逐层点亮, 营造专业商务氛围
+  # ==========================================================================
+
+  knx_welcome_sequence:
+    alias: "KNX 迎宾序列"
+    description: "逐层点亮灯光+开启咖啡机+调节空调, 营造专业迎宾氛围"
+    icon: mdi:hand-wave
+    mode: single
+    sequence:
+      # ========== 第一步: 大堂欢迎灯光 (Step 1: Lobby welcome) ==========
+      - service: light.turn_on
+        target:
+          entity_id: light.knx_yi_lou_da_tang_zhu_deng
+        data:
+          brightness_pct: 100
+      - delay:
+          seconds: 1
+      # 装饰灯带暖色效果
+      - service: light.turn_on
+        target:
+          entity_id: light.knx_yi_lou_da_tang_zhuang_shi_deng_dai
+        data:
+          brightness_pct: 80
+          rgb_color: [255, 200, 150]  # 暖色迎宾
+      - delay:
+          seconds: 1
+      # 前台灯
+      - service: light.turn_on
+        target:
+          entity_id: light.knx_yi_lou_qian_tai_jie_dai_deng
+        data:
+          brightness_pct: 100
+
+      # ========== 第二步: 走廊灯光依次点亮 (Step 2: Corridor lights) ==========
+      - delay:
+          seconds: 2
+      - service: light.turn_on
+        target:
+          entity_id: light.knx_yi_lou_zou_lang_deng
+        data:
+          brightness_pct: 80
+      - delay:
+          seconds: 1
+      - service: light.turn_on
+        target:
+          entity_id: light.knx_er_lou_zou_lang_deng
+        data:
+          brightness_pct: 80
+      - delay:
+          seconds: 1
+      - service: light.turn_on
+        target:
+          entity_id: light.knx_san_lou_zou_lang_deng
+        data:
+          brightness_pct: 80
+
+      # ========== 第三步: 百叶窗缓缓打开 (Step 3: Blinds open gradually) ==========
+      - delay:
+          seconds: 2
+      - service: cover.set_cover_position
+        target:
+          entity_id:
+            - cover.knx_yi_lou_da_tang_nan_ce_bai_ye_chuang
+            - cover.knx_er_lou_dong_ce_bai_ye_chuang_zu
+            - cover.knx_er_lou_xi_ce_bai_ye_chuang_zu
+            - cover.knx_san_lou_nan_ce_bai_ye_chuang_zu
+        data:
+          position: 80
+
+      # ========== 第四步: 咖啡机预热 (Step 4: Coffee machines preheat) ==========
+      - service: switch.turn_on
+        target:
+          entity_id:
+            - switch.knx_yi_lou_ka_fei_ji_dian_yuan
+            - switch.knx_er_lou_cha_shui_jian_ka_fei_ji_dian_yuan
+            - switch.knx_san_lou_ka_fei_ji_dian_yuan
+
+      # ========== 第五步: 空调预设 (Step 5: HVAC preset) ==========
+      - service: climate.set_temperature
+        target:
+          entity_id:
+            - climate.knx_yi_lou_da_tang_kong_tiao
+        data:
+          temperature: 24
+          hvac_mode: auto
+
+      # ========== 第六步: 外墙灯光 (Step 6: Facade lighting - if before dawn) ==========
+      - condition: state
+        entity_id: binary_sensor.knx_lou_ding_qi_xiang_zhan_day_night
+        state: "off"  # 夜间
+      - service: light.turn_on
+        target:
+          entity_id: light.knx_wai_qiang_fan_guang_deng
+        data:
+          brightness_pct: 100
+          rgb_color: [220, 240, 255]  # 冷白专业色
+
+      # 完成
+      - service: logbook.log
+        data:
+          name: "KNX Building Control"
+          message: "迎宾序列已完成 - {{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+          entity_id: script.knx_welcome_sequence
+
+  # --- VIP专属迎宾序列 (VIP Welcome - enhanced version) ---
+  knx_vip_welcome_sequence:
+    alias: "KNX VIP迎宾序列"
+    description: "VIP级别迎宾 - 大堂+三楼VIP区域全面准备"
+    icon: mdi:star-circle
+    mode: single
+    sequence:
+      # 先执行基本迎宾序列
+      - service: script.knx_welcome_sequence
+      - delay:
+          seconds: 10
+      # 三楼VIP走廊和会议室特殊准备
+      - service: light.turn_on
+        target:
+          entity_id: light.knx_san_lou_zou_lang_deng
+        data:
+          brightness_pct: 100
+      - service: script.knx_f3_vip_reception_preset
+      # 总经理办公室灯光开启 (如果需要接待)
+      - service: light.turn_on
+        target:
+          entity_id: light.knx_san_lou_zong_jing_li_ban_gong_shi_deng
+        data:
+          brightness_pct: 80
+          rgb_color: [255, 230, 200]
+
+  # ==========================================================================
+  #  5. 节能模式 (ENERGY SAVING MODE)
+  # ==========================================================================
+  # 最大化节能 - 午休时间或部分区域无人时使用
+  # 与全关不同, 保留基本照明和空调 (降低设定)
+  # ==========================================================================
+
+  knx_energy_saving_mode:
+    alias: "KNX 节能模式"
+    description: "全楼节能 - 照明最低, 空调待机, 非必要设备关闭"
+    icon: mdi:leaf
+    mode: single
+    fields:
+      level:
+        description: "节能等级: light=轻度(午休), medium=中度(加班), deep=深度(下班)"
+        example: "medium"
+        default: "medium"
+        selector:
+          select:
+            options:
+              - "light"
+              - "medium"
+              - "deep"
+    sequence:
+      # --- 轻度节能: 午休模式 (Light energy saving: lunch break) ---
+      - choose:
+          - conditions:
+              - condition: template
+                value_template: "{{ level == 'light' }}"
+            sequence:
+              # 灯光降至50%
+              - service: light.turn_on
+                target:
+                  entity_id:
+                    - light.knx_er_lou_kai_fang_ban_gong_qu_adeng
+                    - light.knx_er_lou_kai_fang_ban_gong_qu_bdeng
+                    - light.knx_er_lou_kai_fang_ban_gong_qu_cdeng
+                    - light.knx_san_lou_cai_wu_bu_deng
+                    - light.knx_san_lou_xing_zheng_bu_deng
+                data:
+                  brightness_pct: 50
+              # 空调提高1度节能
+              - service: climate.set_temperature
+                target:
+                  entity_id:
+                    - climate.knx_er_lou_kai_fang_ban_gong_qu_kong_tiao_a
+                    - climate.knx_er_lou_kai_fang_ban_gong_qu_kong_tiao_b
+                    - climate.knx_er_lou_kai_fang_ban_gong_qu_kong_tiao_c
+                data:
+                  temperature: 26
+              - service: logbook.log
+                data:
+                  name: "KNX Energy"
+                  message: "轻度节能模式 (午休) 已启动"
+
+          # --- 中度节能: 加班模式 (Medium energy saving: overtime) ---
+          - conditions:
+              - condition: template
+                value_template: "{{ level == 'medium' }}"
+            sequence:
+              # 仅保留有人区域照明
+              - service: light.turn_off
+                target:
+                  entity_id:
+                    - light.knx_er_lou_cha_shui_jian_deng
+                    - light.knx_yi_lou_da_tang_zhuang_shi_deng_dai
+              # 走廊降至30%
+              - service: light.turn_on
+                target:
+                  entity_id:
+                    - light.knx_yi_lou_zou_lang_deng
+                    - light.knx_er_lou_zou_lang_deng
+                    - light.knx_san_lou_zou_lang_deng
+                data:
+                  brightness_pct: 30
+              # 关闭无人区域空调
+              - service: climate.turn_off
+                target:
+                  entity_id:
+                    - climate.knx_yi_lou_xiao_hui_yi_shi_akong_tiao
+                    - climate.knx_yi_lou_xiao_hui_yi_shi_bkong_tiao
+                    - climate.knx_er_lou_hui_yi_shi_ckong_tiao
+                    - climate.knx_er_lou_hui_yi_shi_dkong_tiao
+              # 关闭咖啡机
+              - service: switch.turn_off
+                target:
+                  entity_id:
+                    - switch.knx_yi_lou_ka_fei_ji_dian_yuan
+                    - switch.knx_er_lou_cha_shui_jian_ka_fei_ji_dian_yuan
+                    - switch.knx_san_lou_ka_fei_ji_dian_yuan
+              - service: logbook.log
+                data:
+                  name: "KNX Energy"
+                  message: "中度节能模式 (加班) 已启动"
+
+          # --- 深度节能: 下班模式 (Deep energy saving: after hours) ---
+          - conditions:
+              - condition: template
+                value_template: "{{ level == 'deep' }}"
+            sequence:
+              # 关闭所有办公区照明
+              - service: script.knx_all_lights_off
+              # 关闭所有空调
+              - service: climate.turn_off
+                target:
+                  entity_id:
+                    - climate.knx_yi_lou_da_tang_kong_tiao
+                    - climate.knx_yi_lou_da_hui_yi_shi_kong_tiao
+                    - climate.knx_yi_lou_xiao_hui_yi_shi_akong_tiao
+                    - climate.knx_yi_lou_xiao_hui_yi_shi_bkong_tiao
+                    - climate.knx_er_lou_kai_fang_ban_gong_qu_kong_tiao_a
+                    - climate.knx_er_lou_kai_fang_ban_gong_qu_kong_tiao_b
+                    - climate.knx_er_lou_kai_fang_ban_gong_qu_kong_tiao_c
+                    - climate.knx_er_lou_hui_yi_shi_ckong_tiao
+                    - climate.knx_er_lou_hui_yi_shi_dkong_tiao
+                    - climate.knx_san_lou_zong_jing_li_ban_gong_shi_kong_tiao
+                    - climate.knx_san_lou_fu_zong_ban_gong_shi_kong_tiao
+                    - climate.knx_san_lou_cai_wu_bu_kong_tiao
+                    - climate.knx_san_lou_xing_zheng_bu_kong_tiao
+                    - climate.knx_san_lou_viphu_yi_shi_kong_tiao
+              # 关闭所有开关设备
+              - service: switch.turn_off
+                target:
+                  entity_id:
+                    - switch.knx_yi_lou_ka_fei_ji_dian_yuan
+                    - switch.knx_er_lou_cha_shui_jian_ka_fei_ji_dian_yuan
+                    - switch.knx_san_lou_ka_fei_ji_dian_yuan
+                    - switch.knx_er_lou_yin_shui_ji_dian_yuan
+                    - switch.knx_san_lou_yin_shui_ji_dian_yuan
+                    - switch.knx_xin_feng_ji_zu_yi_lou
+                    - switch.knx_xin_feng_ji_zu_er_lou
+                    - switch.knx_xin_feng_ji_zu_san_lou
+                    - switch.knx_yi_lou_da_hui_yi_shi_tou_ying_yi_dian_yuan
+                    - switch.knx_er_lou_hui_yi_shi_ctou_ying_yi_dian_yuan
+                    - switch.knx_er_lou_hui_yi_shi_dtou_ying_yi_dian_yuan
+                    - switch.knx_san_lou_viphu_yi_shi_tou_ying_yi_dian_yuan
+              # 百叶窗全关
+              - service: cover.set_cover_position
+                target:
+                  entity_id:
+                    - cover.knx_yi_lou_da_tang_nan_ce_bai_ye_chuang
+                    - cover.knx_yi_lou_da_hui_yi_shi_bai_ye_chuang
+                    - cover.knx_er_lou_dong_ce_bai_ye_chuang_zu
+                    - cover.knx_er_lou_xi_ce_bai_ye_chuang_zu
+                    - cover.knx_er_lou_nan_ce_bai_ye_chuang_zu
+                    - cover.knx_san_lou_zong_jing_li_ban_gong_shi_bai_ye_chuang
+                    - cover.knx_san_lou_fu_zong_ban_gong_shi_bai_ye_chuang
+                    - cover.knx_san_lou_viphu_yi_shi_bai_ye_chuang
+                    - cover.knx_san_lou_nan_ce_bai_ye_chuang_zu
+                data:
+                  position: 0
+              - service: input_boolean.turn_on
+                target:
+                  entity_id: input_boolean.after_hours_mode
+              - service: logbook.log
+                data:
+                  name: "KNX Energy"
+                  message: "深度节能模式 (下班) 已启动"
+              - service: notify.building_management
+                data:
+                  title: "深度节能模式已启动"
+                  message: "全楼深度节能模式已于 {{ now().strftime('%H:%M') }} 启动。所有非必要设备已关闭。"
+
+  # ==========================================================================
+  #  6. 演示模式 (PRESENTATION MODE - Generic)
+  # ==========================================================================
+  # 通用投影演示模式, 可由房间参数选择
+  # ==========================================================================
+
+  knx_presentation_mode:
+    alias: "KNX 投影演示模式"
+    description: "通用投影演示模式 - 指定房间切换至演示灯光和投影仪"
+    icon: mdi:projector-screen
+    mode: single
+    fields:
+      room:
+        description: "房间选择: f1_large, f2_c, f2_d, f3_vip"
+        example: "f1_large"
+        selector:
+          select:
+            options:
+              - "f1_large"
+              - "f2_c"
+              - "f2_d"
+              - "f3_vip"
+    sequence:
+      - choose:
+          # 一楼大会议室
+          - conditions:
+              - condition: template
+                value_template: "{{ room == 'f1_large' }}"
+            sequence:
+              - service: script.knx_f1_large_conf_presentation_preset
+          # 二楼会议室C
+          - conditions:
+              - condition: template
+                value_template: "{{ room == 'f2_c' }}"
+            sequence:
+              - service: light.turn_on
+                target:
+                  entity_id: light.knx_er_lou_hui_yi_shi_cdeng
+                data:
+                  brightness_pct: 20
+              - service: switch.turn_on
+                target:
+                  entity_id: switch.knx_er_lou_hui_yi_shi_ctou_ying_yi_dian_yuan
+              - service: cover.set_cover_position
+                target:
+                  entity_id: cover.knx_er_lou_hui_yi_shi_cbai_ye_chuang
+                data:
+                  position: 0
+          # 二楼会议室D
+          - conditions:
+              - condition: template
+                value_template: "{{ room == 'f2_d' }}"
+            sequence:
+              - service: light.turn_on
+                target:
+                  entity_id: light.knx_er_lou_hui_yi_shi_ddeng
+                data:
+                  brightness_pct: 20
+              - service: switch.turn_on
+                target:
+                  entity_id: switch.knx_er_lou_hui_yi_shi_dtou_ying_yi_dian_yuan
+          # 三楼VIP会议室
+          - conditions:
+              - condition: template
+                value_template: "{{ room == 'f3_vip' }}"
+            sequence:
+              - service: light.turn_on
+                target:
+                  entity_id: light.knx_san_lou_viphu_yi_shi_deng
+                data:
+                  brightness_pct: 15
+              - service: light.turn_off
+                target:
+                  entity_id: light.knx_san_lou_viphu_yi_shi_she_deng
+              - service: switch.turn_on
+                target:
+                  entity_id: switch.knx_san_lou_viphu_yi_shi_tou_ying_yi_dian_yuan
+              - delay:
+                  seconds: 5
+              - service: switch.turn_on
+                target:
+                  entity_id: switch.knx_san_lou_viphu_yi_shi_mu_bu
+              - service: cover.set_cover_position
+                target:
+                  entity_id: cover.knx_san_lou_viphu_yi_shi_bai_ye_chuang
+                data:
+                  position: 0
+
+  # ==========================================================================
+  #  7. 清洁模式 (CLEANING MODE)
+  # ==========================================================================
+  # 保洁人员使用 - 公共区域和走廊灯光全亮
+  # 通常在下班后或清晨使用
+  # ==========================================================================
+
+  knx_cleaning_mode:
+    alias: "KNX 清洁模式"
+    description: "保洁模式 - 走廊+公共区域+卫生间灯光100%"
+    icon: mdi:broom
+    mode: single
+    sequence:
+      # 所有走廊灯全亮
+      - service: light.turn_on
+        target:
+          entity_id:
+            - light.knx_yi_lou_zou_lang_deng
+            - light.knx_er_lou_zou_lang_deng
+            - light.knx_san_lou_zou_lang_deng
+        data:
+          brightness_pct: 100
+      # 大堂灯光
+      - service: light.turn_on
+        target:
+          entity_id: light.knx_yi_lou_da_tang_zhu_deng
+        data:
+          brightness_pct: 100
+      # 卫生间灯光
+      - service: light.turn_on
+        target:
+          entity_id:
+            - light.knx_wei_sheng_jian_deng_yi_lou
+            - light.knx_wei_sheng_jian_deng_er_lou
+            - light.knx_wei_sheng_jian_deng_san_lou
+      # 茶水间灯光
+      - service: light.turn_on
+        target:
+          entity_id: light.knx_er_lou_cha_shui_jian_deng
+      # 楼梯间灯光
+      - service: light.turn_on
+        target:
+          entity_id: light.knx_lou_ti_jian_deng
+      # 开启卫生间排风扇
+      - service: switch.turn_on
+        target:
+          entity_id:
+            - switch.knx_yi_lou_wei_sheng_jian_pai_feng_shan
+            - switch.knx_er_lou_wei_sheng_jian_pai_feng_shan
+            - switch.knx_san_lou_wei_sheng_jian_pai_feng_shan
+      - service: logbook.log
+        data:
+          name: "KNX Building Control"
+          message: "清洁模式已启动 - {{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+
+  # --- 清洁模式结束 (Cleaning mode end) ---
+  knx_cleaning_mode_off:
+    alias: "KNX 清洁模式结束"
+    description: "结束保洁模式, 恢复节能照明"
+    icon: mdi:broom
+    mode: single
+    sequence:
+      # 走廊灯降至安全照明
+      - service: light.turn_on
+        target:
+          entity_id:
+            - light.knx_yi_lou_zou_lang_deng
+            - light.knx_er_lou_zou_lang_deng
+            - light.knx_san_lou_zou_lang_deng
+        data:
+          brightness_pct: 15
+      # 关闭其他区域灯光
+      - service: light.turn_off
+        target:
+          entity_id:
+            - light.knx_yi_lou_da_tang_zhu_deng
+            - light.knx_wei_sheng_jian_deng_yi_lou
+            - light.knx_wei_sheng_jian_deng_er_lou
+            - light.knx_wei_sheng_jian_deng_san_lou
+            - light.knx_er_lou_cha_shui_jian_deng
+      # 延迟关闭排风扇
+      - delay:
+          minutes: 5
+      - service: switch.turn_off
+        target:
+          entity_id:
+            - switch.knx_yi_lou_wei_sheng_jian_pai_feng_shan
+            - switch.knx_er_lou_wei_sheng_jian_pai_feng_shan
+            - switch.knx_san_lou_wei_sheng_jian_pai_feng_shan
+      - service: logbook.log
+        data:
+          name: "KNX Building Control"
+          message: "清洁模式已结束 - {{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+
+  # ==========================================================================
+  #  8. 设备状态巡检 (EQUIPMENT STATUS CHECK)
+  # ==========================================================================
+  # 定时或手动执行, 汇报全楼设备运行状态
+  # ==========================================================================
+
+  knx_equipment_status_report:
+    alias: "KNX 设备状态巡检报告"
+    description: "生成全楼设备运行状态报告并发送通知"
+    icon: mdi:clipboard-check
+    mode: single
+    sequence:
+      - service: notify.building_management
+        data:
+          title: "KNX 设备状态巡检报告"
+          message: >
+            ===== 办公楼设备状态巡检 =====
+            时间: {{ now().strftime('%Y-%m-%d %H:%M:%S') }}
+
+            --- 温度监测 ---
+            室外温度: {{ states('sensor.knx_lou_ding_qi_xiang_zhan_temperature') }}°C
+            一楼大堂: {{ states('sensor.knx_yi_lou_da_tang_wen_du') }}°C
+            二楼办公A区: {{ states('sensor.knx_er_lou_kai_fang_ban_gong_qu_wen_du_a') }}°C
+            二楼办公B区: {{ states('sensor.knx_er_lou_kai_fang_ban_gong_qu_wen_du_b') }}°C
+            二楼办公C区: {{ states('sensor.knx_er_lou_kai_fang_ban_gong_qu_wen_du_c') }}°C
+            三楼VIP会议室: {{ states('sensor.knx_san_lou_viphu_yi_shi_wen_du') }}°C
+
+            --- CO2 浓度 ---
+            二楼办公区: {{ states('sensor.knx_er_lou_kai_fang_ban_gong_qu_co2') }}ppm
+
+            --- 能耗数据 ---
+            总用电: {{ states('sensor.knx_zong_dian_biao_du_shu') }} kWh
+            当前总功率: {{ states('sensor.knx_zong_you_gong_gong_lv') }} W
+
+            --- 安全状态 ---
+            消防系统: {{ states('binary_sensor.knx_xiao_fang_xi_tong_bao_jing') }}
+            UPS状态: {{ states('binary_sensor.knx_upsdian_yuan_zhuang_tai') }}
+            入侵报警: {{ states('binary_sensor.knx_ru_qin_bao_jing_xi_tong_zhuang_tai') }}
+
+            --- 气象站 ---
+            风速报警: {{ states('binary_sensor.knx_lou_ding_qi_xiang_zhan_wind_alarm') }}
+            雨量报警: {{ states('binary_sensor.knx_lou_ding_qi_xiang_zhan_rain_alarm') }}
+            ================================
+
+      - service: logbook.log
+        data:
+          name: "KNX Inspection"
+          message: "设备状态巡检报告已生成并发送 - {{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+
+# ============================================================================
+# End of KNX Scripts
+# 脚本配置结束
+# ============================================================================

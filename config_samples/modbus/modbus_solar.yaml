@@ -1,0 +1,1126 @@
+# =============================================================================
+# Modbus TCP - 光伏逆变器与储能系统 (Solar Inverter & Battery Storage)
+# =============================================================================
+#
+# 系统概述 (System Overview):
+#   Hub 1: 光伏逆变器 (Solar Inverter) - SMA Sunny Tripower / SolarEdge 风格
+#          IP: 192.168.1.30, Port: 502, Slave ID: 1
+#          寄存器映射基于 SunSpec Alliance Modbus 标准 (Block 101-103)
+#   Hub 2: 储能电池系统 (Battery Energy Storage System - BESS)
+#          IP: 192.168.1.31, Port: 502, Slave ID: 1
+#          寄存器映射基于 SunSpec Storage Block (Block 124)
+#
+# SunSpec 协议说明:
+#   - SunSpec 寄存器基地址通常从 40001 (address 0) 或 40070 开始
+#   - 常见的起始标识: 0x53756E53 ("SunS") 在前两个寄存器
+#   - Block 101: 单相逆变器 (Single Phase Inverter)
+#   - Block 103: 三相逆变器 (Three Phase Inverter)
+#   - Block 124: 储能控制器 (Storage Controller)
+#   - Block 160: 多 MPPT 逆变器扩展 (Multiple MPPT)
+#
+# 系统参数:
+#   光伏阵列: 50kWp, 10 串 x 2 路 MPPT
+#   储能电池: 100kWh LiFePO4, 48V 系统
+#   并网类型: 三相380V
+# =============================================================================
+
+modbus:
+  # ===========================================================================
+  # Hub 1: 光伏逆变器 (Solar Inverter)
+  # ===========================================================================
+  # 基于 SunSpec Block 103 (三相逆变器) 寄存器映射
+  # 寄存器基地址: 40070 (SunSpec common model start)
+  # Block 103 起始偏移: 40070 + 2 (SunS header) + 65 (common block) = 40137
+  # 简化为直接使用厂商手册地址
+  # ===========================================================================
+  - name: "solar_inverter"
+    type: tcp
+    host: 192.168.1.30
+    port: 502
+    timeout: 5
+    delay: 0.1
+    retries: 3
+    retry_on_empty: true
+    close_comm_on_error: true
+    message_wait_milliseconds: 50
+
+    sensors:
+      # -----------------------------------------------------------------------
+      # 直流侧参数 - MPPT 1 (DC Side - MPPT Tracker 1)
+      # 寄存器区域: 30001-30020 (Input Registers)
+      # -----------------------------------------------------------------------
+      - name: "solar_dc_voltage_mppt1"
+        unique_id: "modbus_solar_dc_v_mppt1"
+        slave: 1
+        address: 0            # Input Register 30001 - MPPT1 直流电压
+        input_type: input
+        data_type: float32
+        swap: word
+        precision: 1
+        unit_of_measurement: "V"
+        device_class: voltage
+        state_class: measurement
+        scan_interval: 10
+
+      - name: "solar_dc_current_mppt1"
+        unique_id: "modbus_solar_dc_i_mppt1"
+        slave: 1
+        address: 2            # Input Register 30003 - MPPT1 直流电流
+        input_type: input
+        data_type: float32
+        swap: word
+        precision: 2
+        unit_of_measurement: "A"
+        device_class: current
+        state_class: measurement
+        scan_interval: 10
+
+      - name: "solar_dc_power_mppt1"
+        unique_id: "modbus_solar_dc_p_mppt1"
+        slave: 1
+        address: 4            # Input Register 30005 - MPPT1 直流功率
+        input_type: input
+        data_type: float32
+        swap: word
+        precision: 0
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        scan_interval: 10
+
+      # -----------------------------------------------------------------------
+      # 直流侧参数 - MPPT 2 (DC Side - MPPT Tracker 2)
+      # -----------------------------------------------------------------------
+      - name: "solar_dc_voltage_mppt2"
+        unique_id: "modbus_solar_dc_v_mppt2"
+        slave: 1
+        address: 6            # Input Register 30007 - MPPT2 直流电压
+        input_type: input
+        data_type: float32
+        swap: word
+        precision: 1
+        unit_of_measurement: "V"
+        device_class: voltage
+        state_class: measurement
+        scan_interval: 10
+
+      - name: "solar_dc_current_mppt2"
+        unique_id: "modbus_solar_dc_i_mppt2"
+        slave: 1
+        address: 8            # Input Register 30009 - MPPT2 直流电流
+        input_type: input
+        data_type: float32
+        swap: word
+        precision: 2
+        unit_of_measurement: "A"
+        device_class: current
+        state_class: measurement
+        scan_interval: 10
+
+      - name: "solar_dc_power_mppt2"
+        unique_id: "modbus_solar_dc_p_mppt2"
+        slave: 1
+        address: 10           # Input Register 30011 - MPPT2 直流功率
+        input_type: input
+        data_type: float32
+        swap: word
+        precision: 0
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        scan_interval: 10
+
+      # -----------------------------------------------------------------------
+      # 交流侧参数 - 三相 (AC Side - 3-Phase)
+      # 寄存器区域: 30101-30150
+      # -----------------------------------------------------------------------
+      - name: "solar_ac_voltage_l1"
+        unique_id: "modbus_solar_ac_v_l1"
+        slave: 1
+        address: 100          # Input Register 30101 - L1 交流电压
+        input_type: input
+        data_type: float32
+        swap: word
+        precision: 1
+        unit_of_measurement: "V"
+        device_class: voltage
+        state_class: measurement
+        scan_interval: 10
+
+      - name: "solar_ac_voltage_l2"
+        unique_id: "modbus_solar_ac_v_l2"
+        slave: 1
+        address: 102          # Input Register 30103 - L2 交流电压
+        input_type: input
+        data_type: float32
+        swap: word
+        precision: 1
+        unit_of_measurement: "V"
+        device_class: voltage
+        state_class: measurement
+        scan_interval: 10
+
+      - name: "solar_ac_voltage_l3"
+        unique_id: "modbus_solar_ac_v_l3"
+        slave: 1
+        address: 104          # Input Register 30105 - L3 交流电压
+        input_type: input
+        data_type: float32
+        swap: word
+        precision: 1
+        unit_of_measurement: "V"
+        device_class: voltage
+        state_class: measurement
+        scan_interval: 10
+
+      - name: "solar_ac_current_l1"
+        unique_id: "modbus_solar_ac_i_l1"
+        slave: 1
+        address: 106          # Input Register 30107 - L1 交流电流
+        input_type: input
+        data_type: float32
+        swap: word
+        precision: 2
+        unit_of_measurement: "A"
+        device_class: current
+        state_class: measurement
+        scan_interval: 10
+
+      - name: "solar_ac_current_l2"
+        unique_id: "modbus_solar_ac_i_l2"
+        slave: 1
+        address: 108          # Input Register 30109 - L2 交流电流
+        input_type: input
+        data_type: float32
+        swap: word
+        precision: 2
+        unit_of_measurement: "A"
+        device_class: current
+        state_class: measurement
+        scan_interval: 10
+
+      - name: "solar_ac_current_l3"
+        unique_id: "modbus_solar_ac_i_l3"
+        slave: 1
+        address: 110          # Input Register 30111 - L3 交流电流
+        input_type: input
+        data_type: float32
+        swap: word
+        precision: 2
+        unit_of_measurement: "A"
+        device_class: current
+        state_class: measurement
+        scan_interval: 10
+
+      - name: "solar_ac_power_total"
+        unique_id: "modbus_solar_ac_p_total"
+        slave: 1
+        address: 112          # Input Register 30113 - 总交流有功功率
+        input_type: input
+        data_type: float32
+        swap: word
+        precision: 0
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        scan_interval: 10
+
+      - name: "solar_ac_reactive_power"
+        unique_id: "modbus_solar_ac_q_total"
+        slave: 1
+        address: 114          # Input Register 30115 - 总无功功率 (VAR)
+        input_type: input
+        data_type: float32
+        swap: word
+        precision: 0
+        unit_of_measurement: "VAR"
+        state_class: measurement
+        scan_interval: 30
+
+      - name: "solar_ac_apparent_power"
+        unique_id: "modbus_solar_ac_s_total"
+        slave: 1
+        address: 116          # Input Register 30117 - 总视在功率 (VA)
+        input_type: input
+        data_type: float32
+        swap: word
+        precision: 0
+        unit_of_measurement: "VA"
+        device_class: apparent_power
+        state_class: measurement
+        scan_interval: 30
+
+      - name: "solar_power_factor"
+        unique_id: "modbus_solar_pf"
+        slave: 1
+        address: 118          # Input Register 30119 - 功率因数
+        input_type: input
+        data_type: float32
+        swap: word
+        precision: 3
+        unit_of_measurement: ""
+        device_class: power_factor
+        state_class: measurement
+        scan_interval: 30
+
+      # -----------------------------------------------------------------------
+      # 电网频率 (Grid Frequency)
+      # -----------------------------------------------------------------------
+      - name: "solar_grid_frequency"
+        unique_id: "modbus_solar_freq"
+        slave: 1
+        address: 120          # Input Register 30121 - 电网频率
+        input_type: input
+        data_type: float32
+        swap: word
+        precision: 2
+        unit_of_measurement: "Hz"
+        device_class: frequency
+        state_class: measurement
+        scan_interval: 10
+
+      # -----------------------------------------------------------------------
+      # 发电量统计 (Energy Production Counters)
+      # 寄存器区域: 30201-30220
+      # -----------------------------------------------------------------------
+      - name: "solar_daily_yield"
+        unique_id: "modbus_solar_daily_kwh"
+        slave: 1
+        address: 200          # Input Register 30201 - 当日发电量 (Wh)
+        input_type: input
+        data_type: uint32
+        swap: word
+        scale: 0.001          # Wh -> kWh
+        offset: 0
+        precision: 2
+        unit_of_measurement: "kWh"
+        device_class: energy
+        state_class: total_increasing
+        scan_interval: 300
+
+      - name: "solar_monthly_yield"
+        unique_id: "modbus_solar_monthly_kwh"
+        slave: 1
+        address: 202          # Input Register 30203 - 当月发电量 (Wh)
+        input_type: input
+        data_type: uint32
+        swap: word
+        scale: 0.001
+        offset: 0
+        precision: 1
+        unit_of_measurement: "kWh"
+        device_class: energy
+        state_class: total_increasing
+        scan_interval: 3600
+
+      - name: "solar_yearly_yield"
+        unique_id: "modbus_solar_yearly_kwh"
+        slave: 1
+        address: 204          # Input Register 30205 - 当年发电量 (Wh)
+        input_type: input
+        data_type: uint32
+        swap: word
+        scale: 0.001
+        offset: 0
+        precision: 0
+        unit_of_measurement: "kWh"
+        device_class: energy
+        state_class: total_increasing
+        scan_interval: 3600
+
+      - name: "solar_total_yield"
+        unique_id: "modbus_solar_total_kwh"
+        slave: 1
+        address: 206          # Input Register 30207 - 累计总发电量 (Wh)
+        input_type: input
+        data_type: uint32
+        swap: word
+        scale: 0.001
+        offset: 0
+        precision: 0
+        unit_of_measurement: "kWh"
+        device_class: energy
+        state_class: total_increasing
+        scan_interval: 3600
+
+      # -----------------------------------------------------------------------
+      # 逆变器状态和报警 (Inverter Status and Alarms)
+      # 寄存器区域: 30301-30320
+      # -----------------------------------------------------------------------
+      - name: "solar_inverter_status"
+        unique_id: "modbus_solar_inv_status"
+        slave: 1
+        address: 300          # Input Register 30301 - 逆变器运行状态
+        input_type: input
+        data_type: uint16
+        scan_interval: 10
+        # 状态码:
+        # 0 = 待机 (Standby)
+        # 1 = 启动中 (Starting)
+        # 2 = 运行中 (Running / MPPT)
+        # 3 = 限功率运行 (Throttled)
+        # 4 = 关机中 (Shutting Down)
+        # 5 = 故障 (Fault)
+        # 6 = 维护模式 (Maintenance)
+        # 7 = 通信故障 (Comm Error)
+
+      - name: "solar_error_code"
+        unique_id: "modbus_solar_error"
+        slave: 1
+        address: 301          # Input Register 30302 - 故障代码
+        input_type: input
+        data_type: uint16
+        scan_interval: 10
+
+      - name: "solar_warning_code"
+        unique_id: "modbus_solar_warning"
+        slave: 1
+        address: 302          # Input Register 30303 - 警告代码
+        input_type: input
+        data_type: uint16
+        scan_interval: 30
+
+      # -----------------------------------------------------------------------
+      # 逆变器内部温度 (Internal Temperature Sensors)
+      # -----------------------------------------------------------------------
+      - name: "solar_inverter_temp_internal"
+        unique_id: "modbus_solar_inv_temp"
+        slave: 1
+        address: 310          # Input Register 30311 - 内部温度
+        input_type: input
+        data_type: int16
+        scale: 0.1
+        offset: 0
+        precision: 1
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        scan_interval: 60
+
+      - name: "solar_inverter_temp_heatsink"
+        unique_id: "modbus_solar_inv_heatsink"
+        slave: 1
+        address: 311          # Input Register 30312 - 散热器温度
+        input_type: input
+        data_type: int16
+        scale: 0.1
+        offset: 0
+        precision: 1
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        scan_interval: 60
+
+      - name: "solar_inverter_temp_transformer"
+        unique_id: "modbus_solar_inv_xfmr_temp"
+        slave: 1
+        address: 312          # Input Register 30313 - 变压器温度
+        input_type: input
+        data_type: int16
+        scale: 0.1
+        offset: 0
+        precision: 1
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        scan_interval: 60
+
+      # -----------------------------------------------------------------------
+      # 隔离阻抗 (Insulation Resistance)
+      # -----------------------------------------------------------------------
+      - name: "solar_insulation_resistance"
+        unique_id: "modbus_solar_iso_res"
+        slave: 1
+        address: 320          # Input Register 30321 - 隔离电阻 (kOhm)
+        input_type: input
+        data_type: uint16
+        scale: 1
+        offset: 0
+        precision: 0
+        unit_of_measurement: "kOhm"
+        scan_interval: 300
+
+      # -----------------------------------------------------------------------
+      # 逆变器效率 (Inverter Efficiency)
+      # -----------------------------------------------------------------------
+      - name: "solar_inverter_efficiency"
+        unique_id: "modbus_solar_inv_eff"
+        slave: 1
+        address: 322          # Input Register 30323 - 转换效率 (%)
+        input_type: input
+        data_type: uint16
+        scale: 0.1
+        offset: 0
+        precision: 1
+        unit_of_measurement: "%"
+        scan_interval: 60
+
+      # -----------------------------------------------------------------------
+      # 运行统计 (Operating Statistics)
+      # -----------------------------------------------------------------------
+      - name: "solar_operating_hours"
+        unique_id: "modbus_solar_op_hours"
+        slave: 1
+        address: 330          # Input Register 30331 - 累计运行时间 (hours)
+        input_type: input
+        data_type: uint32
+        swap: word
+        scale: 1
+        offset: 0
+        precision: 0
+        unit_of_measurement: "h"
+        device_class: duration
+        state_class: total_increasing
+        scan_interval: 3600
+
+      - name: "solar_feed_in_hours"
+        unique_id: "modbus_solar_feed_hours"
+        slave: 1
+        address: 332          # Input Register 30333 - 累计并网时间 (hours)
+        input_type: input
+        data_type: uint32
+        swap: word
+        scale: 1
+        offset: 0
+        precision: 0
+        unit_of_measurement: "h"
+        device_class: duration
+        state_class: total_increasing
+        scan_interval: 3600
+
+    # =========================================================================
+    # 逆变器控制 (Inverter Control via Holding Registers)
+    # =========================================================================
+    switches:
+      # 逆变器远程启停
+      - name: "solar_inverter_enable"
+        unique_id: "modbus_solar_inv_enable"
+        slave: 1
+        address: 0            # Holding Register 40001 - 远程启停
+        write_type: coil
+        command_on: 1
+        command_off: 0
+        verify_state: true
+        scan_interval: 30
+
+    numbers:
+      # 有功功率限制 (Active Power Limitation)
+      - name: "solar_power_limit_pct"
+        unique_id: "modbus_solar_pwr_limit"
+        slave: 1
+        address: 10           # Holding Register 40011 - 功率限制 (0-100%)
+        min_value: 0
+        max_value: 100
+        step: 1
+        write_type: holding
+        data_type: uint16
+        scan_interval: 60
+
+      # 无功功率设定 (Reactive Power Setpoint)
+      - name: "solar_reactive_power_setpoint"
+        unique_id: "modbus_solar_q_setpoint"
+        slave: 1
+        address: 12           # Holding Register 40013 - 无功功率设定 (VAR)
+        min_value: -25000     # 容性 (Capacitive)
+        max_value: 25000      # 感性 (Inductive)
+        step: 100
+        write_type: holding
+        data_type: int16
+        scan_interval: 60
+
+  # ===========================================================================
+  # Hub 2: 储能电池系统 (Battery Energy Storage System - BESS)
+  # ===========================================================================
+  # 设备: LiFePO4 电池管理系统 (BMS) + 双向逆变器 (PCS)
+  # IP: 192.168.1.31, Port: 502, Slave ID: 1
+  # 容量: 100kWh, 标称电压 512V (16 串模组)
+  # ===========================================================================
+  - name: "battery_storage"
+    type: tcp
+    host: 192.168.1.31
+    port: 502
+    timeout: 5
+    delay: 0.1
+    retries: 3
+    retry_on_empty: true
+    close_comm_on_error: true
+    message_wait_milliseconds: 50
+
+    sensors:
+      # -----------------------------------------------------------------------
+      # 电池组核心参数 (Battery Pack Core Parameters)
+      # 寄存器区域: 30001-30050 (Input Registers)
+      # -----------------------------------------------------------------------
+      - name: "battery_soc"
+        unique_id: "modbus_batt_soc"
+        slave: 1
+        address: 0            # Input Register 30001 - 电池荷电状态 SOC (%)
+        input_type: input
+        data_type: uint16
+        scale: 0.1
+        offset: 0
+        precision: 1
+        unit_of_measurement: "%"
+        device_class: battery
+        state_class: measurement
+        scan_interval: 30
+
+      - name: "battery_soh"
+        unique_id: "modbus_batt_soh"
+        slave: 1
+        address: 1            # Input Register 30002 - 电池健康状态 SOH (%)
+        input_type: input
+        data_type: uint16
+        scale: 0.1
+        offset: 0
+        precision: 1
+        unit_of_measurement: "%"
+        scan_interval: 3600
+
+      - name: "battery_voltage"
+        unique_id: "modbus_batt_voltage"
+        slave: 1
+        address: 2            # Input Register 30003 - 电池组总电压
+        input_type: input
+        data_type: float32
+        swap: word
+        precision: 1
+        unit_of_measurement: "V"
+        device_class: voltage
+        state_class: measurement
+        scan_interval: 10
+
+      - name: "battery_current"
+        unique_id: "modbus_batt_current"
+        slave: 1
+        address: 4            # Input Register 30005 - 电池组电流
+        input_type: input     # 正=充电, 负=放电
+        data_type: float32
+        swap: word
+        precision: 2
+        unit_of_measurement: "A"
+        device_class: current
+        state_class: measurement
+        scan_interval: 10
+
+      - name: "battery_power"
+        unique_id: "modbus_batt_power"
+        slave: 1
+        address: 6            # Input Register 30007 - 充放电功率
+        input_type: input     # 正=充电, 负=放电
+        data_type: float32
+        swap: word
+        precision: 0
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        scan_interval: 10
+
+      # -----------------------------------------------------------------------
+      # 电池温度 (Battery Temperature)
+      # 多个温度探头分布在电池模组中
+      # -----------------------------------------------------------------------
+      - name: "battery_temp_max"
+        unique_id: "modbus_batt_temp_max"
+        slave: 1
+        address: 10           # Input Register 30011 - 最高温度
+        input_type: input
+        data_type: int16
+        scale: 0.1
+        offset: 0
+        precision: 1
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        scan_interval: 30
+
+      - name: "battery_temp_min"
+        unique_id: "modbus_batt_temp_min"
+        slave: 1
+        address: 11           # Input Register 30012 - 最低温度
+        input_type: input
+        data_type: int16
+        scale: 0.1
+        offset: 0
+        precision: 1
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        scan_interval: 30
+
+      - name: "battery_temp_average"
+        unique_id: "modbus_batt_temp_avg"
+        slave: 1
+        address: 12           # Input Register 30013 - 平均温度
+        input_type: input
+        data_type: int16
+        scale: 0.1
+        offset: 0
+        precision: 1
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        scan_interval: 30
+
+      - name: "battery_temp_delta"
+        unique_id: "modbus_batt_temp_delta"
+        slave: 1
+        address: 13           # Input Register 30014 - 温差 (最高-最低)
+        input_type: input
+        data_type: uint16
+        scale: 0.1
+        offset: 0
+        precision: 1
+        unit_of_measurement: "°C"
+        scan_interval: 30
+
+      # -----------------------------------------------------------------------
+      # 单体电压极值 (Cell Voltage Extremes)
+      # -----------------------------------------------------------------------
+      - name: "battery_cell_voltage_max"
+        unique_id: "modbus_batt_cell_v_max"
+        slave: 1
+        address: 20           # Input Register 30021 - 最高单体电压 (mV)
+        input_type: input
+        data_type: uint16
+        scale: 0.001          # mV -> V
+        offset: 0
+        precision: 3
+        unit_of_measurement: "V"
+        device_class: voltage
+        state_class: measurement
+        scan_interval: 30
+
+      - name: "battery_cell_voltage_min"
+        unique_id: "modbus_batt_cell_v_min"
+        slave: 1
+        address: 21           # Input Register 30022 - 最低单体电压 (mV)
+        input_type: input
+        data_type: uint16
+        scale: 0.001
+        offset: 0
+        precision: 3
+        unit_of_measurement: "V"
+        device_class: voltage
+        state_class: measurement
+        scan_interval: 30
+
+      - name: "battery_cell_voltage_delta"
+        unique_id: "modbus_batt_cell_v_delta"
+        slave: 1
+        address: 22           # Input Register 30023 - 压差 (mV)
+        input_type: input
+        data_type: uint16
+        scale: 0.001
+        offset: 0
+        precision: 3
+        unit_of_measurement: "V"
+        scan_interval: 30
+
+      - name: "battery_cell_max_id"
+        unique_id: "modbus_batt_cell_max_id"
+        slave: 1
+        address: 23           # Input Register 30024 - 最高电压单体编号
+        input_type: input
+        data_type: uint16
+        scan_interval: 30
+
+      - name: "battery_cell_min_id"
+        unique_id: "modbus_batt_cell_min_id"
+        slave: 1
+        address: 24           # Input Register 30025 - 最低电压单体编号
+        input_type: input
+        data_type: uint16
+        scan_interval: 30
+
+      # -----------------------------------------------------------------------
+      # 充放电统计 (Charge/Discharge Statistics)
+      # -----------------------------------------------------------------------
+      - name: "battery_total_charge_energy"
+        unique_id: "modbus_batt_charge_kwh"
+        slave: 1
+        address: 30           # Input Register 30031 - 累计充电电量 (kWh)
+        input_type: input
+        data_type: float32
+        swap: word
+        precision: 1
+        unit_of_measurement: "kWh"
+        device_class: energy
+        state_class: total_increasing
+        scan_interval: 300
+
+      - name: "battery_total_discharge_energy"
+        unique_id: "modbus_batt_discharge_kwh"
+        slave: 1
+        address: 32           # Input Register 30033 - 累计放电电量 (kWh)
+        input_type: input
+        data_type: float32
+        swap: word
+        precision: 1
+        unit_of_measurement: "kWh"
+        device_class: energy
+        state_class: total_increasing
+        scan_interval: 300
+
+      - name: "battery_daily_charge_energy"
+        unique_id: "modbus_batt_daily_charge"
+        slave: 1
+        address: 34           # Input Register 30035 - 当日充电电量 (kWh)
+        input_type: input
+        data_type: float32
+        swap: word
+        precision: 2
+        unit_of_measurement: "kWh"
+        device_class: energy
+        state_class: total_increasing
+        scan_interval: 300
+
+      - name: "battery_daily_discharge_energy"
+        unique_id: "modbus_batt_daily_discharge"
+        slave: 1
+        address: 36           # Input Register 30037 - 当日放电电量 (kWh)
+        input_type: input
+        data_type: float32
+        swap: word
+        precision: 2
+        unit_of_measurement: "kWh"
+        device_class: energy
+        state_class: total_increasing
+        scan_interval: 300
+
+      # -----------------------------------------------------------------------
+      # 循环次数和寿命 (Cycle Count and Lifetime)
+      # -----------------------------------------------------------------------
+      - name: "battery_cycle_count"
+        unique_id: "modbus_batt_cycles"
+        slave: 1
+        address: 40           # Input Register 30041 - 循环次数
+        input_type: input
+        data_type: uint16
+        scale: 1
+        offset: 0
+        precision: 0
+        unit_of_measurement: "cycles"
+        state_class: total_increasing
+        scan_interval: 3600
+
+      - name: "battery_remaining_capacity"
+        unique_id: "modbus_batt_remaining_ah"
+        slave: 1
+        address: 41           # Input Register 30042 - 剩余容量 (Ah)
+        input_type: input
+        data_type: float32
+        swap: word
+        precision: 1
+        unit_of_measurement: "Ah"
+        scan_interval: 300
+
+      - name: "battery_full_capacity"
+        unique_id: "modbus_batt_full_ah"
+        slave: 1
+        address: 43           # Input Register 30044 - 满充容量 (Ah)
+        input_type: input
+        data_type: float32
+        swap: word
+        precision: 1
+        unit_of_measurement: "Ah"
+        scan_interval: 3600
+
+      # -----------------------------------------------------------------------
+      # BMS 状态和报警 (BMS Status and Alarms)
+      # -----------------------------------------------------------------------
+      - name: "battery_bms_status"
+        unique_id: "modbus_batt_bms_status"
+        slave: 1
+        address: 50           # Input Register 30051 - BMS 运行状态
+        input_type: input
+        data_type: uint16
+        scan_interval: 10
+        # 状态码:
+        # 0 = 待机 (Standby)
+        # 1 = 充电 (Charging)
+        # 2 = 放电 (Discharging)
+        # 3 = 空闲 (Idle)
+        # 4 = 故障 (Fault)
+        # 5 = 保护 (Protection Active)
+
+      - name: "battery_alarm_code"
+        unique_id: "modbus_batt_alarm"
+        slave: 1
+        address: 51           # Input Register 30052 - 报警代码 (位域)
+        input_type: input
+        data_type: uint16
+        scan_interval: 10
+        # 位定义 (Bit Field):
+        # Bit 0: 单体过压 (Cell Overvoltage)
+        # Bit 1: 单体欠压 (Cell Undervoltage)
+        # Bit 2: 组过压 (Pack Overvoltage)
+        # Bit 3: 组欠压 (Pack Undervoltage)
+        # Bit 4: 充电过温 (Charge Over-Temperature)
+        # Bit 5: 充电低温 (Charge Under-Temperature)
+        # Bit 6: 放电过温 (Discharge Over-Temperature)
+        # Bit 7: 放电低温 (Discharge Under-Temperature)
+        # Bit 8: 充电过流 (Charge Overcurrent)
+        # Bit 9: 放电过流 (Discharge Overcurrent)
+        # Bit 10: 短路保护 (Short Circuit)
+        # Bit 11: 通信故障 (Communication Fault)
+
+      - name: "battery_protection_code"
+        unique_id: "modbus_batt_protection"
+        slave: 1
+        address: 52           # Input Register 30053 - 保护状态 (位域)
+        input_type: input
+        data_type: uint16
+        scan_interval: 10
+
+      # -----------------------------------------------------------------------
+      # PCS (双向逆变器) 参数
+      # -----------------------------------------------------------------------
+      - name: "battery_pcs_ac_power"
+        unique_id: "modbus_batt_pcs_ac_pwr"
+        slave: 1
+        address: 100          # Input Register 30101 - PCS 交流侧功率
+        input_type: input
+        data_type: float32
+        swap: word
+        precision: 0
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        scan_interval: 10
+
+      - name: "battery_pcs_efficiency"
+        unique_id: "modbus_batt_pcs_eff"
+        slave: 1
+        address: 102          # Input Register 30103 - PCS 效率 (%)
+        input_type: input
+        data_type: uint16
+        scale: 0.1
+        offset: 0
+        precision: 1
+        unit_of_measurement: "%"
+        scan_interval: 60
+
+    # =========================================================================
+    # 储能控制 (Storage Control via Holding Registers)
+    # =========================================================================
+    switches:
+      # 储能系统启停
+      - name: "battery_system_enable"
+        unique_id: "modbus_batt_sys_enable"
+        slave: 1
+        address: 0            # Holding Register 40001 - 系统使能
+        write_type: coil
+        command_on: 1
+        command_off: 0
+        verify_state: true
+        scan_interval: 30
+
+    numbers:
+      # 充电功率限制
+      - name: "battery_charge_power_limit"
+        unique_id: "modbus_batt_charge_limit"
+        slave: 1
+        address: 10           # Holding Register 40011 - 最大充电功率 (W)
+        min_value: 0
+        max_value: 50000      # 50kW
+        step: 500
+        write_type: holding
+        data_type: uint16
+        scan_interval: 60
+
+      # 放电功率限制
+      - name: "battery_discharge_power_limit"
+        unique_id: "modbus_batt_discharge_limit"
+        slave: 1
+        address: 11           # Holding Register 40012 - 最大放电功率 (W)
+        min_value: 0
+        max_value: 50000      # 50kW
+        step: 500
+        write_type: holding
+        data_type: uint16
+        scan_interval: 60
+
+      # 最低 SOC 设定 (防止过放)
+      - name: "battery_min_soc_setpoint"
+        unique_id: "modbus_batt_min_soc"
+        slave: 1
+        address: 12           # Holding Register 40013 - 最低 SOC 限制 (%)
+        min_value: 5
+        max_value: 50
+        step: 1
+        write_type: holding
+        data_type: uint16
+        scan_interval: 300
+
+      # 最高 SOC 设定 (防止过充)
+      - name: "battery_max_soc_setpoint"
+        unique_id: "modbus_batt_max_soc"
+        slave: 1
+        address: 13           # Holding Register 40014 - 最高 SOC 限制 (%)
+        min_value: 50
+        max_value: 100
+        step: 1
+        write_type: holding
+        data_type: uint16
+        scan_interval: 300
+
+    # =========================================================================
+    # 储能系统报警 (Binary Sensors)
+    # =========================================================================
+    binary_sensors:
+      - name: "battery_bms_communication"
+        unique_id: "modbus_batt_bms_comm"
+        slave: 1
+        address: 0            # Discrete Input 10001 - BMS 通信正常
+        input_type: discrete_input
+        device_class: connectivity
+        scan_interval: 10
+
+      - name: "battery_overtemp_alarm"
+        unique_id: "modbus_batt_overtemp"
+        slave: 1
+        address: 1            # Discrete Input 10002 - 过温报警
+        input_type: discrete_input
+        device_class: heat
+        scan_interval: 10
+
+      - name: "battery_overvoltage_alarm"
+        unique_id: "modbus_batt_overvolt"
+        slave: 1
+        address: 2            # Discrete Input 10003 - 过压报警
+        input_type: discrete_input
+        device_class: problem
+        scan_interval: 10
+
+      - name: "battery_undervoltage_alarm"
+        unique_id: "modbus_batt_undervolt"
+        slave: 1
+        address: 3            # Discrete Input 10004 - 欠压报警
+        input_type: discrete_input
+        device_class: problem
+        scan_interval: 10
+
+      - name: "battery_overcurrent_alarm"
+        unique_id: "modbus_batt_overcurrent"
+        slave: 1
+        address: 4            # Discrete Input 10005 - 过流报警
+        input_type: discrete_input
+        device_class: problem
+        scan_interval: 10
+
+      - name: "battery_insulation_alarm"
+        unique_id: "modbus_batt_insulation"
+        slave: 1
+        address: 5            # Discrete Input 10006 - 绝缘故障
+        input_type: discrete_input
+        device_class: problem
+        scan_interval: 60
+
+# =============================================================================
+# 模板传感器 - 光储系统计算 (Calculated Sensors)
+# =============================================================================
+template:
+  - sensor:
+      # 逆变器状态文本映射
+      - name: "Solar Inverter Status Text"
+        unique_id: "solar_inv_status_text"
+        state: >-
+          {% set status = states('sensor.solar_inverter_status') | int(0) %}
+          {% if status == 0 %}待机 (Standby)
+          {% elif status == 1 %}启动中 (Starting)
+          {% elif status == 2 %}运行中 (Running)
+          {% elif status == 3 %}限功率 (Throttled)
+          {% elif status == 4 %}关机中 (Shutting Down)
+          {% elif status == 5 %}故障 (Fault)
+          {% elif status == 6 %}维护 (Maintenance)
+          {% elif status == 7 %}通信故障 (Comm Error)
+          {% else %}未知 (Unknown)
+          {% endif %}
+
+      # BMS 状态文本映射
+      - name: "Battery BMS Status Text"
+        unique_id: "batt_bms_status_text"
+        state: >-
+          {% set status = states('sensor.battery_bms_status') | int(0) %}
+          {% if status == 0 %}待机 (Standby)
+          {% elif status == 1 %}充电中 (Charging)
+          {% elif status == 2 %}放电中 (Discharging)
+          {% elif status == 3 %}空闲 (Idle)
+          {% elif status == 4 %}故障 (Fault)
+          {% elif status == 5 %}保护 (Protection)
+          {% else %}未知 (Unknown)
+          {% endif %}
+
+      # 总直流功率 (两路 MPPT 合计)
+      - name: "Solar Total DC Power"
+        unique_id: "solar_total_dc_power"
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        state: >-
+          {% set p1 = states('sensor.solar_dc_power_mppt1') | float(0) %}
+          {% set p2 = states('sensor.solar_dc_power_mppt2') | float(0) %}
+          {{ (p1 + p2) | round(0) }}
+
+      # 光储系统净功率 (正=向电网馈电, 负=从电网取电)
+      - name: "Solar Battery Net Power"
+        unique_id: "solar_batt_net_power"
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        state: >-
+          {% set solar = states('sensor.solar_ac_power_total') | float(0) %}
+          {% set battery = states('sensor.battery_power') | float(0) %}
+          {{ (solar + battery) | round(0) }}
+
+      # 自发自用率 (Self-Consumption Rate)
+      - name: "Solar Self Consumption Rate"
+        unique_id: "solar_self_consumption"
+        unit_of_measurement: "%"
+        state: >-
+          {% set produced = states('sensor.solar_daily_yield') | float(0) %}
+          {% set exported = 0 %}
+          {% if produced > 0 %}
+            {{ (((produced - exported) / produced) * 100) | round(1) }}
+          {% else %}
+            0
+          {% endif %}
+
+      # 电池预计可用时间 (按当前放电功率计算)
+      - name: "Battery Estimated Runtime"
+        unique_id: "batt_est_runtime"
+        unit_of_measurement: "h"
+        device_class: duration
+        state: >-
+          {% set soc = states('sensor.battery_soc') | float(0) %}
+          {% set power = states('sensor.battery_power') | float(0) %}
+          {% set capacity = 100 %}
+          {% if power < -100 %}
+            {% set remaining_kwh = (soc / 100) * capacity %}
+            {{ (remaining_kwh / (power | abs / 1000)) | round(1) }}
+          {% else %}
+            0
+          {% endif %}
+
+  - binary_sensor:
+      # 逆变器是否正在发电
+      - name: "Solar Inverter Producing"
+        unique_id: "solar_inv_producing"
+        device_class: power
+        state: >-
+          {{ states('sensor.solar_ac_power_total') | float(0) > 50 }}
+
+      # 电池是否在充电
+      - name: "Battery Is Charging"
+        unique_id: "batt_is_charging"
+        device_class: battery_charging
+        state: >-
+          {{ states('sensor.battery_power') | float(0) > 100 }}
+
+      # 电池低电量警告 (SOC < 15%)
+      - name: "Battery Low Warning"
+        unique_id: "batt_low_warning"
+        device_class: battery
+        state: >-
+          {{ states('sensor.battery_soc') | float(100) < 15 }}

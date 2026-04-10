@@ -1,0 +1,1375 @@
+# ============================================================================
+# KNX Main Configuration - Smart Office Building (智能办公楼 KNX 主配置)
+# ============================================================================
+# 项目: 三层办公楼宇智能控制系统
+# Building: 3-story commercial office (B1 lobby + F1-F3 office floors)
+# KNX System Integrator: Woow Smart Building Solutions
+# ETS Project Version: 5.7.x
+# 最后更新: 2026-04
+#
+# Group Address 分配规则 (3-level format):
+#   Main Group 0:  系统功能 (System functions)
+#   Main Group 1:  照明控制 (Lighting control)
+#   Main Group 2:  遮阳/窗帘 (Blinds/shading)
+#   Main Group 3:  暖通空调 (HVAC)
+#   Main Group 4:  二进制传感器 (Binary sensors)
+#   Main Group 5:  环境传感器 (Environmental sensors)
+#   Main Group 6:  开关设备 (Switching devices)
+#   Main Group 7:  场景控制 (Scene control)
+#   Main Group 8:  气象站 (Weather station)
+#   Main Group 9:  能耗监控 (Energy monitoring)
+#
+#   Middle Group 编码: 0=公共/系统, 1=一楼, 2=二楼, 3=三楼, 4=屋顶
+#
+# 注意: 所有 group address 均遵循 ETS 项目实际分配
+# ============================================================================
+
+knx:
+
+  # --------------------------------------------------------------------------
+  # KNX/IP 连接配置 (Connection Configuration)
+  # --------------------------------------------------------------------------
+  # 使用 KNX/IP Tunneling 连接到 Weinzierl KNX IP Interface 730
+  # 网关安装在一楼弱电间 (Telecom room, Floor 1)
+  tunneling:
+    host: "192.168.1.10"
+    port: 3671
+    local_ip: "192.168.1.50"
+    # route_back: true  # 如果 HA 在不同子网时启用
+
+  # 速率限制 - 防止 KNX 总线过载
+  rate_limit: 0  # 0 = 使用默认值 (20 telegrams/sec)
+
+  # 状态更新器 - 定期读取传感器值
+  state_updater: true
+
+  # ==========================================================================
+  #  照明控制 (LIGHTING CONTROL)
+  # ==========================================================================
+  # DPT 1.001 = 开关 (Switch)
+  # DPT 3.007 = 调光控制 (Dimming control)
+  # DPT 5.001 = 调光值 0-100% (Dimming value)
+  # DPT 232.600 = RGB 颜色 (RGB color)
+  # ==========================================================================
+
+  light:
+
+    # --- 一楼大堂 (Floor 1 - Lobby) ---
+    - name: "一楼大堂主灯"
+      comment: "F1 Lobby main ceiling lights - ABB Busch-Dimmer 6155"
+      address: "1/1/0"                    # 开关 switching (DPT 1.001)
+      state_address: "1/1/1"              # 开关状态反馈 switch status
+      brightness_address: "1/1/2"         # 调光值 dimming value (DPT 5.001)
+      brightness_state_address: "1/1/3"   # 调光状态反馈 dim status
+
+    - name: "一楼大堂装饰灯带"
+      comment: "F1 Lobby RGB LED strip - MDT AKD-0424R.02"
+      address: "1/1/4"
+      state_address: "1/1/5"
+      brightness_address: "1/1/6"
+      brightness_state_address: "1/1/7"
+      color_address: "1/1/8"              # RGB 颜色 (DPT 232.600)
+      color_state_address: "1/1/9"
+
+    - name: "一楼前台接待灯"
+      comment: "F1 Reception desk downlights - Theben DALI gateway"
+      address: "1/1/10"
+      state_address: "1/1/11"
+      brightness_address: "1/1/12"
+      brightness_state_address: "1/1/13"
+
+    - name: "一楼走廊灯"
+      comment: "F1 Corridor lights - ABB SA/S 4.16.6.1"
+      address: "1/1/14"
+      state_address: "1/1/15"
+      brightness_address: "1/1/16"
+      brightness_state_address: "1/1/17"
+
+    # --- 一楼会议室 (Floor 1 - Meeting Rooms) ---
+    - name: "一楼小会议室A灯"
+      comment: "F1 Meeting Room A (6人) - Schneider MTN6725"
+      address: "1/1/20"
+      state_address: "1/1/21"
+      brightness_address: "1/1/22"
+      brightness_state_address: "1/1/23"
+
+    - name: "一楼小会议室B灯"
+      comment: "F1 Meeting Room B (6人) - Schneider MTN6725"
+      address: "1/1/24"
+      state_address: "1/1/25"
+      brightness_address: "1/1/26"
+      brightness_state_address: "1/1/27"
+
+    - name: "一楼大会议室灯"
+      comment: "F1 Large conference room (20人) - DALI zone control"
+      address: "1/1/30"
+      state_address: "1/1/31"
+      brightness_address: "1/1/32"
+      brightness_state_address: "1/1/33"
+      color_address: "1/1/34"
+      color_state_address: "1/1/35"
+
+    # --- 二楼开放办公区 (Floor 2 - Open Office) ---
+    - name: "二楼开放办公区A灯"
+      comment: "F2 Open office zone A (东侧) - ABB UD/S 4.315.2"
+      address: "1/2/0"
+      state_address: "1/2/1"
+      brightness_address: "1/2/2"
+      brightness_state_address: "1/2/3"
+
+    - name: "二楼开放办公区B灯"
+      comment: "F2 Open office zone B (西侧) - ABB UD/S 4.315.2"
+      address: "1/2/4"
+      state_address: "1/2/5"
+      brightness_address: "1/2/6"
+      brightness_state_address: "1/2/7"
+
+    - name: "二楼开放办公区C灯"
+      comment: "F2 Open office zone C (中央) - ABB UD/S 4.315.2"
+      address: "1/2/8"
+      state_address: "1/2/9"
+      brightness_address: "1/2/10"
+      brightness_state_address: "1/2/11"
+
+    - name: "二楼走廊灯"
+      comment: "F2 Corridor lights"
+      address: "1/2/14"
+      state_address: "1/2/15"
+      brightness_address: "1/2/16"
+      brightness_state_address: "1/2/17"
+
+    - name: "二楼会议室C灯"
+      comment: "F2 Meeting Room C (8人)"
+      address: "1/2/20"
+      state_address: "1/2/21"
+      brightness_address: "1/2/22"
+      brightness_state_address: "1/2/23"
+
+    - name: "二楼会议室D灯"
+      comment: "F2 Meeting Room D (8人)"
+      address: "1/2/24"
+      state_address: "1/2/25"
+      brightness_address: "1/2/26"
+      brightness_state_address: "1/2/27"
+
+    - name: "二楼茶水间灯"
+      comment: "F2 Pantry/kitchen area"
+      address: "1/2/30"
+      state_address: "1/2/31"
+
+    # --- 三楼管理层 (Floor 3 - Management) ---
+    - name: "三楼总经理办公室灯"
+      comment: "F3 CEO office - Gira Sensotec dimmer"
+      address: "1/3/0"
+      state_address: "1/3/1"
+      brightness_address: "1/3/2"
+      brightness_state_address: "1/3/3"
+      color_address: "1/3/4"
+      color_state_address: "1/3/5"
+
+    - name: "三楼副总办公室灯"
+      comment: "F3 VP office"
+      address: "1/3/6"
+      state_address: "1/3/7"
+      brightness_address: "1/3/8"
+      brightness_state_address: "1/3/9"
+
+    - name: "三楼财务部灯"
+      comment: "F3 Finance department"
+      address: "1/3/10"
+      state_address: "1/3/11"
+      brightness_address: "1/3/12"
+      brightness_state_address: "1/3/13"
+
+    - name: "三楼行政部灯"
+      comment: "F3 Admin department"
+      address: "1/3/14"
+      state_address: "1/3/15"
+      brightness_address: "1/3/16"
+      brightness_state_address: "1/3/17"
+
+    - name: "三楼走廊灯"
+      comment: "F3 Corridor lights"
+      address: "1/3/20"
+      state_address: "1/3/21"
+      brightness_address: "1/3/22"
+      brightness_state_address: "1/3/23"
+
+    - name: "三楼VIP会议室灯"
+      comment: "F3 VIP boardroom (30人) - Full DALI + RGB"
+      address: "1/3/30"
+      state_address: "1/3/31"
+      brightness_address: "1/3/32"
+      brightness_state_address: "1/3/33"
+      color_address: "1/3/34"
+      color_state_address: "1/3/35"
+
+    - name: "三楼VIP会议室射灯"
+      comment: "F3 VIP boardroom accent spotlights"
+      address: "1/3/36"
+      state_address: "1/3/37"
+      brightness_address: "1/3/38"
+      brightness_state_address: "1/3/39"
+
+    # --- 公共区域 (Common Areas) ---
+    - name: "地下车库灯区域1"
+      comment: "Basement parking zone 1 - Presence-controlled"
+      address: "1/0/0"
+      state_address: "1/0/1"
+      brightness_address: "1/0/2"
+      brightness_state_address: "1/0/3"
+
+    - name: "地下车库灯区域2"
+      comment: "Basement parking zone 2"
+      address: "1/0/4"
+      state_address: "1/0/5"
+      brightness_address: "1/0/6"
+      brightness_state_address: "1/0/7"
+
+    - name: "楼梯间灯"
+      comment: "Stairwell emergency + general lighting"
+      address: "1/0/10"
+      state_address: "1/0/11"
+
+    - name: "卫生间灯一楼"
+      comment: "F1 Restroom lights - Motion activated"
+      address: "1/0/20"
+      state_address: "1/0/21"
+
+    - name: "卫生间灯二楼"
+      comment: "F2 Restroom lights"
+      address: "1/0/22"
+      state_address: "1/0/23"
+
+    - name: "卫生间灯三楼"
+      comment: "F3 Restroom lights"
+      address: "1/0/24"
+      state_address: "1/0/25"
+
+    - name: "外墙泛光灯"
+      comment: "Building facade floodlights - Dusk/dawn controlled"
+      address: "1/0/30"
+      state_address: "1/0/31"
+      brightness_address: "1/0/32"
+      brightness_state_address: "1/0/33"
+      color_address: "1/0/34"
+      color_state_address: "1/0/35"
+
+  # ==========================================================================
+  #  二进制传感器 (BINARY SENSORS)
+  # ==========================================================================
+  # 运动探测器 (PIR/presence), 门窗磁, 烟感, 按键等
+  # DPT 1.001 = Switch
+  # DPT 1.002 = Boolean
+  # DPT 1.005 = Alarm
+  # ==========================================================================
+
+  binary_sensor:
+
+    # --- 运动/存在探测器 (Motion / Presence Detectors) ---
+    # Devices: ABB Busch-Presence detector Premium 6131/31
+    - name: "一楼大堂人体感应"
+      comment: "F1 Lobby presence detector"
+      state_address: "4/1/0"
+      device_class: "motion"
+
+    - name: "一楼走廊人体感应"
+      comment: "F1 Corridor PIR sensor"
+      state_address: "4/1/1"
+      device_class: "motion"
+
+    - name: "一楼小会议室A人体感应"
+      comment: "F1 Meeting Room A presence"
+      state_address: "4/1/2"
+      device_class: "occupancy"
+
+    - name: "一楼小会议室B人体感应"
+      comment: "F1 Meeting Room B presence"
+      state_address: "4/1/3"
+      device_class: "occupancy"
+
+    - name: "一楼大会议室人体感应"
+      comment: "F1 Large conference room presence"
+      state_address: "4/1/4"
+      device_class: "occupancy"
+
+    - name: "二楼开放办公区人体感应A"
+      comment: "F2 Open office zone A presence"
+      state_address: "4/2/0"
+      device_class: "occupancy"
+
+    - name: "二楼开放办公区人体感应B"
+      comment: "F2 Open office zone B presence"
+      state_address: "4/2/1"
+      device_class: "occupancy"
+
+    - name: "二楼开放办公区人体感应C"
+      comment: "F2 Open office zone C presence"
+      state_address: "4/2/2"
+      device_class: "occupancy"
+
+    - name: "二楼走廊人体感应"
+      comment: "F2 Corridor PIR"
+      state_address: "4/2/3"
+      device_class: "motion"
+
+    - name: "二楼会议室C人体感应"
+      comment: "F2 Meeting Room C presence"
+      state_address: "4/2/4"
+      device_class: "occupancy"
+
+    - name: "二楼会议室D人体感应"
+      comment: "F2 Meeting Room D presence"
+      state_address: "4/2/5"
+      device_class: "occupancy"
+
+    - name: "二楼茶水间人体感应"
+      comment: "F2 Pantry motion"
+      state_address: "4/2/6"
+      device_class: "motion"
+
+    - name: "三楼走廊人体感应"
+      comment: "F3 Corridor PIR"
+      state_address: "4/3/0"
+      device_class: "motion"
+
+    - name: "三楼总经理办公室人体感应"
+      comment: "F3 CEO office presence"
+      state_address: "4/3/1"
+      device_class: "occupancy"
+
+    - name: "三楼VIP会议室人体感应"
+      comment: "F3 VIP boardroom presence"
+      state_address: "4/3/2"
+      device_class: "occupancy"
+
+    - name: "地下车库人体感应区域1"
+      comment: "Basement parking zone 1 motion"
+      state_address: "4/0/0"
+      device_class: "motion"
+
+    - name: "地下车库人体感应区域2"
+      comment: "Basement parking zone 2 motion"
+      state_address: "4/0/1"
+      device_class: "motion"
+
+    - name: "卫生间一楼人体感应"
+      comment: "F1 Restroom motion"
+      state_address: "4/0/10"
+      device_class: "motion"
+
+    - name: "卫生间二楼人体感应"
+      comment: "F2 Restroom motion"
+      state_address: "4/0/11"
+      device_class: "motion"
+
+    - name: "卫生间三楼人体感应"
+      comment: "F3 Restroom motion"
+      state_address: "4/0/12"
+      device_class: "motion"
+
+    # --- 门窗磁 (Door/Window Contacts) ---
+    # Devices: Siemens AP 260 magnetic contacts
+    - name: "一楼大门状态"
+      comment: "F1 Main entrance door contact"
+      state_address: "4/1/20"
+      device_class: "door"
+
+    - name: "一楼后门状态"
+      comment: "F1 Rear exit door contact"
+      state_address: "4/1/21"
+      device_class: "door"
+
+    - name: "一楼大会议室门状态"
+      comment: "F1 Large conference room door"
+      state_address: "4/1/22"
+      device_class: "door"
+
+    - name: "二楼会议室C门状态"
+      comment: "F2 Meeting Room C door"
+      state_address: "4/2/20"
+      device_class: "door"
+
+    - name: "二楼会议室D门状态"
+      comment: "F2 Meeting Room D door"
+      state_address: "4/2/21"
+      device_class: "door"
+
+    - name: "三楼总经理办公室门状态"
+      comment: "F3 CEO office door"
+      state_address: "4/3/20"
+      device_class: "door"
+
+    - name: "三楼VIP会议室门状态"
+      comment: "F3 VIP boardroom door"
+      state_address: "4/3/21"
+      device_class: "door"
+
+    - name: "三楼财务室门状态"
+      comment: "F3 Finance room door (security zone)"
+      state_address: "4/3/22"
+      device_class: "door"
+
+    # --- 窗户触点 (Window Contacts) ---
+    - name: "二楼东侧窗户状态"
+      comment: "F2 East windows contact (grouped)"
+      state_address: "4/2/30"
+      device_class: "window"
+
+    - name: "二楼西侧窗户状态"
+      comment: "F2 West windows contact (grouped)"
+      state_address: "4/2/31"
+      device_class: "window"
+
+    - name: "三楼总经理办公室窗户状态"
+      comment: "F3 CEO office window"
+      state_address: "4/3/30"
+      device_class: "window"
+
+    - name: "三楼VIP会议室窗户状态"
+      comment: "F3 VIP boardroom windows"
+      state_address: "4/3/31"
+      device_class: "window"
+
+    # --- 烟感探测器 (Smoke Detectors) ---
+    # Devices: Siemens FDOOT241 via KNX gateway
+    - name: "一楼大堂烟感"
+      comment: "F1 Lobby smoke detector"
+      state_address: "4/1/40"
+      device_class: "smoke"
+
+    - name: "一楼走廊烟感"
+      comment: "F1 Corridor smoke detector"
+      state_address: "4/1/41"
+      device_class: "smoke"
+
+    - name: "一楼大会议室烟感"
+      comment: "F1 Large conference room smoke detector"
+      state_address: "4/1/42"
+      device_class: "smoke"
+
+    - name: "二楼开放办公区烟感"
+      comment: "F2 Open office smoke detector"
+      state_address: "4/2/40"
+      device_class: "smoke"
+
+    - name: "二楼走廊烟感"
+      comment: "F2 Corridor smoke detector"
+      state_address: "4/2/41"
+      device_class: "smoke"
+
+    - name: "三楼走廊烟感"
+      comment: "F3 Corridor smoke detector"
+      state_address: "4/3/40"
+      device_class: "smoke"
+
+    - name: "三楼VIP会议室烟感"
+      comment: "F3 VIP boardroom smoke detector"
+      state_address: "4/3/41"
+      device_class: "smoke"
+
+    - name: "地下车库烟感"
+      comment: "Basement parking smoke detector"
+      state_address: "4/0/40"
+      device_class: "smoke"
+
+    # --- 其他二进制传感器 (Other binary sensors) ---
+    - name: "UPS电源状态"
+      comment: "UPS power status - 1=on battery"
+      state_address: "4/0/50"
+      device_class: "power"
+
+    - name: "消防系统报警"
+      comment: "Fire alarm system general alarm relay"
+      state_address: "4/0/51"
+      device_class: "safety"
+
+    - name: "入侵报警系统状态"
+      comment: "Intrusion alarm system armed status"
+      state_address: "4/0/52"
+      device_class: "safety"
+
+  # ==========================================================================
+  #  环境传感器 (ENVIRONMENTAL SENSORS)
+  # ==========================================================================
+  # 温度 DPT 9.001, 湿度 DPT 9.007, 照度 DPT 9.004
+  # CO2 DPT 9.008, 风速 DPT 9.005
+  # Devices: ABB Busch-Room Temperature Controller, Elsner Sewi KNX
+  # ==========================================================================
+
+  sensor:
+
+    # --- 一楼温度传感器 (Floor 1 Temperature) ---
+    - name: "一楼大堂温度"
+      comment: "F1 Lobby temperature (DPT 9.001)"
+      state_address: "5/1/0"
+      type: "temperature"
+
+    - name: "一楼大会议室温度"
+      comment: "F1 Large conference room temperature"
+      state_address: "5/1/1"
+      type: "temperature"
+
+    - name: "一楼小会议室A温度"
+      comment: "F1 Meeting Room A temperature"
+      state_address: "5/1/2"
+      type: "temperature"
+
+    - name: "一楼小会议室B温度"
+      comment: "F1 Meeting Room B temperature"
+      state_address: "5/1/3"
+      type: "temperature"
+
+    - name: "一楼走廊温度"
+      comment: "F1 Corridor temperature"
+      state_address: "5/1/4"
+      type: "temperature"
+
+    # --- 二楼温度传感器 (Floor 2 Temperature) ---
+    - name: "二楼开放办公区温度A"
+      comment: "F2 Open office zone A temperature"
+      state_address: "5/2/0"
+      type: "temperature"
+
+    - name: "二楼开放办公区温度B"
+      comment: "F2 Open office zone B temperature"
+      state_address: "5/2/1"
+      type: "temperature"
+
+    - name: "二楼开放办公区温度C"
+      comment: "F2 Open office zone C temperature"
+      state_address: "5/2/2"
+      type: "temperature"
+
+    - name: "二楼会议室C温度"
+      comment: "F2 Meeting Room C temperature"
+      state_address: "5/2/3"
+      type: "temperature"
+
+    - name: "二楼会议室D温度"
+      comment: "F2 Meeting Room D temperature"
+      state_address: "5/2/4"
+      type: "temperature"
+
+    # --- 三楼温度传感器 (Floor 3 Temperature) ---
+    - name: "三楼总经理办公室温度"
+      comment: "F3 CEO office temperature"
+      state_address: "5/3/0"
+      type: "temperature"
+
+    - name: "三楼副总办公室温度"
+      comment: "F3 VP office temperature"
+      state_address: "5/3/1"
+      type: "temperature"
+
+    - name: "三楼财务部温度"
+      comment: "F3 Finance dept temperature"
+      state_address: "5/3/2"
+      type: "temperature"
+
+    - name: "三楼行政部温度"
+      comment: "F3 Admin dept temperature"
+      state_address: "5/3/3"
+      type: "temperature"
+
+    - name: "三楼VIP会议室温度"
+      comment: "F3 VIP boardroom temperature"
+      state_address: "5/3/4"
+      type: "temperature"
+
+    # --- 湿度传感器 (Humidity Sensors) ---
+    - name: "一楼大堂湿度"
+      comment: "F1 Lobby humidity (DPT 9.007)"
+      state_address: "5/1/10"
+      type: "humidity"
+
+    - name: "一楼大会议室湿度"
+      comment: "F1 Large conference room humidity"
+      state_address: "5/1/11"
+      type: "humidity"
+
+    - name: "二楼开放办公区湿度"
+      comment: "F2 Open office humidity (central)"
+      state_address: "5/2/10"
+      type: "humidity"
+
+    - name: "三楼总经理办公室湿度"
+      comment: "F3 CEO office humidity"
+      state_address: "5/3/10"
+      type: "humidity"
+
+    - name: "三楼VIP会议室湿度"
+      comment: "F3 VIP boardroom humidity"
+      state_address: "5/3/11"
+      type: "humidity"
+
+    # --- 照度传感器 (Illuminance / Lux Sensors) ---
+    - name: "一楼大堂照度"
+      comment: "F1 Lobby illuminance (DPT 9.004)"
+      state_address: "5/1/20"
+      type: "illuminance"
+
+    - name: "二楼开放办公区东侧照度"
+      comment: "F2 Open office east illuminance"
+      state_address: "5/2/20"
+      type: "illuminance"
+
+    - name: "二楼开放办公区西侧照度"
+      comment: "F2 Open office west illuminance"
+      state_address: "5/2/21"
+      type: "illuminance"
+
+    - name: "三楼总经理办公室照度"
+      comment: "F3 CEO office illuminance"
+      state_address: "5/3/20"
+      type: "illuminance"
+
+    - name: "三楼VIP会议室照度"
+      comment: "F3 VIP boardroom illuminance"
+      state_address: "5/3/21"
+      type: "illuminance"
+
+    # --- CO2 传感器 (CO2 Sensors) ---
+    # 用于需求控制通风 (Demand Controlled Ventilation)
+    - name: "一楼大会议室CO2"
+      comment: "F1 Large conference room CO2 (DPT 9.008)"
+      state_address: "5/1/30"
+      type: "default"
+      state_class: "measurement"
+
+    - name: "二楼开放办公区CO2"
+      comment: "F2 Open office CO2 concentration"
+      state_address: "5/2/30"
+      type: "default"
+      state_class: "measurement"
+
+    - name: "三楼VIP会议室CO2"
+      comment: "F3 VIP boardroom CO2"
+      state_address: "5/3/30"
+      type: "default"
+      state_class: "measurement"
+
+    # --- 能耗传感器 (Energy Monitoring) ---
+    # Devices: ABB EQmatic energy meters via KNX
+    - name: "总电表读数"
+      comment: "Main meter total energy (DPT 13.010, kWh)"
+      state_address: "9/0/0"
+      type: "energy"
+      state_class: "total_increasing"
+
+    - name: "一楼电表读数"
+      comment: "F1 sub-meter energy"
+      state_address: "9/1/0"
+      type: "energy"
+      state_class: "total_increasing"
+
+    - name: "二楼电表读数"
+      comment: "F2 sub-meter energy"
+      state_address: "9/2/0"
+      type: "energy"
+      state_class: "total_increasing"
+
+    - name: "三楼电表读数"
+      comment: "F3 sub-meter energy"
+      state_address: "9/3/0"
+      type: "energy"
+      state_class: "total_increasing"
+
+    - name: "空调系统电表"
+      comment: "HVAC system energy meter"
+      state_address: "9/0/10"
+      type: "energy"
+      state_class: "total_increasing"
+
+    - name: "照明系统电表"
+      comment: "Lighting system energy meter"
+      state_address: "9/0/11"
+      type: "energy"
+      state_class: "total_increasing"
+
+    - name: "总有功功率"
+      comment: "Main meter active power (DPT 14.056, W)"
+      state_address: "9/0/1"
+      type: "power"
+      state_class: "measurement"
+
+  # ==========================================================================
+  #  窗帘/遮阳控制 (COVER / BLIND CONTROL)
+  # ==========================================================================
+  # DPT 1.008 = 上/下移动 (Up/Down)
+  # DPT 1.007 = 步进/停止 (Step/Stop)
+  # DPT 5.001 = 位置 0-100% (Position)
+  # DPT 5.001 = 叶片角度 (Angle)
+  # Devices: Warema EWFS 611 KNX blind actuators
+  # ==========================================================================
+
+  cover:
+
+    # --- 一楼窗帘 (Floor 1 Blinds) ---
+    - name: "一楼大堂南侧百叶窗"
+      comment: "F1 Lobby south facade venetian blinds"
+      move_long_address: "2/1/0"         # 上下控制
+      stop_address: "2/1/1"              # 停止/步进
+      position_address: "2/1/2"          # 位置设定
+      position_state_address: "2/1/3"    # 位置反馈
+      angle_address: "2/1/4"             # 叶片角度设定
+      angle_state_address: "2/1/5"       # 叶片角度反馈
+      travelling_time_down: 30
+      travelling_time_up: 32
+      invert_position: true
+      invert_angle: true
+
+    - name: "一楼大会议室百叶窗"
+      comment: "F1 Large conference room blinds"
+      move_long_address: "2/1/10"
+      stop_address: "2/1/11"
+      position_address: "2/1/12"
+      position_state_address: "2/1/13"
+      angle_address: "2/1/14"
+      angle_state_address: "2/1/15"
+      travelling_time_down: 25
+      travelling_time_up: 27
+      invert_position: true
+      invert_angle: true
+
+    # --- 二楼窗帘 (Floor 2 Blinds) ---
+    - name: "二楼东侧百叶窗组"
+      comment: "F2 East facade blinds (grouped, 8 windows)"
+      move_long_address: "2/2/0"
+      stop_address: "2/2/1"
+      position_address: "2/2/2"
+      position_state_address: "2/2/3"
+      angle_address: "2/2/4"
+      angle_state_address: "2/2/5"
+      travelling_time_down: 35
+      travelling_time_up: 38
+      invert_position: true
+      invert_angle: true
+
+    - name: "二楼西侧百叶窗组"
+      comment: "F2 West facade blinds (grouped, 8 windows)"
+      move_long_address: "2/2/10"
+      stop_address: "2/2/11"
+      position_address: "2/2/12"
+      position_state_address: "2/2/13"
+      angle_address: "2/2/14"
+      angle_state_address: "2/2/15"
+      travelling_time_down: 35
+      travelling_time_up: 38
+      invert_position: true
+      invert_angle: true
+
+    - name: "二楼南侧百叶窗组"
+      comment: "F2 South facade blinds (grouped, 6 windows)"
+      move_long_address: "2/2/20"
+      stop_address: "2/2/21"
+      position_address: "2/2/22"
+      position_state_address: "2/2/23"
+      angle_address: "2/2/24"
+      angle_state_address: "2/2/25"
+      travelling_time_down: 35
+      travelling_time_up: 38
+      invert_position: true
+      invert_angle: true
+
+    - name: "二楼会议室C百叶窗"
+      comment: "F2 Meeting Room C blinds"
+      move_long_address: "2/2/30"
+      stop_address: "2/2/31"
+      position_address: "2/2/32"
+      position_state_address: "2/2/33"
+      angle_address: "2/2/34"
+      angle_state_address: "2/2/35"
+      travelling_time_down: 25
+      travelling_time_up: 27
+      invert_position: true
+      invert_angle: true
+
+    # --- 三楼窗帘 (Floor 3 Blinds) ---
+    - name: "三楼总经理办公室百叶窗"
+      comment: "F3 CEO office blinds - Individual control"
+      move_long_address: "2/3/0"
+      stop_address: "2/3/1"
+      position_address: "2/3/2"
+      position_state_address: "2/3/3"
+      angle_address: "2/3/4"
+      angle_state_address: "2/3/5"
+      travelling_time_down: 28
+      travelling_time_up: 30
+      invert_position: true
+      invert_angle: true
+
+    - name: "三楼副总办公室百叶窗"
+      comment: "F3 VP office blinds"
+      move_long_address: "2/3/10"
+      stop_address: "2/3/11"
+      position_address: "2/3/12"
+      position_state_address: "2/3/13"
+      angle_address: "2/3/14"
+      angle_state_address: "2/3/15"
+      travelling_time_down: 28
+      travelling_time_up: 30
+      invert_position: true
+      invert_angle: true
+
+    - name: "三楼VIP会议室百叶窗"
+      comment: "F3 VIP boardroom blinds - Individual motor control"
+      move_long_address: "2/3/20"
+      stop_address: "2/3/21"
+      position_address: "2/3/22"
+      position_state_address: "2/3/23"
+      angle_address: "2/3/24"
+      angle_state_address: "2/3/25"
+      travelling_time_down: 30
+      travelling_time_up: 32
+      invert_position: true
+      invert_angle: true
+
+    - name: "三楼南侧百叶窗组"
+      comment: "F3 South facade blinds"
+      move_long_address: "2/3/30"
+      stop_address: "2/3/31"
+      position_address: "2/3/32"
+      position_state_address: "2/3/33"
+      angle_address: "2/3/34"
+      angle_state_address: "2/3/35"
+      travelling_time_down: 35
+      travelling_time_up: 38
+      invert_position: true
+      invert_angle: true
+
+  # ==========================================================================
+  #  暖通空调 (HVAC / CLIMATE CONTROL)
+  # ==========================================================================
+  # DPT 9.001  = 温度设定/反馈 (Temperature setpoint/feedback)
+  # DPT 20.102 = HVAC 模式 (HVAC mode)
+  # DPT 1.001  = 开关 (On/Off)
+  # Devices: Siemens RDF800KN room controllers, Daikin VRV via KNX gateway
+  # ==========================================================================
+
+  climate:
+
+    # --- 一楼空调 (Floor 1 HVAC) ---
+    - name: "一楼大堂空调"
+      comment: "F1 Lobby HVAC - Daikin VRV indoor unit"
+      temperature_address: "3/1/0"              # 设定温度 setpoint (DPT 9.001)
+      temperature_state_address: "3/1/1"        # 设定温度反馈 setpoint feedback
+      target_temperature_state_address: "3/1/1" # 目标温度状态
+      operation_mode_address: "3/1/2"           # HVAC 模式 (DPT 20.102)
+      operation_mode_state_address: "3/1/3"     # HVAC 模式状态
+      on_off_address: "3/1/4"                   # 开关 on/off
+      on_off_state_address: "3/1/5"             # 开关状态
+      min_temp: 16
+      max_temp: 30
+
+    - name: "一楼大会议室空调"
+      comment: "F1 Large conference room HVAC"
+      temperature_address: "3/1/10"
+      temperature_state_address: "3/1/11"
+      target_temperature_state_address: "3/1/11"
+      operation_mode_address: "3/1/12"
+      operation_mode_state_address: "3/1/13"
+      on_off_address: "3/1/14"
+      on_off_state_address: "3/1/15"
+      min_temp: 16
+      max_temp: 30
+
+    - name: "一楼小会议室A空调"
+      comment: "F1 Meeting Room A HVAC"
+      temperature_address: "3/1/20"
+      temperature_state_address: "3/1/21"
+      target_temperature_state_address: "3/1/21"
+      operation_mode_address: "3/1/22"
+      operation_mode_state_address: "3/1/23"
+      on_off_address: "3/1/24"
+      on_off_state_address: "3/1/25"
+      min_temp: 18
+      max_temp: 28
+
+    - name: "一楼小会议室B空调"
+      comment: "F1 Meeting Room B HVAC"
+      temperature_address: "3/1/30"
+      temperature_state_address: "3/1/31"
+      target_temperature_state_address: "3/1/31"
+      operation_mode_address: "3/1/32"
+      operation_mode_state_address: "3/1/33"
+      on_off_address: "3/1/34"
+      on_off_state_address: "3/1/35"
+      min_temp: 18
+      max_temp: 28
+
+    # --- 二楼空调 (Floor 2 HVAC) ---
+    - name: "二楼开放办公区空调A"
+      comment: "F2 Open office zone A HVAC"
+      temperature_address: "3/2/0"
+      temperature_state_address: "3/2/1"
+      target_temperature_state_address: "3/2/1"
+      operation_mode_address: "3/2/2"
+      operation_mode_state_address: "3/2/3"
+      on_off_address: "3/2/4"
+      on_off_state_address: "3/2/5"
+      min_temp: 18
+      max_temp: 28
+
+    - name: "二楼开放办公区空调B"
+      comment: "F2 Open office zone B HVAC"
+      temperature_address: "3/2/10"
+      temperature_state_address: "3/2/11"
+      target_temperature_state_address: "3/2/11"
+      operation_mode_address: "3/2/12"
+      operation_mode_state_address: "3/2/13"
+      on_off_address: "3/2/14"
+      on_off_state_address: "3/2/15"
+      min_temp: 18
+      max_temp: 28
+
+    - name: "二楼开放办公区空调C"
+      comment: "F2 Open office zone C HVAC"
+      temperature_address: "3/2/20"
+      temperature_state_address: "3/2/21"
+      target_temperature_state_address: "3/2/21"
+      operation_mode_address: "3/2/22"
+      operation_mode_state_address: "3/2/23"
+      on_off_address: "3/2/24"
+      on_off_state_address: "3/2/25"
+      min_temp: 18
+      max_temp: 28
+
+    - name: "二楼会议室C空调"
+      comment: "F2 Meeting Room C HVAC"
+      temperature_address: "3/2/30"
+      temperature_state_address: "3/2/31"
+      target_temperature_state_address: "3/2/31"
+      operation_mode_address: "3/2/32"
+      operation_mode_state_address: "3/2/33"
+      on_off_address: "3/2/34"
+      on_off_state_address: "3/2/35"
+      min_temp: 18
+      max_temp: 28
+
+    - name: "二楼会议室D空调"
+      comment: "F2 Meeting Room D HVAC"
+      temperature_address: "3/2/40"
+      temperature_state_address: "3/2/41"
+      target_temperature_state_address: "3/2/41"
+      operation_mode_address: "3/2/42"
+      operation_mode_state_address: "3/2/43"
+      on_off_address: "3/2/44"
+      on_off_state_address: "3/2/45"
+      min_temp: 18
+      max_temp: 28
+
+    # --- 三楼空调 (Floor 3 HVAC) ---
+    - name: "三楼总经理办公室空调"
+      comment: "F3 CEO office HVAC - Individual VRV unit"
+      temperature_address: "3/3/0"
+      temperature_state_address: "3/3/1"
+      target_temperature_state_address: "3/3/1"
+      operation_mode_address: "3/3/2"
+      operation_mode_state_address: "3/3/3"
+      on_off_address: "3/3/4"
+      on_off_state_address: "3/3/5"
+      min_temp: 16
+      max_temp: 30
+
+    - name: "三楼副总办公室空调"
+      comment: "F3 VP office HVAC"
+      temperature_address: "3/3/10"
+      temperature_state_address: "3/3/11"
+      target_temperature_state_address: "3/3/11"
+      operation_mode_address: "3/3/12"
+      operation_mode_state_address: "3/3/13"
+      on_off_address: "3/3/14"
+      on_off_state_address: "3/3/15"
+      min_temp: 18
+      max_temp: 28
+
+    - name: "三楼财务部空调"
+      comment: "F3 Finance dept HVAC"
+      temperature_address: "3/3/20"
+      temperature_state_address: "3/3/21"
+      target_temperature_state_address: "3/3/21"
+      operation_mode_address: "3/3/22"
+      operation_mode_state_address: "3/3/23"
+      on_off_address: "3/3/24"
+      on_off_state_address: "3/3/25"
+      min_temp: 18
+      max_temp: 28
+
+    - name: "三楼行政部空调"
+      comment: "F3 Admin dept HVAC"
+      temperature_address: "3/3/30"
+      temperature_state_address: "3/3/31"
+      target_temperature_state_address: "3/3/31"
+      operation_mode_address: "3/3/32"
+      operation_mode_state_address: "3/3/33"
+      on_off_address: "3/3/34"
+      on_off_state_address: "3/3/35"
+      min_temp: 18
+      max_temp: 28
+
+    - name: "三楼VIP会议室空调"
+      comment: "F3 VIP boardroom HVAC - Dual VRV units"
+      temperature_address: "3/3/40"
+      temperature_state_address: "3/3/41"
+      target_temperature_state_address: "3/3/41"
+      operation_mode_address: "3/3/42"
+      operation_mode_state_address: "3/3/43"
+      on_off_address: "3/3/44"
+      on_off_state_address: "3/3/45"
+      min_temp: 16
+      max_temp: 30
+
+  # ==========================================================================
+  #  开关设备 (SWITCH DEVICES)
+  # ==========================================================================
+  # 排风扇、咖啡机、投影仪电源等辅助设备
+  # DPT 1.001 = Switch
+  # Devices: ABB SA/S switch actuators
+  # ==========================================================================
+
+  switch:
+
+    # --- 排风扇 (Exhaust Fans) ---
+    - name: "一楼卫生间排风扇"
+      comment: "F1 Restroom exhaust fan"
+      address: "6/1/0"
+      state_address: "6/1/1"
+
+    - name: "二楼卫生间排风扇"
+      comment: "F2 Restroom exhaust fan"
+      address: "6/2/0"
+      state_address: "6/2/1"
+
+    - name: "三楼卫生间排风扇"
+      comment: "F3 Restroom exhaust fan"
+      address: "6/3/0"
+      state_address: "6/3/1"
+
+    - name: "二楼茶水间排风扇"
+      comment: "F2 Pantry exhaust fan"
+      address: "6/2/2"
+      state_address: "6/2/3"
+
+    # --- 新风系统 (Fresh Air System) ---
+    - name: "新风机组一楼"
+      comment: "F1 Fresh air handling unit (AHU)"
+      address: "6/1/10"
+      state_address: "6/1/11"
+
+    - name: "新风机组二楼"
+      comment: "F2 Fresh air handling unit"
+      address: "6/2/10"
+      state_address: "6/2/11"
+
+    - name: "新风机组三楼"
+      comment: "F3 Fresh air handling unit"
+      address: "6/3/10"
+      state_address: "6/3/11"
+
+    # --- 咖啡机 (Coffee Machines) ---
+    - name: "一楼咖啡机电源"
+      comment: "F1 Lobby coffee machine power relay"
+      address: "6/1/20"
+      state_address: "6/1/21"
+
+    - name: "二楼茶水间咖啡机电源"
+      comment: "F2 Pantry coffee machine power relay"
+      address: "6/2/20"
+      state_address: "6/2/21"
+
+    - name: "三楼咖啡机电源"
+      comment: "F3 Executive floor coffee machine"
+      address: "6/3/20"
+      state_address: "6/3/21"
+
+    # --- 投影仪 (Projectors) ---
+    - name: "一楼大会议室投影仪电源"
+      comment: "F1 Large conference room projector power"
+      address: "6/1/30"
+      state_address: "6/1/31"
+
+    - name: "二楼会议室C投影仪电源"
+      comment: "F2 Meeting Room C projector power"
+      address: "6/2/30"
+      state_address: "6/2/31"
+
+    - name: "二楼会议室D投影仪电源"
+      comment: "F2 Meeting Room D projector power"
+      address: "6/2/32"
+      state_address: "6/2/33"
+
+    - name: "三楼VIP会议室投影仪电源"
+      comment: "F3 VIP boardroom projector power"
+      address: "6/3/30"
+      state_address: "6/3/31"
+
+    # --- 投影幕布 (Projector Screens) ---
+    - name: "一楼大会议室幕布"
+      comment: "F1 Large conference room motorized screen"
+      address: "6/1/32"
+      state_address: "6/1/33"
+
+    - name: "三楼VIP会议室幕布"
+      comment: "F3 VIP boardroom motorized screen"
+      address: "6/3/32"
+      state_address: "6/3/33"
+
+    # --- 电动门/闸机 (Electric Doors) ---
+    - name: "一楼大门电动开启"
+      comment: "F1 Main entrance electric door release"
+      address: "6/1/40"
+      state_address: "6/1/41"
+
+    # --- 饮水机 (Water Dispensers) ---
+    - name: "二楼饮水机电源"
+      comment: "F2 Water dispenser power relay"
+      address: "6/2/40"
+      state_address: "6/2/41"
+
+    - name: "三楼饮水机电源"
+      comment: "F3 Water dispenser power relay"
+      address: "6/3/40"
+      state_address: "6/3/41"
+
+    # --- 电梯间通风 (Elevator Shaft Ventilation) ---
+    - name: "电梯间排风扇"
+      comment: "Elevator shaft ventilation fan"
+      address: "6/0/0"
+      state_address: "6/0/1"
+
+    # --- 车库通风 (Parking Ventilation) ---
+    - name: "地下车库排风扇"
+      comment: "Basement parking ventilation fan"
+      address: "6/0/10"
+      state_address: "6/0/11"
+
+  # ==========================================================================
+  #  气象站 (WEATHER STATION)
+  # ==========================================================================
+  # 屋顶气象站 - Elsner Suntracer KNX pro
+  # 提供外部环境数据用于自动遮阳和HVAC优化
+  # Main Group 8, Middle Group 4 (屋顶)
+  # ==========================================================================
+
+  weather:
+    - name: "楼顶气象站"
+      comment: "Rooftop weather station - Elsner Suntracer KNX pro"
+      address_temperature: "8/4/0"         # 室外温度 (DPT 9.001)
+      address_brightness_south: "8/4/1"    # 南向照度 (DPT 9.004, lux)
+      address_brightness_east: "8/4/2"     # 东向照度
+      address_brightness_west: "8/4/3"     # 西向照度
+      address_wind_speed: "8/4/4"          # 风速 (DPT 9.005, m/s)
+      address_rain_alarm: "8/4/5"          # 雨量报警 (DPT 1.005)
+      address_wind_alarm: "8/4/6"          # 风速报警 (DPT 1.005)
+      address_day_night: "8/4/7"           # 日/夜信号 (DPT 1.002)
+      sync_state: true
+      expose_sensors: true
+
+  # ==========================================================================
+  #  场景控制 (SCENE DEFINITIONS)
+  # ==========================================================================
+  # DPT 17.001 = Scene Number (0-63)
+  # 通过 KNX 场景执行器实现多设备联动
+  # Group Address: 7/x/0 for scene recall
+  # ==========================================================================
+
+  scene:
+
+    # --- 一楼场景 (Floor 1 Scenes) ---
+    - name: "一楼会议模式"
+      comment: "F1 Meeting mode - 大会议室全灯+空调+窗帘半开"
+      address: "7/1/0"
+      scene_number: 1
+
+    - name: "一楼演示模式"
+      comment: "F1 Presentation mode - 投影仪开+灯光调暗+窗帘全关"
+      address: "7/1/0"
+      scene_number: 2
+
+    - name: "一楼欢迎模式"
+      comment: "F1 Welcome mode - 大堂灯光亮+装饰灯+咖啡机开"
+      address: "7/1/0"
+      scene_number: 3
+
+    - name: "一楼下班模式"
+      comment: "F1 After-hours mode - 仅走廊保安灯+空调待机"
+      address: "7/1/0"
+      scene_number: 4
+
+    # --- 二楼场景 (Floor 2 Scenes) ---
+    - name: "二楼工作模式"
+      comment: "F2 Working mode - 正常办公照明+空调标准"
+      address: "7/2/0"
+      scene_number: 1
+
+    - name: "二楼午休模式"
+      comment: "F2 Lunch break mode - 灯光50%+空调节能"
+      address: "7/2/0"
+      scene_number: 2
+
+    - name: "二楼加班模式"
+      comment: "F2 Overtime mode - 部分区域照明+空调延时"
+      address: "7/2/0"
+      scene_number: 3
+
+    - name: "二楼下班模式"
+      comment: "F2 After-hours mode - 全部关闭"
+      address: "7/2/0"
+      scene_number: 4
+
+    # --- 三楼场景 (Floor 3 Scenes) ---
+    - name: "三楼VIP接待模式"
+      comment: "F3 VIP reception - 全部高端灯光+空调22度+窗帘全开"
+      address: "7/3/0"
+      scene_number: 1
+
+    - name: "三楼董事会模式"
+      comment: "F3 Board meeting - VIP室全灯+投影+窗帘关闭"
+      address: "7/3/0"
+      scene_number: 2
+
+    - name: "三楼演示模式"
+      comment: "F3 Presentation mode - 投影+暗灯"
+      address: "7/3/0"
+      scene_number: 3
+
+    - name: "三楼下班模式"
+      comment: "F3 After-hours mode"
+      address: "7/3/0"
+      scene_number: 4
+
+    # --- 全楼场景 (Building-wide Scenes) ---
+    - name: "全楼紧急模式"
+      comment: "Building emergency - 全部灯光100%+窗帘全开+新风关闭"
+      address: "7/0/0"
+      scene_number: 10
+
+    - name: "全楼节能模式"
+      comment: "Building energy saving - 最低照明+空调待机+设备关"
+      address: "7/0/0"
+      scene_number: 11
+
+    - name: "全楼下班模式"
+      comment: "Building after-hours - 保安照明+全关"
+      address: "7/0/0"
+      scene_number: 12
+
+    - name: "全楼清洁模式"
+      comment: "Building cleaning mode - 走廊+公共区域灯光100%"
+      address: "7/0/0"
+      scene_number: 13
+
+  # ==========================================================================
+  #  数据暴露 (EXPOSE ENTITIES TO KNX BUS)
+  # ==========================================================================
+  # 将 Home Assistant 内部状态同步到 KNX 总线
+  # 供 KNX 触摸屏和其他 KNX 设备读取
+  # ==========================================================================
+
+  expose:
+
+    # --- 时间同步 (Time Synchronization) ---
+    # KNX 总线时间由 HA 提供, 每分钟更新
+    - type: "time"
+      address: "0/0/0"                   # KNX 时间 (DPT 10.001)
+
+    - type: "date"
+      address: "0/0/1"                   # KNX 日期 (DPT 11.001)
+
+    - type: "datetime"
+      address: "0/0/2"                   # KNX 日期时间 (DPT 19.001)
+
+    # --- 二进制状态暴露 (Binary State Expose) ---
+    # 供 KNX 逻辑模块使用
+    - type: "binary"
+      entity_id: "binary_sensor.workday_sensor"
+      address: "0/0/10"                  # 工作日信号 (1=工作日)
+
+    - type: "binary"
+      entity_id: "input_boolean.building_occupied"
+      address: "0/0/11"                  # 大楼占用信号
+
+    - type: "binary"
+      entity_id: "input_boolean.after_hours_mode"
+      address: "0/0/12"                  # 下班模式信号
+
+    - type: "binary"
+      entity_id: "input_boolean.emergency_mode"
+      address: "0/0/13"                  # 紧急模式信号
+
+    # --- 温度暴露 (Temperature Expose) ---
+    - type: "temperature"
+      entity_id: "weather.office_building"
+      attribute: "temperature"
+      address: "0/0/20"                  # HA获取的室外温度
+
+    # --- 场景状态暴露 (Scene Status Expose) ---
+    - type: "binary"
+      entity_id: "input_boolean.meeting_mode_active"
+      address: "0/0/30"                  # 会议模式激活状态
+
+    - type: "binary"
+      entity_id: "input_boolean.presentation_mode_active"
+      address: "0/0/31"                  # 演示模式激活状态
+
+  # ==========================================================================
+  #  事件监听 (EVENT LISTENERS)
+  # ==========================================================================
+  # 监听 KNX 按键面板的按键事件, 用于触发 HA 自动化
+  # Devices: ABB Busch-priOn, Gira Tastsensor 4
+  # ==========================================================================
+
+  event:
+    # 一楼大堂按键面板 (F1 Lobby button panel)
+    - name: "一楼大堂面板按键1"
+      comment: "F1 Lobby panel - Button 1 (全开/全关)"
+      address: "0/1/0"
+      type: "1byte"
+
+    - name: "一楼大堂面板按键2"
+      comment: "F1 Lobby panel - Button 2 (场景切换)"
+      address: "0/1/1"
+      type: "1byte"
+
+    # 一楼大会议室面板 (F1 Conference room panel)
+    - name: "一楼大会议室面板按键1"
+      comment: "F1 Conference panel - Button 1 (会议模式)"
+      address: "0/1/10"
+      type: "1byte"
+
+    - name: "一楼大会议室面板按键2"
+      comment: "F1 Conference panel - Button 2 (演示模式)"
+      address: "0/1/11"
+      type: "1byte"
+
+    - name: "一楼大会议室面板按键3"
+      comment: "F1 Conference panel - Button 3 (全关)"
+      address: "0/1/12"
+      type: "1byte"
+
+    # 三楼VIP会议室面板 (F3 VIP boardroom panel)
+    - name: "三楼VIP面板按键1"
+      comment: "F3 VIP panel - Button 1 (VIP接待)"
+      address: "0/3/10"
+      type: "1byte"
+
+    - name: "三楼VIP面板按键2"
+      comment: "F3 VIP panel - Button 2 (董事会模式)"
+      address: "0/3/11"
+      type: "1byte"
+
+    - name: "三楼VIP面板按键3"
+      comment: "F3 VIP panel - Button 3 (演示模式)"
+      address: "0/3/12"
+      type: "1byte"
+
+    - name: "三楼VIP面板按键4"
+      comment: "F3 VIP panel - Button 4 (全关)"
+      address: "0/3/13"
+      type: "1byte"
+
+# ============================================================================
+# End of KNX Main Configuration
+# 配置文件结束 - 如需修改 group address 请参考 ETS 项目文件
+# ============================================================================

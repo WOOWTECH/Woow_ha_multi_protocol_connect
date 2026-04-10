@@ -1,0 +1,1329 @@
+# =============================================================================
+# Modbus 自动化 - 建筑管理系统自动化规则
+# (Building Management System Automations)
+# =============================================================================
+#
+# 自动化分类 (Automation Categories):
+#   1. 电力负荷管理 (Load Shedding / Demand Management)
+#   2. HVAC 计划与占位联动 (HVAC Scheduling & Occupancy)
+#   3. 光伏自消费优化 (Solar Self-Consumption Optimization)
+#   4. 异常报警通知 (Abnormal Sensor Alarm Notifications)
+#   5. 能耗报告 (Energy Reporting)
+#
+# 依赖实体来源:
+#   - modbus_tcp.yaml (HVAC, Energy Meter, Lighting)
+#   - modbus_rtu.yaml (RTU sensors, VFD, PLC I/O)
+#   - modbus_solar.yaml (Solar Inverter, Battery Storage)
+#
+# 注意: 所有自动化使用 Home Assistant 原生自动化引擎
+#       涉及 Modbus 寄存器写入的操作使用 modbus.write_register 服务
+# =============================================================================
+
+# =============================================================================
+# 输入辅助实体 (Input Helpers for Automation Parameters)
+# =============================================================================
+input_number:
+  # 电力需量报警阈值 (kW)
+  power_demand_threshold:
+    name: "电力需量报警阈值 (Power Demand Threshold)"
+    min: 50
+    max: 500
+    step: 10
+    initial: 300
+    unit_of_measurement: "kW"
+    icon: mdi:flash-alert
+
+  # 节能模式温度偏移 (Energy Saving Temperature Offset)
+  energy_saving_temp_offset:
+    name: "节能模式温度偏移 (Energy Saving Offset)"
+    min: 0
+    max: 5
+    step: 0.5
+    initial: 2
+    unit_of_measurement: "°C"
+    icon: mdi:thermometer-minus
+
+  # 电池最低备用 SOC (Battery Minimum Reserve SOC)
+  battery_reserve_soc:
+    name: "电池备用电量下限 (Battery Reserve SOC)"
+    min: 5
+    max: 50
+    step: 5
+    initial: 20
+    unit_of_measurement: "%"
+    icon: mdi:battery-low
+
+  # CO2 通风阈值 (CO2 Ventilation Threshold)
+  co2_ventilation_threshold:
+    name: "CO2 通风启动阈值 (CO2 Ventilation Threshold)"
+    min: 400
+    max: 2000
+    step: 50
+    initial: 1000
+    unit_of_measurement: "ppm"
+    icon: mdi:molecule-co2
+
+  # 照明自动关闭延迟 (Lighting Auto-Off Delay)
+  lighting_auto_off_delay:
+    name: "照明无人关灯延迟 (Lighting Auto-Off Delay)"
+    min: 1
+    max: 60
+    step: 1
+    initial: 15
+    unit_of_measurement: "min"
+    icon: mdi:timer-outline
+
+input_boolean:
+  # 自动负荷切减使能 (Automatic Load Shedding Enable)
+  auto_load_shedding_enabled:
+    name: "自动负荷切减使能 (Auto Load Shedding)"
+    icon: mdi:flash-off
+
+  # 太阳能自消费模式 (Solar Self-Consumption Mode)
+  solar_self_consumption_mode:
+    name: "光伏自消费模式 (Solar Self-Consumption)"
+    icon: mdi:solar-power
+
+  # 夜间节能模式 (Night Energy Saving Mode)
+  night_energy_saving:
+    name: "夜间节能模式 (Night Energy Saving)"
+    icon: mdi:weather-night
+
+  # 假日模式 (Holiday Mode)
+  holiday_mode:
+    name: "假日模式 (Holiday Mode)"
+    icon: mdi:palm-tree
+
+input_select:
+  # 建筑运行模式 (Building Operation Mode)
+  building_operation_mode:
+    name: "建筑运行模式 (Building Mode)"
+    options:
+      - "正常 (Normal)"
+      - "节能 (Energy Saving)"
+      - "假日 (Holiday)"
+      - "应急 (Emergency)"
+      - "维护 (Maintenance)"
+    initial: "正常 (Normal)"
+    icon: mdi:office-building-cog
+
+# =============================================================================
+# 自动化规则 (Automation Rules)
+# =============================================================================
+automation:
+  # ===========================================================================
+  # 1. 电力负荷管理 (Load Shedding / Demand Management)
+  # ===========================================================================
+
+  # ---- 1.1 需量超限报警 (Power Demand Over Threshold Alert) ----
+  - id: "modbus_power_demand_alert"
+    alias: "电力需量超限报警 (Power Demand Alert)"
+    description: >-
+      当建筑总用电需量超过设定阈值时发送通知
+      When building power demand exceeds the configured threshold
+    mode: single
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.energy_active_power_total
+        above: input_number.power_demand_threshold
+        for:
+          minutes: 2          # 持续2分钟确认, 避免瞬时尖峰误报
+    condition:
+      - condition: state
+        entity_id: input_boolean.auto_load_shedding_enabled
+        state: "on"
+    action:
+      - service: notify.notify
+        data:
+          title: "电力需量报警 (Power Demand Alert)"
+          message: >-
+            建筑总功率 {{ states('sensor.energy_active_power_total') }} kW
+            已超过阈值 {{ states('input_number.power_demand_threshold') }} kW。
+            当前负载率: {{ states('sensor.building_load_percentage') }}%
+            Building power {{ states('sensor.energy_active_power_total') }} kW
+            exceeds threshold {{ states('input_number.power_demand_threshold') }} kW.
+          data:
+            priority: high
+            tag: power_demand_alert
+      - service: persistent_notification.create
+        data:
+          title: "电力需量超限"
+          message: >-
+            总功率: {{ states('sensor.energy_active_power_total') }} kW
+            阈值: {{ states('input_number.power_demand_threshold') }} kW
+          notification_id: power_demand_warning
+
+  # ---- 1.2 自动负荷切减 - 第一级 (Load Shedding - Level 1) ----
+  - id: "modbus_load_shed_level1"
+    alias: "负荷切减-第一级 (Load Shed Level 1)"
+    description: >-
+      需量超过阈值 110% 时, 降低非关键区域照明和 HVAC 设定
+      When demand exceeds 110% of threshold, reduce non-critical loads
+    mode: single
+    trigger:
+      - platform: template
+        value_template: >-
+          {{ states('sensor.energy_active_power_total') | float(0) >
+             states('input_number.power_demand_threshold') | float(300) * 1.1 }}
+        for:
+          minutes: 3
+    condition:
+      - condition: state
+        entity_id: input_boolean.auto_load_shedding_enabled
+        state: "on"
+    action:
+      # 降低走廊照明到 50%
+      - service: modbus.write_register
+        data:
+          hub: lighting_controller
+          slave: 1
+          address: 4          # 走廊调光寄存器
+          value: 50
+      # 降低停车场照明到 30%
+      - service: modbus.write_register
+        data:
+          hub: lighting_controller
+          slave: 1
+          address: 5          # 停车场调光寄存器
+          value: 30
+      # 各区域 HVAC 设定温度偏移 (夏季升高, 冬季降低)
+      - service: notify.notify
+        data:
+          title: "负荷切减-第一级已启动 (Load Shed L1 Active)"
+          message: >-
+            已降低走廊和停车场照明。
+            当前功率: {{ states('sensor.energy_active_power_total') }} kW
+
+  # ---- 1.3 自动负荷切减 - 第二级 (Load Shedding - Level 2) ----
+  - id: "modbus_load_shed_level2"
+    alias: "负荷切减-第二级 (Load Shed Level 2)"
+    description: >-
+      需量超过阈值 130% 时, 进一步削减负荷
+      When demand exceeds 130%, further load reduction
+    mode: single
+    trigger:
+      - platform: template
+        value_template: >-
+          {{ states('sensor.energy_active_power_total') | float(0) >
+             states('input_number.power_demand_threshold') | float(300) * 1.3 }}
+        for:
+          minutes: 2
+    condition:
+      - condition: state
+        entity_id: input_boolean.auto_load_shedding_enabled
+        state: "on"
+    action:
+      # 关闭非必要区域照明
+      - service: modbus.write_coil
+        data:
+          hub: lighting_controller
+          slave: 1
+          address: 5          # 停车场照明关闭
+          state: false
+      # 降低 VFD 水泵频率到 35Hz (节能运行)
+      - service: modbus.write_register
+        data:
+          hub: rs485_bus
+          slave: 4
+          address: 1          # VFD 频率设定寄存器
+          value: 3500         # 35.00 Hz (scale 0.01)
+      # 关闭会议室 HVAC (如果无人)
+      - if:
+          - condition: state
+            entity_id: binary_sensor.lighting_zone4_occupancy
+            state: "off"
+        then:
+          - service: modbus.write_coil
+            data:
+              hub: hvac_controller
+              slave: 1
+              address: 13     # Zone 4 使能 coil
+              state: false
+      - service: notify.notify
+        data:
+          title: "负荷切减-第二级已启动 (Load Shed L2 Active)"
+          message: >-
+            已关闭停车场照明, 降低水泵频率, 关闭空闲区域 HVAC。
+            当前功率: {{ states('sensor.energy_active_power_total') }} kW
+          data:
+            priority: critical
+
+  # ---- 1.4 负荷恢复 (Load Restoration) ----
+  - id: "modbus_load_restore"
+    alias: "负荷恢复 (Load Restoration)"
+    description: >-
+      需量恢复到阈值以下时, 逐步恢复负荷
+      When demand returns below threshold, gradually restore loads
+    mode: single
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.energy_active_power_total
+        below: input_number.power_demand_threshold
+        for:
+          minutes: 10         # 持续 10 分钟确认恢复
+    action:
+      # 恢复走廊照明到 80%
+      - service: modbus.write_register
+        data:
+          hub: lighting_controller
+          slave: 1
+          address: 4
+          value: 80
+      # 恢复停车场照明
+      - service: modbus.write_coil
+        data:
+          hub: lighting_controller
+          slave: 1
+          address: 5
+          state: true
+      - service: modbus.write_register
+        data:
+          hub: lighting_controller
+          slave: 1
+          address: 5
+          value: 60
+      # 恢复 VFD 到正常频率 (50Hz)
+      - service: modbus.write_register
+        data:
+          hub: rs485_bus
+          slave: 4
+          address: 1
+          value: 5000         # 50.00 Hz
+      # 恢复 HVAC zones
+      - service: modbus.write_coil
+        data:
+          hub: hvac_controller
+          slave: 1
+          address: 13
+          state: true
+      - service: persistent_notification.dismiss
+        data:
+          notification_id: power_demand_warning
+      - service: notify.notify
+        data:
+          title: "负荷已恢复 (Load Restored)"
+          message: "建筑用电已恢复正常, 所有负荷已重新投入。"
+
+  # ===========================================================================
+  # 2. HVAC 计划与占位联动 (HVAC Scheduling & Occupancy)
+  # ===========================================================================
+
+  # ---- 2.1 工作日早晨预冷/预热 (Weekday Morning Pre-Conditioning) ----
+  - id: "modbus_hvac_morning_precon"
+    alias: "HVAC 早晨预冷预热 (Morning Pre-Conditioning)"
+    description: >-
+      工作日早晨 7:00 启动 HVAC 系统预冷/预热
+      Start HVAC pre-conditioning at 7:00 on weekdays
+    mode: single
+    trigger:
+      - platform: time
+        at: "07:00:00"
+    condition:
+      - condition: time
+        weekday:
+          - mon
+          - tue
+          - wed
+          - thu
+          - fri
+      - condition: state
+        entity_id: input_boolean.holiday_mode
+        state: "off"
+    action:
+      # 启动送风机和回风机
+      - service: modbus.write_coil
+        data:
+          hub: hvac_controller
+          slave: 1
+          address: 0          # 送风机启动
+          state: true
+      - service: modbus.write_coil
+        data:
+          hub: hvac_controller
+          slave: 1
+          address: 1          # 回风机启动
+          state: true
+      # 启动所有区域
+      - service: modbus.write_coil
+        data:
+          hub: hvac_controller
+          slave: 1
+          address: 10         # Zone 1 使能
+          state: true
+      - service: modbus.write_coil
+        data:
+          hub: hvac_controller
+          slave: 1
+          address: 11         # Zone 2 使能
+          state: true
+      - service: modbus.write_coil
+        data:
+          hub: hvac_controller
+          slave: 1
+          address: 12         # Zone 3 使能
+          state: true
+      - service: modbus.write_coil
+        data:
+          hub: hvac_controller
+          slave: 1
+          address: 13         # Zone 4 使能
+          state: true
+      # 设定为自动模式
+      - service: climate.set_hvac_mode
+        target:
+          entity_id:
+            - climate.hvac_zone1_thermostat
+            - climate.hvac_zone2_thermostat
+            - climate.hvac_zone3_thermostat
+            - climate.hvac_zone4_thermostat
+        data:
+          hvac_mode: auto
+      # 设定标准温度 24°C
+      - service: climate.set_temperature
+        target:
+          entity_id:
+            - climate.hvac_zone1_thermostat
+            - climate.hvac_zone2_thermostat
+            - climate.hvac_zone3_thermostat
+            - climate.hvac_zone4_thermostat
+        data:
+          temperature: 24
+
+  # ---- 2.2 工作日下班关闭 HVAC (Weekday Evening Shutdown) ----
+  - id: "modbus_hvac_evening_shutdown"
+    alias: "HVAC 下班关闭 (Evening Shutdown)"
+    description: >-
+      工作日 19:00 关闭 HVAC 系统 (非加班区域)
+      Shut down HVAC at 19:00 on weekdays for unoccupied zones
+    mode: single
+    trigger:
+      - platform: time
+        at: "19:00:00"
+    condition:
+      - condition: time
+        weekday:
+          - mon
+          - tue
+          - wed
+          - thu
+          - fri
+      - condition: state
+        entity_id: input_boolean.holiday_mode
+        state: "off"
+    action:
+      # 检查每个区域占位状态, 只关闭无人区域
+      - if:
+          - condition: state
+            entity_id: binary_sensor.lighting_zone2_occupancy
+            state: "off"
+        then:
+          - service: climate.set_hvac_mode
+            target:
+              entity_id: climate.hvac_zone2_thermostat
+            data:
+              hvac_mode: "off"
+      - if:
+          - condition: state
+            entity_id: binary_sensor.lighting_zone3_occupancy
+            state: "off"
+        then:
+          - service: climate.set_hvac_mode
+            target:
+              entity_id: climate.hvac_zone3_thermostat
+            data:
+              hvac_mode: "off"
+      # 会议室一般下班后无人, 直接关闭
+      - service: climate.set_hvac_mode
+        target:
+          entity_id: climate.hvac_zone4_thermostat
+        data:
+          hvac_mode: "off"
+      # 22:00 后强制全部关闭 (由另一个自动化处理)
+
+  # ---- 2.3 深夜强制关闭 (Late Night Force Shutdown) ----
+  - id: "modbus_hvac_late_shutdown"
+    alias: "HVAC 深夜强制关闭 (Late Night Shutdown)"
+    description: >-
+      22:00 强制关闭所有 HVAC, 关闭风机
+      Force shutdown all HVAC at 22:00
+    mode: single
+    trigger:
+      - platform: time
+        at: "22:00:00"
+    action:
+      - service: climate.set_hvac_mode
+        target:
+          entity_id:
+            - climate.hvac_zone1_thermostat
+            - climate.hvac_zone2_thermostat
+            - climate.hvac_zone3_thermostat
+            - climate.hvac_zone4_thermostat
+        data:
+          hvac_mode: "off"
+      # 关闭风机
+      - service: modbus.write_coil
+        data:
+          hub: hvac_controller
+          slave: 1
+          address: 0
+          state: false
+      - service: modbus.write_coil
+        data:
+          hub: hvac_controller
+          slave: 1
+          address: 1
+          state: false
+
+  # ---- 2.4 会议室占位联动 (Conference Room Occupancy) ----
+  - id: "modbus_hvac_conference_occupancy"
+    alias: "会议室占位联动 (Conference Room Occupancy)"
+    description: >-
+      会议室有人时自动开启 HVAC 和照明, 无人延迟关闭
+      Auto HVAC/lighting based on conference room occupancy
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.lighting_zone4_occupancy
+    action:
+      - choose:
+          # 有人进入 - 开启
+          - conditions:
+              - condition: state
+                entity_id: binary_sensor.lighting_zone4_occupancy
+                state: "on"
+            sequence:
+              - service: climate.set_hvac_mode
+                target:
+                  entity_id: climate.hvac_zone4_thermostat
+                data:
+                  hvac_mode: auto
+              - service: climate.set_temperature
+                target:
+                  entity_id: climate.hvac_zone4_thermostat
+                data:
+                  temperature: 24
+              - service: modbus.write_coil
+                data:
+                  hub: lighting_controller
+                  slave: 1
+                  address: 3
+                  state: true
+              - service: modbus.write_register
+                data:
+                  hub: lighting_controller
+                  slave: 1
+                  address: 3
+                  value: 100
+          # 无人离开 - 延迟关闭
+          - conditions:
+              - condition: state
+                entity_id: binary_sensor.lighting_zone4_occupancy
+                state: "off"
+            sequence:
+              - delay:
+                  minutes: "{{ states('input_number.lighting_auto_off_delay') | int(15) }}"
+              # 再次检查是否仍然无人
+              - condition: state
+                entity_id: binary_sensor.lighting_zone4_occupancy
+                state: "off"
+              - service: climate.set_hvac_mode
+                target:
+                  entity_id: climate.hvac_zone4_thermostat
+                data:
+                  hvac_mode: "off"
+              - service: modbus.write_register
+                data:
+                  hub: lighting_controller
+                  slave: 1
+                  address: 3
+                  value: 0
+              - service: modbus.write_coil
+                data:
+                  hub: lighting_controller
+                  slave: 1
+                  address: 3
+                  state: false
+
+  # ---- 2.5 CO2 超标自动通风 (CO2 Ventilation Control) ----
+  - id: "modbus_co2_ventilation"
+    alias: "CO2 超标自动通风 (CO2 Auto Ventilation)"
+    description: >-
+      当室内 CO2 超过阈值时, 增大新风量 (开大风阀)
+      Increase fresh air when CO2 exceeds threshold
+    mode: single
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.rtu_slave2_co2
+        above: input_number.co2_ventilation_threshold
+        for:
+          minutes: 5
+    action:
+      # 通知
+      - service: notify.notify
+        data:
+          title: "CO2 超标通风 (CO2 Ventilation)"
+          message: >-
+            室内 CO2 浓度 {{ states('sensor.rtu_slave2_co2') }} ppm
+            已超过阈值 {{ states('input_number.co2_ventilation_threshold') }} ppm,
+            已启动强制通风。
+      # 排风扇启动
+      - service: modbus.write_coil
+        data:
+          hub: rs485_bus
+          slave: 5
+          address: 2          # 排风扇 DO
+          state: true
+      # 等待 CO2 降低
+      - wait_for_trigger:
+          - platform: numeric_state
+            entity_id: sensor.rtu_slave2_co2
+            below: 800        # CO2 降到 800ppm 以下
+        timeout: "01:00:00"   # 最长运行 1 小时
+      # 关闭排风扇
+      - service: modbus.write_coil
+        data:
+          hub: rs485_bus
+          slave: 5
+          address: 2
+          state: false
+
+  # ===========================================================================
+  # 3. 光伏自消费优化 (Solar Self-Consumption Optimization)
+  # ===========================================================================
+
+  # ---- 3.1 太阳能充电 - 白天有余电时充电池 (Charge Battery with Excess Solar) ----
+  - id: "modbus_solar_charge_battery"
+    alias: "光伏余电充电池 (Solar Excess to Battery)"
+    description: >-
+      当光伏发电大于建筑负荷且电池未满时, 将余电存入电池
+      Route excess solar production to battery storage
+    mode: single
+    trigger:
+      - platform: template
+        value_template: >-
+          {% set solar = states('sensor.solar_ac_power_total') | float(0) %}
+          {% set load = states('sensor.energy_active_power_total') | float(0) * 1000 %}
+          {% set soc = states('sensor.battery_soc') | float(100) %}
+          {{ solar > load + 500 and soc < 95 }}
+        for:
+          minutes: 5
+    condition:
+      - condition: state
+        entity_id: input_boolean.solar_self_consumption_mode
+        state: "on"
+      - condition: sun
+        after: sunrise
+        before: sunset
+    action:
+      # 计算可用充电功率 (光伏功率 - 负荷功率, 留 500W 余量)
+      - variables:
+          charge_power: >-
+            {% set solar = states('sensor.solar_ac_power_total') | float(0) %}
+            {% set load = states('sensor.energy_active_power_total') | float(0) * 1000 %}
+            {{ [solar - load - 500, 50000] | min | int }}
+      # 设定电池充电功率
+      - service: modbus.write_register
+        data:
+          hub: battery_storage
+          slave: 1
+          address: 10         # 充电功率限制寄存器
+          value: "{{ charge_power }}"
+      # 使能电池系统
+      - service: modbus.write_coil
+        data:
+          hub: battery_storage
+          slave: 1
+          address: 0
+          state: true
+
+  # ---- 3.2 傍晚放电 - 电池放电补充负荷 (Evening Battery Discharge) ----
+  - id: "modbus_battery_evening_discharge"
+    alias: "傍晚电池放电 (Evening Battery Discharge)"
+    description: >-
+      日落后, 如果电池 SOC 充足, 使用电池供电减少电网取电
+      After sunset, discharge battery to reduce grid import
+    mode: single
+    trigger:
+      - platform: sun
+        event: sunset
+        offset: "+00:30:00"   # 日落后 30 分钟
+    condition:
+      - condition: state
+        entity_id: input_boolean.solar_self_consumption_mode
+        state: "on"
+      - condition: numeric_state
+        entity_id: sensor.battery_soc
+        above: input_number.battery_reserve_soc
+    action:
+      # 设定放电功率 (按当前负荷的 80% 放电)
+      - variables:
+          discharge_power: >-
+            {% set load = states('sensor.energy_active_power_total') | float(0) * 1000 %}
+            {{ [load * 0.8, 50000] | min | int }}
+      - service: modbus.write_register
+        data:
+          hub: battery_storage
+          slave: 1
+          address: 11         # 放电功率限制寄存器
+          value: "{{ discharge_power }}"
+      - service: modbus.write_coil
+        data:
+          hub: battery_storage
+          slave: 1
+          address: 0
+          state: true
+
+  # ---- 3.3 电池低电量保护 (Battery Low SOC Protection) ----
+  - id: "modbus_battery_low_soc_protect"
+    alias: "电池低电量保护 (Battery Low SOC Protection)"
+    description: >-
+      当电池 SOC 低于备用阈值时, 停止放电
+      Stop discharge when SOC reaches minimum reserve
+    mode: single
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.battery_soc
+        below: input_number.battery_reserve_soc
+    action:
+      # 停止放电 (设置放电功率为 0)
+      - service: modbus.write_register
+        data:
+          hub: battery_storage
+          slave: 1
+          address: 11
+          value: 0
+      - service: notify.notify
+        data:
+          title: "电池低电量保护 (Battery Low SOC)"
+          message: >-
+            电池 SOC 已降至 {{ states('sensor.battery_soc') }}%,
+            低于备用阈值 {{ states('input_number.battery_reserve_soc') }}%,
+            已停止放电。
+
+  # ---- 3.4 光伏功率限制自动调整 (Solar Power Curtailment) ----
+  - id: "modbus_solar_curtailment"
+    alias: "光伏功率限制 (Solar Power Curtailment)"
+    description: >-
+      当电池满且负荷低于光伏输出时, 限制逆变器功率防止反送电
+      Curtail solar when battery full and low load
+    mode: single
+    trigger:
+      - platform: template
+        value_template: >-
+          {% set soc = states('sensor.battery_soc') | float(0) %}
+          {% set solar = states('sensor.solar_ac_power_total') | float(0) %}
+          {% set load = states('sensor.energy_active_power_total') | float(0) * 1000 %}
+          {{ soc > 98 and solar > load * 1.2 }}
+        for:
+          minutes: 3
+    action:
+      - variables:
+          limit_pct: >-
+            {% set load = states('sensor.energy_active_power_total') | float(0) * 1000 %}
+            {% set rated = 50000 %}
+            {{ [(load / rated * 100) | int + 5, 100] | min }}
+      - service: modbus.write_register
+        data:
+          hub: solar_inverter
+          slave: 1
+          address: 10         # 功率限制寄存器 (%)
+          value: "{{ limit_pct }}"
+
+  # ---- 3.5 光伏功率限制恢复 (Solar Curtailment Release) ----
+  - id: "modbus_solar_curtailment_release"
+    alias: "光伏功率限制恢复 (Solar Curtailment Release)"
+    description: >-
+      当电池 SOC 降低或负荷增加时, 恢复逆变器满功率
+      Release curtailment when conditions normalize
+    mode: single
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.battery_soc
+        below: 90
+      - platform: template
+        value_template: >-
+          {% set solar = states('sensor.solar_ac_power_total') | float(0) %}
+          {% set load = states('sensor.energy_active_power_total') | float(0) * 1000 %}
+          {{ solar < load * 0.9 }}
+        for:
+          minutes: 5
+    action:
+      - service: modbus.write_register
+        data:
+          hub: solar_inverter
+          slave: 1
+          address: 10
+          value: 100          # 恢复 100% 功率
+
+  # ===========================================================================
+  # 4. 异常报警通知 (Abnormal Sensor Alarm Notifications)
+  # ===========================================================================
+
+  # ---- 4.1 HVAC 防冻报警 (Freeze Protection Alarm) ----
+  - id: "modbus_hvac_freeze_alarm"
+    alias: "HVAC 防冻报警 (Freeze Protection)"
+    description: >-
+      冷冻保护传感器触发时紧急通知
+      Emergency notification on freeze protection activation
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.hvac_freeze_alarm
+        to: "on"
+    action:
+      - service: notify.notify
+        data:
+          title: "紧急: HVAC 防冻报警 (FREEZE ALARM)"
+          message: >-
+            送风温度过低, 防冻保护已触发!
+            送风温度: {{ states('sensor.hvac_supply_air_temp') }} °C
+            室外温度: {{ states('sensor.hvac_outdoor_temp') }} °C
+            请立即检查冷冻水阀和加热系统。
+          data:
+            priority: critical
+
+  # ---- 4.2 消防联动 (Fire Alarm Interlock) ----
+  - id: "modbus_fire_alarm_interlock"
+    alias: "消防联动 (Fire Alarm Interlock)"
+    description: >-
+      消防报警信号触发时, 关闭 HVAC 风机, 启动应急照明
+      On fire alarm: shutdown fans, activate emergency lighting
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.hvac_fire_alarm_input
+        to: "on"
+    action:
+      # 紧急关闭所有风机
+      - service: modbus.write_coil
+        data:
+          hub: hvac_controller
+          slave: 1
+          address: 0
+          state: false
+      - service: modbus.write_coil
+        data:
+          hub: hvac_controller
+          slave: 1
+          address: 1
+          state: false
+      # 关闭排风扇 (防止助燃)
+      - service: modbus.write_coil
+        data:
+          hub: rs485_bus
+          slave: 5
+          address: 2
+          state: false
+      # 启动应急照明
+      - service: modbus.write_coil
+        data:
+          hub: lighting_controller
+          slave: 1
+          address: 7          # 应急照明
+          state: true
+      - service: modbus.write_register
+        data:
+          hub: lighting_controller
+          slave: 1
+          address: 0          # 大堂满亮
+          value: 100
+      - service: modbus.write_register
+        data:
+          hub: lighting_controller
+          slave: 1
+          address: 4          # 走廊满亮
+          value: 100
+      # 紧急通知
+      - service: notify.notify
+        data:
+          title: "紧急: 消防报警联动 (FIRE ALARM)"
+          message: >-
+            消防报警信号已触发! HVAC 风机已关闭, 应急照明已开启。
+            请立即撤离并联系消防部门。
+          data:
+            priority: critical
+
+  # ---- 4.3 漏水报警 (Water Leak Alarm) ----
+  - id: "modbus_water_leak_alarm"
+    alias: "漏水报警 (Water Leak Alarm)"
+    description: >-
+      检测到漏水时关闭电磁阀并报警
+      Close valve and alarm on water leak detection
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.rtu_slave5_water_leak
+        to: "on"
+    action:
+      # 关闭补水电磁阀
+      - service: modbus.write_coil
+        data:
+          hub: rs485_bus
+          slave: 5
+          address: 1
+          state: false
+      # 开启警报灯
+      - service: modbus.write_coil
+        data:
+          hub: rs485_bus
+          slave: 5
+          address: 3
+          state: true
+      - service: notify.notify
+        data:
+          title: "报警: 漏水检测 (Water Leak Detected)"
+          message: >-
+            设备间检测到漏水! 补水电磁阀已自动关闭。
+            请立即检查现场。
+          data:
+            priority: critical
+
+  # ---- 4.4 VFD 故障报警 (VFD Fault Alarm) ----
+  - id: "modbus_vfd_fault_alarm"
+    alias: "VFD 故障报警 (VFD Fault Alarm)"
+    description: >-
+      变频器故障时发送详细报警信息
+      Send detailed alarm on VFD fault
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.vfd_fault_active
+        to: "on"
+    action:
+      - service: notify.notify
+        data:
+          title: "设备报警: 变频器故障 (VFD Fault)"
+          message: >-
+            变频器发生故障!
+            故障代码: {{ states('sensor.rtu_slave4_vfd_fault_code') }}
+            故障描述: {{ states('sensor.vfd_fault_description') }}
+            散热器温度: {{ states('sensor.rtu_slave4_vfd_heatsink_temp') }} °C
+            输出电流: {{ states('sensor.rtu_slave4_vfd_output_current') }} A
+            运行时间: {{ states('sensor.rtu_slave4_vfd_run_hours') }} 小时
+          data:
+            priority: high
+
+  # ---- 4.5 电池过温报警 (Battery Over-Temperature Alarm) ----
+  - id: "modbus_battery_overtemp_alarm"
+    alias: "电池过温报警 (Battery Over-Temperature)"
+    description: >-
+      电池温度异常时发送报警
+      Alarm on battery temperature anomaly
+    mode: single
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.battery_temp_max
+        above: 45             # 45°C 过温阈值
+    action:
+      # 停止充放电
+      - service: modbus.write_register
+        data:
+          hub: battery_storage
+          slave: 1
+          address: 10
+          value: 0            # 充电功率清零
+      - service: modbus.write_register
+        data:
+          hub: battery_storage
+          slave: 1
+          address: 11
+          value: 0            # 放电功率清零
+      - service: notify.notify
+        data:
+          title: "紧急: 电池过温 (Battery Over-Temperature)"
+          message: >-
+            电池最高温度: {{ states('sensor.battery_temp_max') }} °C
+            最低温度: {{ states('sensor.battery_temp_min') }} °C
+            温差: {{ states('sensor.battery_temp_delta') }} °C
+            SOC: {{ states('sensor.battery_soc') }}%
+            已停止充放电, 请检查电池冷却系统!
+          data:
+            priority: critical
+
+  # ---- 4.6 逆变器故障报警 (Solar Inverter Fault) ----
+  - id: "modbus_solar_inverter_fault"
+    alias: "逆变器故障报警 (Solar Inverter Fault)"
+    description: >-
+      光伏逆变器进入故障状态时报警
+      Alarm when solar inverter enters fault state
+    mode: single
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.solar_inverter_status
+        above: 4              # Status 5 = Fault
+    action:
+      - service: notify.notify
+        data:
+          title: "设备报警: 逆变器故障 (Inverter Fault)"
+          message: >-
+            光伏逆变器进入故障状态!
+            状态: {{ states('sensor.solar_inverter_status_text') }}
+            故障代码: {{ states('sensor.solar_error_code') }}
+            警告代码: {{ states('sensor.solar_warning_code') }}
+            内部温度: {{ states('sensor.solar_inverter_temp_internal') }} °C
+            隔离电阻: {{ states('sensor.solar_insulation_resistance') }} kOhm
+          data:
+            priority: high
+
+  # ---- 4.7 电网电压异常 (Grid Voltage Anomaly) ----
+  - id: "modbus_grid_voltage_anomaly"
+    alias: "电网电压异常报警 (Grid Voltage Anomaly)"
+    description: >-
+      电网电压超出正常范围 (198V-242V) 时报警
+      Alarm when grid voltage is outside normal range
+    mode: single
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.energy_voltage_l1
+        above: 253            # 上限 253V (国标 +10%)
+      - platform: numeric_state
+        entity_id: sensor.energy_voltage_l1
+        below: 198            # 下限 198V (国标 -10%)  [使用 below]
+      - platform: numeric_state
+        entity_id: sensor.energy_voltage_l2
+        above: 253
+      - platform: numeric_state
+        entity_id: sensor.energy_voltage_l2
+        below: 198
+      - platform: numeric_state
+        entity_id: sensor.energy_voltage_l3
+        above: 253
+      - platform: numeric_state
+        entity_id: sensor.energy_voltage_l3
+        below: 198
+    action:
+      - service: notify.notify
+        data:
+          title: "报警: 电网电压异常 (Grid Voltage Anomaly)"
+          message: >-
+            检测到电网电压异常!
+            L1: {{ states('sensor.energy_voltage_l1') }} V
+            L2: {{ states('sensor.energy_voltage_l2') }} V
+            L3: {{ states('sensor.energy_voltage_l3') }} V
+            频率: {{ states('sensor.energy_frequency') }} Hz
+            正常范围: 198V-253V
+          data:
+            priority: high
+
+  # ---- 4.8 滤网堵塞提醒 (Filter Clogged Reminder) ----
+  - id: "modbus_filter_clogged_reminder"
+    alias: "滤网堵塞提醒 (Filter Clogged Reminder)"
+    description: >-
+      HVAC 滤网压差过高或滤网报警触发时提醒更换
+      Remind filter replacement when differential pressure is high
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.hvac_filter_alarm
+        to: "on"
+      - platform: numeric_state
+        entity_id: sensor.hvac_filter_dp
+        above: 250            # 250 Pa 压差阈值
+    action:
+      - service: notify.notify
+        data:
+          title: "维护提醒: 滤网需更换 (Filter Replacement)"
+          message: >-
+            HVAC 滤网压差过高, 建议尽快更换!
+            当前压差: {{ states('sensor.hvac_filter_dp') }} Pa
+            报警状态: {{ states('binary_sensor.hvac_filter_alarm') }}
+      - service: persistent_notification.create
+        data:
+          title: "HVAC 滤网维护"
+          message: "滤网压差 {{ states('sensor.hvac_filter_dp') }} Pa, 请安排更换。"
+          notification_id: filter_maintenance
+
+  # ===========================================================================
+  # 5. 能耗报告 (Energy Reporting)
+  # ===========================================================================
+
+  # ---- 5.1 每日能耗报告 (Daily Energy Report) ----
+  - id: "modbus_daily_energy_report"
+    alias: "每日能耗报告 (Daily Energy Report)"
+    description: >-
+      每天 23:55 生成当日能耗和光伏发电报告
+      Generate daily energy and solar production report at 23:55
+    mode: single
+    trigger:
+      - platform: time
+        at: "23:55:00"
+    action:
+      - service: notify.notify
+        data:
+          title: "每日能耗报告 (Daily Energy Report)"
+          message: >-
+            === 建筑能耗日报 ===
+            日期: {{ now().strftime('%Y-%m-%d') }}
+
+            [电力消耗 (Grid Consumption)]
+            总有功电能: {{ states('sensor.energy_total_active_import') }} kWh
+            最大需量: {{ states('sensor.energy_max_demand') }} kW
+            功率因数: {{ states('sensor.energy_power_factor_total') }}
+
+            [光伏发电 (Solar Production)]
+            当日发电: {{ states('sensor.solar_daily_yield') }} kWh
+            逆变器效率: {{ states('sensor.solar_inverter_efficiency') }}%
+            运行小时: {{ states('sensor.solar_operating_hours') }}h
+
+            [储能电池 (Battery Storage)]
+            当前 SOC: {{ states('sensor.battery_soc') }}%
+            当日充电: {{ states('sensor.battery_daily_charge_energy') }} kWh
+            当日放电: {{ states('sensor.battery_daily_discharge_energy') }} kWh
+            循环次数: {{ states('sensor.battery_cycle_count') }}
+
+            [用水 (Water)]
+            当日用水: {{ states('sensor.rtu_slave3_daily_total') }} m3
+
+            [环境 (Environment)]
+            室外温度: {{ states('sensor.hvac_outdoor_temp') }}°C
+            室内 CO2: {{ states('sensor.rtu_slave2_co2') }} ppm
+            PM2.5: {{ states('sensor.rtu_slave2_pm25') }} ug/m3
+
+  # ---- 5.2 每周能耗趋势报告 (Weekly Energy Trend Report) ----
+  - id: "modbus_weekly_energy_report"
+    alias: "每周能耗趋势报告 (Weekly Energy Report)"
+    description: >-
+      每周一 08:00 发送上周能耗概要
+      Send weekly energy summary every Monday at 08:00
+    mode: single
+    trigger:
+      - platform: time
+        at: "08:00:00"
+    condition:
+      - condition: time
+        weekday:
+          - mon
+    action:
+      - service: notify.notify
+        data:
+          title: "每周能耗报告 (Weekly Energy Report)"
+          message: >-
+            === 建筑能耗周报 ===
+            报告周期: {{ (now() - timedelta(days=7)).strftime('%m/%d') }} - {{ now().strftime('%m/%d') }}
+
+            [总用电量]
+            累计: {{ states('sensor.energy_total_active_import') }} kWh
+
+            [光伏系统]
+            累计发电: {{ states('sensor.solar_total_yield') }} kWh
+            SOH: {{ states('sensor.battery_soh') }}%
+
+            [设备运行时间]
+            VFD 水泵: {{ states('sensor.rtu_slave4_vfd_run_hours') }} 小时
+
+            请登录 Home Assistant 查看详细图表和趋势分析。
+
+  # ---- 5.3 功率因数过低报警 (Low Power Factor Alert) ----
+  - id: "modbus_low_power_factor"
+    alias: "功率因数过低报警 (Low Power Factor Alert)"
+    description: >-
+      功率因数低于 0.9 时提醒, 避免电力罚款
+      Alert when power factor drops below 0.9 to avoid utility penalties
+    mode: single
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.energy_power_factor_total
+        below: 0.9
+        for:
+          minutes: 30         # 持续 30 分钟
+    condition:
+      # 只在有一定负荷时检测, 轻载时功率因数低是正常的
+      - condition: numeric_state
+        entity_id: sensor.energy_active_power_total
+        above: 20             # 至少 20kW 负荷
+    action:
+      - service: notify.notify
+        data:
+          title: "电力质量: 功率因数偏低 (Low Power Factor)"
+          message: >-
+            当前功率因数: {{ states('sensor.energy_power_factor_total') }}
+            L1: {{ states('sensor.energy_power_factor_l1') }}
+            L2: {{ states('sensor.energy_power_factor_l2') }}
+            L3: {{ states('sensor.energy_power_factor_l3') }}
+            无功功率: {{ states('sensor.energy_reactive_power_total') }} kVAR
+            建议检查无功补偿装置。
+      - service: persistent_notification.create
+        data:
+          title: "功率因数偏低"
+          message: >-
+            PF={{ states('sensor.energy_power_factor_total') }},
+            请检查无功补偿电容器组。
+          notification_id: low_pf_warning
+
+  # ---- 5.4 照明节能自动化 (Lighting Energy Saving) ----
+  - id: "modbus_lighting_energy_saving"
+    alias: "照明节能-无人区域关灯 (Lighting Auto-Off)"
+    description: >-
+      办公区域无人超过设定时间后自动关灯
+      Auto-off lights in unoccupied office areas after delay
+    mode: parallel
+    max: 4
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.lighting_zone2_occupancy
+        to: "off"
+        for:
+          minutes: "{{ states('input_number.lighting_auto_off_delay') | int(15) }}"
+        id: zone2
+      - platform: state
+        entity_id: binary_sensor.lighting_zone3_occupancy
+        to: "off"
+        for:
+          minutes: "{{ states('input_number.lighting_auto_off_delay') | int(15) }}"
+        id: zone3
+    action:
+      - choose:
+          - conditions:
+              - condition: trigger
+                id: zone2
+            sequence:
+              - service: modbus.write_register
+                data:
+                  hub: lighting_controller
+                  slave: 1
+                  address: 1
+                  value: 0
+              - service: modbus.write_coil
+                data:
+                  hub: lighting_controller
+                  slave: 1
+                  address: 1
+                  state: false
+          - conditions:
+              - condition: trigger
+                id: zone3
+            sequence:
+              - service: modbus.write_register
+                data:
+                  hub: lighting_controller
+                  slave: 1
+                  address: 2
+                  value: 0
+              - service: modbus.write_coil
+                data:
+                  hub: lighting_controller
+                  slave: 1
+                  address: 2
+                  state: false
+
+  # ---- 5.5 水箱液位控制 (Water Tank Level Control) ----
+  - id: "modbus_tank_level_control"
+    alias: "水箱液位自动控制 (Tank Level Auto Control)"
+    description: >-
+      水箱液位自动控制: 低液位补水, 高液位关阀
+      Automatic water tank level control with hysteresis
+    mode: single
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.rtu_slave5_tank_level
+        below: 30             # 液位低于 30% 开始补水
+        id: low_level
+      - platform: numeric_state
+        entity_id: sensor.rtu_slave5_tank_level
+        above: 85             # 液位高于 85% 停止补水
+        id: high_level
+    action:
+      - choose:
+          - conditions:
+              - condition: trigger
+                id: low_level
+            sequence:
+              # 开启补水电磁阀
+              - service: modbus.write_coil
+                data:
+                  hub: rs485_bus
+                  slave: 5
+                  address: 1
+                  state: true
+              - service: notify.notify
+                data:
+                  title: "水箱补水 (Tank Filling)"
+                  message: "水箱液位 {{ states('sensor.rtu_slave5_tank_level') }}%, 已开启补水阀。"
+          - conditions:
+              - condition: trigger
+                id: high_level
+            sequence:
+              # 关闭补水电磁阀
+              - service: modbus.write_coil
+                data:
+                  hub: rs485_bus
+                  slave: 5
+                  address: 1
+                  state: false
+              - service: notify.notify
+                data:
+                  title: "水箱补水完成 (Tank Full)"
+                  message: "水箱液位 {{ states('sensor.rtu_slave5_tank_level') }}%, 补水阀已关闭。"
+
+  # ---- 5.6 假日模式切换 (Holiday Mode Toggle) ----
+  - id: "modbus_holiday_mode_activate"
+    alias: "假日模式启动 (Holiday Mode Activate)"
+    description: >-
+      假日模式启动时关闭非必要系统
+      Shutdown non-essential systems in holiday mode
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: input_boolean.holiday_mode
+        to: "on"
+    action:
+      # 关闭所有 HVAC
+      - service: climate.set_hvac_mode
+        target:
+          entity_id:
+            - climate.hvac_zone1_thermostat
+            - climate.hvac_zone2_thermostat
+            - climate.hvac_zone3_thermostat
+            - climate.hvac_zone4_thermostat
+        data:
+          hvac_mode: "off"
+      # 关闭风机
+      - service: modbus.write_coil
+        data:
+          hub: hvac_controller
+          slave: 1
+          address: 0
+          state: false
+      - service: modbus.write_coil
+        data:
+          hub: hvac_controller
+          slave: 1
+          address: 1
+          state: false
+      # 关闭办公区照明, 保留走廊和应急
+      - service: modbus.write_coil
+        data:
+          hub: lighting_controller
+          slave: 1
+          address: 1          # 办公区A
+          state: false
+      - service: modbus.write_coil
+        data:
+          hub: lighting_controller
+          slave: 1
+          address: 2          # 办公区B
+          state: false
+      - service: modbus.write_coil
+        data:
+          hub: lighting_controller
+          slave: 1
+          address: 3          # 会议室
+          state: false
+      # 走廊照明调暗到 20%
+      - service: modbus.write_register
+        data:
+          hub: lighting_controller
+          slave: 1
+          address: 4
+          value: 20
+      # VFD 降到最低频率
+      - service: modbus.write_register
+        data:
+          hub: rs485_bus
+          slave: 4
+          address: 1
+          value: 2000         # 20.00 Hz 最低运行
+      - service: notify.notify
+        data:
+          title: "假日模式已启动 (Holiday Mode Active)"
+          message: "建筑已切换到假日模式, 非必要系统已关闭。"

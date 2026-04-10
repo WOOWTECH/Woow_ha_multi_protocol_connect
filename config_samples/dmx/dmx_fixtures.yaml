@@ -1,0 +1,1073 @@
+# =============================================================================
+# DMX Fixture Library Definitions
+# Standard Fixture Profiles for Commercial Venue Lighting
+# =============================================================================
+#
+# This file defines the channel mapping and capabilities for each fixture type
+# used in the venue. These definitions are referenced by fixture_type in the
+# universe configurations (dmx_artnet.yaml, dmx_sacn.yaml).
+#
+# Channel values are 0-255 (8-bit DMX) unless noted as 16-bit.
+# Channel offsets are 0-indexed relative to the fixture's start_channel.
+#
+# Last Updated: 2026-04-10
+# =============================================================================
+
+fixture_library:
+  # ===========================================================================
+  # Generic RGB (3 Channel)
+  # ===========================================================================
+  - type_id: "generic_rgb"
+    name: "Generic RGB LED"
+    manufacturer: "Generic"
+    category: "color_mixing"
+    channel_count: 3
+    description: >
+      Standard 3-channel RGB fixture. Common for LED strips, basic LED PARs,
+      and accent lighting. No independent dimmer - use RGB levels to control
+      intensity.
+
+    channels:
+      - offset: 0
+        name: "Red"
+        short_name: "R"
+        type: "intensity"
+        color: "red"
+        default: 0
+        min: 0
+        max: 255
+        description: "Red intensity (0=off, 255=full)"
+
+      - offset: 1
+        name: "Green"
+        short_name: "G"
+        type: "intensity"
+        color: "green"
+        default: 0
+        min: 0
+        max: 255
+        description: "Green intensity (0=off, 255=full)"
+
+      - offset: 2
+        name: "Blue"
+        short_name: "B"
+        type: "intensity"
+        color: "blue"
+        default: 0
+        min: 0
+        max: 255
+        description: "Blue intensity (0=off, 255=full)"
+
+    capabilities:
+      color_mixing: "RGB"
+      dimming: "virtual"                   # Dimming through color channel scaling
+      min_cct_equivalent: 2700
+      max_cct_equivalent: 10000
+
+  # ===========================================================================
+  # Generic RGBW (4 Channel)
+  # ===========================================================================
+  - type_id: "rgbw_4ch"
+    name: "Generic RGBW LED (4ch)"
+    manufacturer: "Generic"
+    category: "color_mixing"
+    channel_count: 4
+    description: >
+      4-channel RGBW fixture. Adds dedicated white LED for purer whites and
+      better color rendering. Used for wall washers, floods, and architectural
+      fixtures.
+
+    channels:
+      - offset: 0
+        name: "Red"
+        short_name: "R"
+        type: "intensity"
+        color: "red"
+        default: 0
+        min: 0
+        max: 255
+
+      - offset: 1
+        name: "Green"
+        short_name: "G"
+        type: "intensity"
+        color: "green"
+        default: 0
+        min: 0
+        max: 255
+
+      - offset: 2
+        name: "Blue"
+        short_name: "B"
+        type: "intensity"
+        color: "blue"
+        default: 0
+        min: 0
+        max: 255
+
+      - offset: 3
+        name: "White"
+        short_name: "W"
+        type: "intensity"
+        color: "white"
+        default: 0
+        min: 0
+        max: 255
+        description: "Dedicated white LED (typically 4000-5000K phosphor)"
+
+    capabilities:
+      color_mixing: "RGBW"
+      dimming: "virtual"
+      white_led_cct: 4500
+      min_cct_equivalent: 2700
+      max_cct_equivalent: 10000
+      cri: 90
+
+  # ===========================================================================
+  # Generic RGBW with Master Dimmer (5 Channel)
+  # ===========================================================================
+  - type_id: "rgbw_5ch"
+    name: "Generic RGBW LED (5ch with Dimmer)"
+    manufacturer: "Generic"
+    category: "color_mixing"
+    channel_count: 5
+    description: >
+      5-channel RGBW fixture with independent master dimmer. The master dimmer
+      channel allows proportional intensity control without affecting color
+      ratios. Preferred for decorative and architectural fixtures where
+      consistent color at varying brightness is critical.
+
+    channels:
+      - offset: 0
+        name: "Red"
+        short_name: "R"
+        type: "intensity"
+        color: "red"
+        default: 0
+        min: 0
+        max: 255
+
+      - offset: 1
+        name: "Green"
+        short_name: "G"
+        type: "intensity"
+        color: "green"
+        default: 0
+        min: 0
+        max: 255
+
+      - offset: 2
+        name: "Blue"
+        short_name: "B"
+        type: "intensity"
+        color: "blue"
+        default: 0
+        min: 0
+        max: 255
+
+      - offset: 3
+        name: "White"
+        short_name: "W"
+        type: "intensity"
+        color: "white"
+        default: 0
+        min: 0
+        max: 255
+
+      - offset: 4
+        name: "Master Dimmer"
+        short_name: "Dim"
+        type: "dimmer"
+        default: 0
+        min: 0
+        max: 255
+        description: "Master dimmer - scales all color output proportionally"
+
+    capabilities:
+      color_mixing: "RGBW"
+      dimming: "dedicated"                 # Has dedicated dimmer channel
+      white_led_cct: 4500
+      min_cct_equivalent: 2700
+      max_cct_equivalent: 10000
+      cri: 90
+      dimmer_curve: "square_law"           # square_law / linear / s_curve
+
+  # ===========================================================================
+  # Moving Head Spot (16 Channel Extended Mode)
+  # ===========================================================================
+  - type_id: "moving_head_16ch"
+    name: "Moving Head Spot (16ch Extended)"
+    manufacturer: "Generic Professional"
+    model: "MH-300 LED Spot"
+    category: "moving_head"
+    channel_count: 16
+    description: >
+      Full-featured moving head spot with 16-bit pan/tilt resolution, color
+      wheel, gobo wheel with rotation, prism, motorized focus and zoom, and
+      RGB color mixing. Suitable for stage, concert, and architectural use.
+
+    physical:
+      weight_kg: 18.5
+      power_watts: 300
+      beam_angle_min: 8
+      beam_angle_max: 40
+      pan_range_degrees: 540
+      tilt_range_degrees: 270
+      lamp_type: "LED"
+      lamp_life_hours: 50000
+      cooling: "forced_air"
+      ip_rating: "IP20"
+
+    channels:
+      - offset: 0
+        name: "Pan (Coarse)"
+        short_name: "Pan"
+        type: "pan"
+        resolution: "8bit_coarse"
+        default: 128                       # Center position
+        min: 0                             # 0 degrees
+        max: 255                           # 540 degrees
+        description: "Pan position coarse (0-540 degrees)"
+
+      - offset: 1
+        name: "Pan (Fine)"
+        short_name: "PanF"
+        type: "pan_fine"
+        resolution: "8bit_fine"
+        default: 0
+        min: 0
+        max: 255
+        description: "Pan position fine (16-bit precision with ch0)"
+
+      - offset: 2
+        name: "Tilt (Coarse)"
+        short_name: "Tilt"
+        type: "tilt"
+        resolution: "8bit_coarse"
+        default: 128                       # Center position
+        min: 0                             # 0 degrees
+        max: 255                           # 270 degrees
+        description: "Tilt position coarse (0-270 degrees)"
+
+      - offset: 3
+        name: "Tilt (Fine)"
+        short_name: "TiltF"
+        type: "tilt_fine"
+        resolution: "8bit_fine"
+        default: 0
+        min: 0
+        max: 255
+        description: "Tilt position fine (16-bit precision with ch2)"
+
+      - offset: 4
+        name: "Pan/Tilt Speed"
+        short_name: "Spd"
+        type: "speed"
+        default: 0
+        min: 0                             # Maximum speed (fastest)
+        max: 255                           # Slowest movement
+        description: "Pan/Tilt motor speed (0=fastest, 255=slowest)"
+        ranges:
+          - start: 0
+            end: 0
+            label: "Maximum speed"
+          - start: 1
+            end: 255
+            label: "Speed control (fast to slow)"
+
+      - offset: 5
+        name: "Dimmer"
+        short_name: "Dim"
+        type: "dimmer"
+        default: 0
+        min: 0
+        max: 255
+        description: "Master dimmer (0=closed/blackout, 255=full output)"
+
+      - offset: 6
+        name: "Strobe"
+        short_name: "Strb"
+        type: "strobe"
+        default: 0
+        min: 0
+        max: 255
+        description: "Strobe/shutter control"
+        ranges:
+          - start: 0
+            end: 3
+            label: "Closed (blackout)"
+          - start: 4
+            end: 7
+            label: "Open (no strobe)"
+          - start: 8
+            end: 76
+            label: "Strobe slow to fast"
+          - start: 77
+            end: 145
+            label: "Pulse open slow to fast"
+          - start: 146
+            end: 215
+            label: "Pulse close slow to fast"
+          - start: 216
+            end: 255
+            label: "Random strobe slow to fast"
+
+      - offset: 7
+        name: "Color Wheel"
+        short_name: "Col"
+        type: "color_wheel"
+        default: 0
+        min: 0
+        max: 255
+        description: "Color wheel position"
+        ranges:
+          - start: 0
+            end: 7
+            label: "Open / White"
+          - start: 8
+            end: 15
+            label: "Red"
+          - start: 16
+            end: 23
+            label: "Orange"
+          - start: 24
+            end: 31
+            label: "Yellow"
+          - start: 32
+            end: 39
+            label: "Green"
+          - start: 40
+            end: 47
+            label: "Cyan"
+          - start: 48
+            end: 55
+            label: "Blue"
+          - start: 56
+            end: 63
+            label: "Magenta"
+          - start: 64
+            end: 127
+            label: "Split colors (indexed)"
+          - start: 128
+            end: 189
+            label: "Color wheel rotation CW (slow to fast)"
+          - start: 190
+            end: 193
+            label: "Stop rotation"
+          - start: 194
+            end: 255
+            label: "Color wheel rotation CCW (slow to fast)"
+
+      - offset: 8
+        name: "Gobo Wheel"
+        short_name: "Gobo"
+        type: "gobo_wheel"
+        default: 0
+        min: 0
+        max: 255
+        description: "Gobo selection"
+        ranges:
+          - start: 0
+            end: 7
+            label: "Open (no gobo)"
+          - start: 8
+            end: 15
+            label: "Gobo 1 - Dot breakup"
+          - start: 16
+            end: 23
+            label: "Gobo 2 - Linear"
+          - start: 24
+            end: 31
+            label: "Gobo 3 - Star"
+          - start: 32
+            end: 39
+            label: "Gobo 4 - Circle breakup"
+          - start: 40
+            end: 47
+            label: "Gobo 5 - Spiral"
+          - start: 48
+            end: 55
+            label: "Gobo 6 - Triangle"
+          - start: 56
+            end: 63
+            label: "Gobo 7 - Custom"
+          - start: 64
+            end: 127
+            label: "Gobo shake (indexed, slow to fast)"
+          - start: 128
+            end: 255
+            label: "Gobo wheel rotation (slow to fast)"
+
+      - offset: 9
+        name: "Gobo Rotation"
+        short_name: "GRot"
+        type: "gobo_rotation"
+        default: 0
+        min: 0
+        max: 255
+        description: "Gobo rotation / indexing"
+        ranges:
+          - start: 0
+            end: 0
+            label: "No rotation"
+          - start: 1
+            end: 127
+            label: "CW rotation (slow to fast)"
+          - start: 128
+            end: 128
+            label: "Stop"
+          - start: 129
+            end: 255
+            label: "CCW rotation (slow to fast)"
+
+      - offset: 10
+        name: "Prism"
+        short_name: "Prsm"
+        type: "prism"
+        default: 0
+        min: 0
+        max: 255
+        description: "Prism insertion and rotation"
+        ranges:
+          - start: 0
+            end: 0
+            label: "Prism out"
+          - start: 1
+            end: 63
+            label: "Prism inserted (static)"
+          - start: 64
+            end: 127
+            label: "Prism CW rotation (slow to fast)"
+          - start: 128
+            end: 191
+            label: "Prism CCW rotation (slow to fast)"
+          - start: 192
+            end: 255
+            label: "Prism macro effects"
+
+      - offset: 11
+        name: "Focus"
+        short_name: "Foc"
+        type: "focus"
+        default: 128
+        min: 0                             # Near focus
+        max: 255                           # Far focus
+        description: "Motorized focus (0=near, 255=far)"
+
+      - offset: 12
+        name: "Zoom"
+        short_name: "Zoom"
+        type: "zoom"
+        default: 128
+        min: 0                             # Narrow beam (8 degrees)
+        max: 255                           # Wide beam (40 degrees)
+        description: "Motorized zoom (0=narrow/spot, 255=wide/flood)"
+
+      - offset: 13
+        name: "Red (Color Mix)"
+        short_name: "R"
+        type: "intensity"
+        color: "red"
+        default: 0
+        min: 0
+        max: 255
+        description: "Red LED intensity for color mixing mode"
+
+      - offset: 14
+        name: "Green (Color Mix)"
+        short_name: "G"
+        type: "intensity"
+        color: "green"
+        default: 0
+        min: 0
+        max: 255
+        description: "Green LED intensity for color mixing mode"
+
+      - offset: 15
+        name: "Blue (Color Mix)"
+        short_name: "B"
+        type: "intensity"
+        color: "blue"
+        default: 0
+        min: 0
+        max: 255
+        description: "Blue LED intensity for color mixing mode"
+
+    modes:
+      - name: "Standard (16ch)"
+        channel_count: 16
+        description: "Full feature set with 16-bit pan/tilt"
+      - name: "Basic (8ch)"
+        channel_count: 8
+        description: "8-channel simplified mode (no fine pan/tilt, no color mix)"
+        channel_mapping:
+          0: "Pan (Coarse)"
+          1: "Tilt (Coarse)"
+          2: "Dimmer"
+          3: "Strobe"
+          4: "Color Wheel"
+          5: "Gobo Wheel"
+          6: "Focus"
+          7: "Zoom"
+
+    capabilities:
+      color_mixing: "RGB + Color Wheel"
+      dimming: "dedicated"
+      pan_tilt: true
+      pan_resolution: "16bit"
+      tilt_resolution: "16bit"
+      gobo: true
+      gobo_rotation: true
+      prism: true
+      focus: "motorized"
+      zoom: "motorized"
+      strobe: true
+      dimmer_curve: "linear"
+
+  # ===========================================================================
+  # PAR LED (7 Channel)
+  # ===========================================================================
+  - type_id: "par_led_7ch"
+    name: "LED PAR Light (7ch)"
+    manufacturer: "Generic Professional"
+    model: "PAR-120 RGBW"
+    category: "par"
+    channel_count: 7
+    description: >
+      Professional LED PAR fixture with RGB color mixing, master dimmer,
+      strobe control, color macros, and mode selection. Suitable for stage
+      wash, uplighting, and general color effects.
+
+    physical:
+      weight_kg: 3.2
+      power_watts: 120
+      beam_angle: 25
+      field_angle: 45
+      lamp_type: "LED RGBW"
+      ip_rating: "IP20"
+
+    channels:
+      - offset: 0
+        name: "Master Dimmer"
+        short_name: "Dim"
+        type: "dimmer"
+        default: 0
+        min: 0
+        max: 255
+        description: "Master dimmer (0=off, 255=full)"
+
+      - offset: 1
+        name: "Red"
+        short_name: "R"
+        type: "intensity"
+        color: "red"
+        default: 0
+        min: 0
+        max: 255
+
+      - offset: 2
+        name: "Green"
+        short_name: "G"
+        type: "intensity"
+        color: "green"
+        default: 0
+        min: 0
+        max: 255
+
+      - offset: 3
+        name: "Blue"
+        short_name: "B"
+        type: "intensity"
+        color: "blue"
+        default: 0
+        min: 0
+        max: 255
+
+      - offset: 4
+        name: "Strobe"
+        short_name: "Strb"
+        type: "strobe"
+        default: 0
+        min: 0
+        max: 255
+        description: "Strobe speed"
+        ranges:
+          - start: 0
+            end: 0
+            label: "No strobe"
+          - start: 1
+            end: 255
+            label: "Strobe slow to fast (1-20 Hz)"
+
+      - offset: 5
+        name: "Color Macro"
+        short_name: "CMac"
+        type: "color_macro"
+        default: 0
+        min: 0
+        max: 255
+        description: "Built-in color presets (overrides RGB when active)"
+        ranges:
+          - start: 0
+            end: 0
+            label: "No macro (manual RGB)"
+          - start: 1
+            end: 14
+            label: "Macro: Red"
+          - start: 15
+            end: 28
+            label: "Macro: Green"
+          - start: 29
+            end: 42
+            label: "Macro: Blue"
+          - start: 43
+            end: 56
+            label: "Macro: Yellow"
+          - start: 57
+            end: 70
+            label: "Macro: Cyan"
+          - start: 71
+            end: 84
+            label: "Macro: Magenta"
+          - start: 85
+            end: 98
+            label: "Macro: White"
+          - start: 99
+            end: 112
+            label: "Macro: Orange"
+          - start: 113
+            end: 126
+            label: "Macro: Pink"
+          - start: 127
+            end: 140
+            label: "Macro: Lavender"
+          - start: 141
+            end: 154
+            label: "Macro: Light Blue"
+          - start: 155
+            end: 168
+            label: "Macro: Warm White"
+          - start: 169
+            end: 182
+            label: "Macro: Cool White"
+          - start: 183
+            end: 196
+            label: "Color chase slow"
+          - start: 197
+            end: 210
+            label: "Color chase medium"
+          - start: 211
+            end: 224
+            label: "Color chase fast"
+          - start: 225
+            end: 238
+            label: "Color fade slow"
+          - start: 239
+            end: 255
+            label: "Color fade fast"
+
+      - offset: 6
+        name: "Mode"
+        short_name: "Mode"
+        type: "mode"
+        default: 0
+        min: 0
+        max: 255
+        description: "Operating mode selection"
+        ranges:
+          - start: 0
+            end: 0
+            label: "DMX control mode"
+          - start: 1
+            end: 50
+            label: "Auto mode 1 (smooth)"
+          - start: 51
+            end: 100
+            label: "Auto mode 2 (snap)"
+          - start: 101
+            end: 150
+            label: "Auto mode 3 (pulse)"
+          - start: 151
+            end: 200
+            label: "Sound active mode 1"
+          - start: 201
+            end: 255
+            label: "Sound active mode 2"
+
+    capabilities:
+      color_mixing: "RGB"
+      dimming: "dedicated"
+      strobe: true
+      color_macros: true
+      sound_active: true
+      dimmer_curve: "linear"
+
+  # ===========================================================================
+  # Dimmer Pack (4 Channel)
+  # ===========================================================================
+  - type_id: "dimmer_pack_4ch"
+    name: "4-Channel Dimmer Pack"
+    manufacturer: "Generic"
+    model: "DP-4x1000"
+    category: "dimmer"
+    channel_count: 4
+    description: >
+      Standard 4-channel dimmer pack for controlling conventional (halogen,
+      incandescent) light sources. Each channel rated for 1000W. Features
+      trailing-edge phase dimming for smooth operation. Can also control
+      LED-compatible dimmable fixtures.
+
+    physical:
+      weight_kg: 6.5
+      channels_per_unit: 4
+      max_load_per_channel_watts: 1000
+      total_max_load_watts: 4000
+      dimming_type: "trailing_edge"        # trailing_edge / leading_edge / sine_wave
+      input_voltage: "220-240V AC"
+      input_frequency: "50/60 Hz"
+      fuse_per_channel: "5A"
+
+    channels:
+      - offset: 0
+        name: "Channel 1"
+        short_name: "Ch1"
+        type: "dimmer"
+        default: 0
+        min: 0
+        max: 255
+        description: "Dimmer output channel 1 (0=off, 255=full)"
+
+      - offset: 1
+        name: "Channel 2"
+        short_name: "Ch2"
+        type: "dimmer"
+        default: 0
+        min: 0
+        max: 255
+        description: "Dimmer output channel 2"
+
+      - offset: 2
+        name: "Channel 3"
+        short_name: "Ch3"
+        type: "dimmer"
+        default: 0
+        min: 0
+        max: 255
+        description: "Dimmer output channel 3"
+
+      - offset: 3
+        name: "Channel 4"
+        short_name: "Ch4"
+        type: "dimmer"
+        default: 0
+        min: 0
+        max: 255
+        description: "Dimmer output channel 4"
+
+    capabilities:
+      dimming: "dedicated"
+      dimmer_curve: "square_law"
+      min_dim_level_pct: 1                 # Minimum dimming level before cutoff
+      preheat: true                        # Supports filament preheat
+      preheat_level_pct: 3                 # Default preheat percentage
+
+    dimmer_curves:
+      # Selectable dimmer curves (set on hardware or via RDM)
+      - id: "linear"
+        name: "Linear"
+        description: "Linear response (even steps 0-100%)"
+      - id: "square_law"
+        name: "Square Law"
+        description: "Perceptually linear dimming (default for stage)"
+      - id: "s_curve"
+        name: "S-Curve"
+        description: "Slow start and end, faster in middle range"
+      - id: "switch"
+        name: "Switch"
+        description: "On/Off at 50% threshold (relay behavior)"
+
+  # ===========================================================================
+  # LED Strip Controller (6 Channel)
+  # ===========================================================================
+  - type_id: "led_strip_controller"
+    name: "LED Strip Controller (6ch)"
+    manufacturer: "Generic"
+    model: "LSC-RGBW-6CH"
+    category: "led_driver"
+    channel_count: 6
+    description: >
+      Multi-channel LED strip driver/controller. Controls RGBW LED strip
+      with independent master dimmer and strobe. Supports up to 20m of
+      strip per output at 24V DC. PWM frequency 25kHz for flicker-free
+      dimming.
+
+    physical:
+      weight_kg: 0.8
+      max_strip_length_m: 20
+      output_voltage: "24V DC"
+      max_current_per_channel_a: 5
+      total_max_current_a: 20
+      pwm_frequency_hz: 25000
+      ip_rating: "IP20"
+
+    channels:
+      - offset: 0
+        name: "Master Dimmer"
+        short_name: "Dim"
+        type: "dimmer"
+        default: 0
+        min: 0
+        max: 255
+        description: "Master dimmer for all colors"
+
+      - offset: 1
+        name: "Red"
+        short_name: "R"
+        type: "intensity"
+        color: "red"
+        default: 0
+        min: 0
+        max: 255
+
+      - offset: 2
+        name: "Green"
+        short_name: "G"
+        type: "intensity"
+        color: "green"
+        default: 0
+        min: 0
+        max: 255
+
+      - offset: 3
+        name: "Blue"
+        short_name: "B"
+        type: "intensity"
+        color: "blue"
+        default: 0
+        min: 0
+        max: 255
+
+      - offset: 4
+        name: "White"
+        short_name: "W"
+        type: "intensity"
+        color: "white"
+        default: 0
+        min: 0
+        max: 255
+        description: "Dedicated warm white channel (3000K)"
+
+      - offset: 5
+        name: "Strobe"
+        short_name: "Strb"
+        type: "strobe"
+        default: 0
+        min: 0
+        max: 255
+        description: "Strobe effect"
+        ranges:
+          - start: 0
+            end: 0
+            label: "No strobe (continuous)"
+          - start: 1
+            end: 255
+            label: "Strobe slow to fast (0.5-25 Hz)"
+
+    capabilities:
+      color_mixing: "RGBW"
+      dimming: "dedicated"
+      strobe: true
+      dimmer_curve: "linear"
+      bit_depth: 8                         # Some controllers support 16-bit
+      flicker_free: true
+
+  # ===========================================================================
+  # Tunable White Panel (2 Channel)
+  # ===========================================================================
+  - type_id: "tunable_white_2ch"
+    name: "Tunable White LED Panel (2ch)"
+    manufacturer: "Generic"
+    model: "TWP-600x600"
+    category: "panel"
+    channel_count: 2
+    description: >
+      2-channel tunable white LED panel (600x600mm recessed). Features dual
+      LED arrays (warm + cool phosphor) for CCT adjustment from 2700K to
+      6500K. Suitable for offices, conference rooms, and commercial spaces
+      requiring human-centric lighting (HCL) capability.
+
+    physical:
+      weight_kg: 3.8
+      dimensions_mm: "595x595x40"
+      power_watts: 40
+      luminous_flux_lm: 3600
+      cri: 95
+      min_cct_kelvin: 2700
+      max_cct_kelvin: 6500
+      beam_angle: 120
+      ip_rating: "IP40"
+      mounting: "recessed_grid"
+      lifetime_hours: 60000                # L70 rated lifetime
+
+    channels:
+      - offset: 0
+        name: "Brightness"
+        short_name: "Brt"
+        type: "dimmer"
+        default: 0
+        min: 0                             # Off
+        max: 255                           # Full brightness
+        description: "Light output level (0=off, 255=full output ~3600lm)"
+
+      - offset: 1
+        name: "Color Temperature"
+        short_name: "CCT"
+        type: "color_temperature"
+        default: 140                       # ~4000K neutral (midpoint)
+        min: 0                             # 2700K (warm white)
+        max: 255                           # 6500K (daylight)
+        description: "CCT control (0=2700K warm, 128=~4000K neutral, 255=6500K daylight)"
+        cct_mapping:
+          - value: 0
+            kelvin: 2700
+            label: "Warm White"
+          - value: 64
+            kelvin: 3200
+            label: "Warm"
+          - value: 128
+            kelvin: 4000
+            label: "Neutral"
+          - value: 192
+            kelvin: 5500
+            label: "Cool White"
+          - value: 255
+            kelvin: 6500
+            label: "Daylight"
+
+    capabilities:
+      color_mixing: "tunable_white"
+      dimming: "dedicated"
+      cct_range: "2700K-6500K"
+      dimmer_curve: "logarithmic"
+      flicker_free: true
+      dali_compatible: true                # Can also accept DALI signal
+      human_centric_lighting: true
+
+    presets:
+      # Common CCT presets for quick recall
+      - name: "Relaxed"
+        brightness: 153                    # 60%
+        cct: 0                             # 2700K
+      - name: "Comfortable"
+        brightness: 204                    # 80%
+        cct: 45                            # ~3000K
+      - name: "Working"
+        brightness: 230                    # 90%
+        cct: 140                           # ~4000K
+      - name: "Focused"
+        brightness: 255                    # 100%
+        cct: 200                           # ~5600K
+      - name: "Energizing"
+        brightness: 255                    # 100%
+        cct: 255                           # 6500K
+
+  # ===========================================================================
+  # Fog Machine (2 Channel)
+  # ===========================================================================
+  - type_id: "fog_machine_2ch"
+    name: "DMX Fog Machine (2ch)"
+    manufacturer: "Generic"
+    model: "FOG-1500DMX"
+    category: "effects"
+    channel_count: 2
+    description: >
+      DMX-controlled fog/haze machine with independent output volume and
+      fan speed control. Uses water-based fog fluid. Requires warm-up period
+      of approximately 5-8 minutes before first use. Fan control allows
+      adjusting fog dispersion from concentrated bursts to thin atmospheric
+      haze.
+
+    physical:
+      weight_kg: 12.0
+      power_watts: 1500
+      fluid_type: "water_based"
+      tank_capacity_ml: 2500
+      warm_up_time_min: 5
+      output_rate_cubic_ft_min: 20000
+      continuous_run_time_min: 90
+      ip_rating: "IP20"
+
+    channels:
+      - offset: 0
+        name: "Fog Output"
+        short_name: "Out"
+        type: "fog_output"
+        default: 0
+        min: 0
+        max: 255
+        description: "Fog output volume (0=off, 255=maximum output)"
+        ranges:
+          - start: 0
+            end: 4
+            label: "Off"
+          - start: 5
+            end: 255
+            label: "Output level (5% to 100%)"
+        safety:
+          max_continuous_value: 200         # Recommended max for continuous use
+          max_continuous_duration_s: 30     # Maximum burst at full power
+          cooldown_required_s: 10          # Rest period between max bursts
+
+      - offset: 1
+        name: "Fan Speed"
+        short_name: "Fan"
+        type: "fan"
+        default: 0
+        min: 0
+        max: 255
+        description: "Output fan speed - controls fog dispersion pattern"
+        ranges:
+          - start: 0
+            end: 4
+            label: "Fan off (dense low fog)"
+          - start: 5
+            end: 127
+            label: "Low speed (concentrated output)"
+          - start: 128
+            end: 200
+            label: "Medium speed (dispersed haze)"
+          - start: 201
+            end: 255
+            label: "High speed (thin atmospheric haze)"
+
+    capabilities:
+      fog_type: "standard"                 # standard / low_fog / haze
+      dmx_controlled: true
+      timer_mode: true                     # Internal timer available
+      remote_ready: true
+      fluid_level_sensor: true
+
+    safety_notes:
+      - "Ensure adequate ventilation when operating"
+      - "Do not exceed maximum continuous run time"
+      - "Keep fog fluid reservoir above minimum level"
+      - "Position away from smoke detectors or use detector bypass"
+      - "Allow full warm-up before first output command"
+
+# =============================================================================
+# Fixture Type Cross-Reference
+# =============================================================================
+# Quick reference for all fixture types defined in this library:
+#
+#   type_id                  | ch | Category       | Description
+#   -------------------------|----|----------------|---------------------------
+#   generic_rgb              |  3 | color_mixing   | Basic RGB LED
+#   rgbw_4ch                 |  4 | color_mixing   | RGBW LED (no dimmer ch)
+#   rgbw_5ch                 |  5 | color_mixing   | RGBW LED + master dimmer
+#   moving_head_16ch         | 16 | moving_head    | Full feature MH spot
+#   par_led_7ch              |  7 | par            | LED PAR with macros
+#   dimmer_pack_4ch          |  4 | dimmer         | 4x1000W dimmer pack
+#   led_strip_controller     |  6 | led_driver     | RGBW strip controller
+#   tunable_white_2ch        |  2 | panel          | CCT adjustable panel
+#   fog_machine_2ch          |  2 | effects        | Fog/haze machine
+# =============================================================================
