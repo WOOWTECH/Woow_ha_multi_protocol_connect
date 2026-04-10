@@ -6,11 +6,14 @@ Art-Net DMX 模擬節點 — 供 Home Assistant DMX 整合測試
 模擬一個 Art-Net DMX 節點（接收端），監聽 Art-Net UDP 封包
 並顯示 DMX 通道值的變化。同時會回應 ArtPoll 請求。
 
-模擬 DMX 燈具配置：
-  Ch 1:     簡易調光燈 (Dimmer)
-  Ch 2-4:   RGB LED 燈條 (R, G, B)
-  Ch 5-8:   RGBW 投射燈 (R, G, B, W)
-  Ch 9-10:  色溫燈 (Warm, Cool)
+模擬 DMX 燈具配置 (涵蓋 artnet_led 所有 7 種燈具類型)：
+  Ch 1:     簡易調光燈 (Dimmer)        - 1 channel
+  Ch 2-4:   RGB LED 燈條 (R, G, B)     - 3 channels
+  Ch 5-8:   RGBW 投射燈 (R, G, B, W)   - 4 channels
+  Ch 9-10:  色溫燈 (Cool, Hot)          - 2 channels
+  Ch 11-15: RGBWW 燈 (R, G, B, C, H)   - 5 channels
+  Ch 16:    Binary 開關燈               - 1 channel
+  Ch 17:    Fixed 固定亮度燈             - 1 channel
 
 啟動方式:
   python3 simulators/dmx_artnet_simulator.py
@@ -36,12 +39,15 @@ ARTNET_OPCODE_POLL = 0x2000
 ARTNET_OPCODE_POLLREPLY = 0x2100
 ARTNET_OPCODE_DMX = 0x5000
 
-# 模擬燈具定義
+# 模擬燈具定義 — 涵蓋 ha-artnet-led 所有 7 種類型
 FIXTURES = {
-    "Dimmer": {"start": 1, "channels": 1, "type": "dimmer"},
-    "RGB Strip": {"start": 2, "channels": 3, "type": "rgb"},
-    "RGBW Spot": {"start": 5, "channels": 4, "type": "rgbw"},
-    "CCT Light": {"start": 9, "channels": 2, "type": "cct"},
+    "Dimmer":     {"start": 1,  "channels": 1, "type": "dimmer"},
+    "RGB Strip":  {"start": 2,  "channels": 3, "type": "rgb"},
+    "RGBW Spot":  {"start": 5,  "channels": 4, "type": "rgbw"},
+    "CCT Light":  {"start": 9,  "channels": 2, "type": "cct"},
+    "RGBWW Lamp": {"start": 11, "channels": 5, "type": "rgbww"},
+    "Binary Sw":  {"start": 16, "channels": 1, "type": "binary"},
+    "Fixed Out":  {"start": 17, "channels": 1, "type": "fixed"},
 }
 
 # 當前 DMX 值
@@ -138,7 +144,16 @@ def display_fixture_state():
                          f"R={values[0]:3d} G={values[1]:3d} B={values[2]:3d} W={values[3]:3d}")
         elif fix["type"] == "cct":
             lines.append(f"  {name:12s} Ch{fix['start']:3d}-{fix['start']+1}  "
-                         f"Warm={values[0]:3d} Cool={values[1]:3d}")
+                         f"Cool={values[0]:3d} Hot={values[1]:3d}")
+        elif fix["type"] == "rgbww":
+            lines.append(f"  {name:12s} Ch{fix['start']:3d}-{fix['start']+4}  "
+                         f"R={values[0]:3d} G={values[1]:3d} B={values[2]:3d} "
+                         f"C={values[3]:3d} H={values[4]:3d}")
+        elif fix["type"] == "binary":
+            state = "ON" if values[0] > 127 else "off"
+            lines.append(f"  {name:12s} Ch{fix['start']:3d}     Val={values[0]:3d} ({state})")
+        elif fix["type"] == "fixed":
+            lines.append(f"  {name:12s} Ch{fix['start']:3d}     Out={values[0]:3d}")
 
     return "\n".join(lines)
 
@@ -238,7 +253,7 @@ class ArtNetSimulator:
             await asyncio.sleep(30)
             log.info("Status: %d frames received total", frame_count)
             state = display_fixture_state()
-            if any(dmx_universe[:12]):
+            if any(dmx_universe[:17]):
                 print(state)
 
     async def run(self):

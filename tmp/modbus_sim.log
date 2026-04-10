@@ -1,0 +1,316 @@
+2026-04-11 07:54:12,525 [INFO] ================================================================
+2026-04-11 07:54:12,525 [INFO] Woow Modbus TCP Simulator v2 -- All 7 HA Entity Types
+2026-04-11 07:54:12,525 [INFO] ================================================================
+2026-04-11 07:54:12,525 [INFO] Listen: 0.0.0.0:5020  Device ID: 1
+2026-04-11 07:54:12,525 [INFO] 
+2026-04-11 07:54:12,525 [INFO] Holding Registers (FC03):
+2026-04-11 07:54:12,525 [INFO]   0-1:   Temperature       (float32, C)
+2026-04-11 07:54:12,525 [INFO]   2-3:   Humidity           (float32, %%)
+2026-04-11 07:54:12,525 [INFO]   4-5:   Power             (float32, W)
+2026-04-11 07:54:12,525 [INFO]   6:     Voltage           (uint16,  V)
+2026-04-11 07:54:12,525 [INFO]   10:    Light on/off      (0/1)
+2026-04-11 07:54:12,525 [INFO]   11:    Light brightness  (0-255)
+2026-04-11 07:54:12,525 [INFO]   12:    Light color temp  (2000-7000 K)
+2026-04-11 07:54:12,525 [INFO]   20-21: Climate current T (float32, C)
+2026-04-11 07:54:12,525 [INFO]   22-23: Climate target T  (float32, C)
+2026-04-11 07:54:12,525 [INFO]   24:    HVAC mode         (0=off,1=heat,2=cool,3=auto)
+2026-04-11 07:54:12,525 [INFO]   25:    Fan mode          (0=auto,1=low,2=med,3=high)
+2026-04-11 07:54:12,525 [INFO]   26:    HVAC action       (0=off,1=heating,2=cooling,3=idle)
+2026-04-11 07:54:12,525 [INFO]   30:    Cover position    (0-100)
+2026-04-11 07:54:12,526 [INFO]   31:    Cover state       (0=closed,1=open,2=opening,3=closing)
+2026-04-11 07:54:12,526 [INFO]   35:    Fan2 speed        (0=off,1=low,2=med,3=high)
+2026-04-11 07:54:12,526 [INFO]   --- Stress-test (50 float32 temperatures) ---
+2026-04-11 07:54:12,526 [INFO]   100-199: Temp sensors #0..#49 (2 regs each, float32)
+2026-04-11 07:54:12,526 [INFO] Coils (FC01/05/15):
+2026-04-11 07:54:12,526 [INFO]   0: Light  1: Fan  2: Heater
+2026-04-11 07:54:12,526 [INFO]   5: Cover open  6: Cover close
+2026-04-11 07:54:12,526 [INFO]   8: Fan2 on/off
+2026-04-11 07:54:12,526 [INFO]   100-119: Stress-test switches (20)
+2026-04-11 07:54:12,526 [INFO] Discrete Inputs (FC02):
+2026-04-11 07:54:12,526 [INFO]   0: Door  1: Window  2: Motion
+2026-04-11 07:54:12,526 [INFO]   100-109: Stress-test binary sensors (10)
+2026-04-11 07:54:12,526 [INFO] ================================================================
+2026-04-11 07:54:12,526 [INFO] Sensor updater started (interval=2.0s)
+2026-04-11 07:54:12,527 [INFO] T=24.4°C H=54.4% P=55W V=221V | Light=off Fan=off Heat=off | Door=shut Win=shut Motion=no
+2026-04-11 07:54:12,527 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:54:12,527 [INFO]   Stress: 50 temps [20.0..29.9 avg=24.9] | 5 DI active/10 | 20 switches
+2026-04-11 07:54:12,527 [INFO] Server listening.
+2026-04-11 07:54:14,529 [INFO] T=24.3°C H=54.1% P=147W V=220V | Light=off Fan=off Heat=off | Door=shut Win=shut Motion=no
+2026-04-11 07:54:14,529 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:54:14,529 [INFO]   Stress: 50 temps [20.0..30.1 avg=24.9] | 5 DI active/10 | 20 switches
+2026-04-11 07:54:16,531 [INFO] T=24.3°C H=54.7% P=157W V=222V | Light=off Fan=off Heat=off | Door=shut Win=shut Motion=no
+2026-04-11 07:54:16,531 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:54:16,531 [INFO]   Stress: 50 temps [20.0..30.2 avg=24.9] | 5 DI active/10 | 20 switches
+2026-04-11 07:54:18,533 [INFO] T=24.6°C H=53.8% P=146W V=221V | Light=off Fan=off Heat=off | Door=shut Win=shut Motion=no
+2026-04-11 07:54:18,533 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:54:18,533 [INFO]   Stress: 50 temps [20.0..30.2 avg=24.9] | 3 DI active/10 | 20 switches
+2026-04-11 07:54:20,536 [INFO] T=24.5°C H=54.1% P=148W V=223V | Light=off Fan=off Heat=off | Door=shut Win=shut Motion=no
+2026-04-11 07:54:20,537 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:54:20,537 [INFO]   Stress: 50 temps [20.0..30.4 avg=24.9] | 4 DI active/10 | 20 switches
+2026-04-11 07:54:22,539 [INFO] T=24.3°C H=55.1% P=160W V=221V | Light=off Fan=off Heat=off | Door=shut Win=shut Motion=no
+2026-04-11 07:54:22,539 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:54:22,539 [INFO]   Stress: 50 temps [20.2..30.6 avg=24.9] | 5 DI active/10 | 20 switches
+2026-04-11 07:54:24,542 [INFO] T=24.2°C H=55.3% P=159W V=222V | Light=off Fan=off Heat=off | Door=shut Win=shut Motion=no
+2026-04-11 07:54:24,542 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:54:24,542 [INFO]   Stress: 50 temps [20.3..30.6 avg=24.9] | 4 DI active/10 | 20 switches
+2026-04-11 07:54:26,545 [INFO] T=24.3°C H=55.4% P=157W V=222V | Light=off Fan=off Heat=off | Door=shut Win=shut Motion=no
+2026-04-11 07:54:26,545 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:54:26,545 [INFO]   Stress: 50 temps [20.2..30.6 avg=24.9] | 4 DI active/10 | 20 switches
+2026-04-11 07:54:28,548 [INFO] T=24.4°C H=55.8% P=149W V=223V | Light=off Fan=off Heat=off | Door=shut Win=OPEN Motion=no
+2026-04-11 07:54:28,548 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:54:28,548 [INFO]   Stress: 50 temps [20.3..30.4 avg=24.9] | 4 DI active/10 | 20 switches
+2026-04-11 07:54:30,550 [INFO] T=24.5°C H=56.2% P=162W V=222V | Light=off Fan=off Heat=off | Door=shut Win=OPEN Motion=no
+2026-04-11 07:54:30,550 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:54:30,550 [INFO]   Stress: 50 temps [20.3..30.4 avg=24.9] | 4 DI active/10 | 20 switches
+2026-04-11 07:54:32,553 [INFO] T=24.5°C H=55.3% P=157W V=223V | Light=off Fan=off Heat=off | Door=OPEN Win=OPEN Motion=no
+2026-04-11 07:54:32,553 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:54:32,553 [INFO]   Stress: 50 temps [20.2..30.2 avg=24.9] | 4 DI active/10 | 20 switches
+2026-04-11 07:54:34,554 [INFO] T=24.7°C H=54.9% P=159W V=224V | Light=off Fan=off Heat=off | Door=OPEN Win=OPEN Motion=YES
+2026-04-11 07:54:34,554 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:54:34,554 [INFO]   Stress: 50 temps [20.3..30.2 avg=24.9] | 4 DI active/10 | 20 switches
+2026-04-11 07:54:36,556 [INFO] T=24.5°C H=55.0% P=147W V=223V | Light=off Fan=off Heat=off | Door=OPEN Win=OPEN Motion=YES
+2026-04-11 07:54:36,556 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:54:36,556 [INFO]   Stress: 50 temps [20.4..30.4 avg=24.9] | 3 DI active/10 | 20 switches
+2026-04-11 07:54:38,558 [INFO] T=24.5°C H=54.8% P=146W V=225V | Light=off Fan=off Heat=off | Door=OPEN Win=OPEN Motion=YES
+2026-04-11 07:54:38,558 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:54:38,558 [INFO]   Stress: 50 temps [20.5..30.4 avg=24.9] | 2 DI active/10 | 20 switches
+2026-04-11 07:54:40,560 [INFO] T=24.7°C H=55.5% P=158W V=227V | Light=off Fan=off Heat=off | Door=OPEN Win=OPEN Motion=YES
+2026-04-11 07:54:40,560 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:54:40,560 [INFO]   Stress: 50 temps [20.5..30.4 avg=24.9] | 2 DI active/10 | 20 switches
+2026-04-11 07:54:42,562 [INFO] T=24.7°C H=55.3% P=161W V=228V | Light=off Fan=off Heat=off | Door=OPEN Win=OPEN Motion=YES
+2026-04-11 07:54:42,562 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:54:42,562 [INFO]   Stress: 50 temps [20.6..30.4 avg=24.9] | 3 DI active/10 | 20 switches
+2026-04-11 07:54:44,564 [INFO] T=24.7°C H=56.1% P=161W V=229V | Light=off Fan=off Heat=off | Door=OPEN Win=OPEN Motion=no
+2026-04-11 07:54:44,565 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:54:44,565 [INFO]   Stress: 50 temps [20.7..30.4 avg=24.9] | 3 DI active/10 | 20 switches
+2026-04-11 07:54:46,567 [INFO] T=25.0°C H=56.2% P=147W V=230V | Light=off Fan=off Heat=off | Door=OPEN Win=OPEN Motion=no
+2026-04-11 07:54:46,567 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:54:46,567 [INFO]   Stress: 50 temps [20.6..30.3 avg=24.9] | 3 DI active/10 | 20 switches
+2026-04-11 07:54:48,569 [INFO] T=24.8°C H=56.4% P=155W V=231V | Light=off Fan=off Heat=off | Door=OPEN Win=OPEN Motion=no
+2026-04-11 07:54:48,569 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:54:48,569 [INFO]   Stress: 50 temps [20.4..30.2 avg=24.9] | 4 DI active/10 | 20 switches
+2026-04-11 07:54:50,571 [INFO] T=24.7°C H=55.8% P=161W V=233V | Light=off Fan=off Heat=off | Door=OPEN Win=OPEN Motion=no
+2026-04-11 07:54:50,571 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:54:50,571 [INFO]   Stress: 50 temps [20.3..30.1 avg=24.9] | 5 DI active/10 | 20 switches
+2026-04-11 07:54:52,573 [INFO] T=24.7°C H=56.5% P=145W V=232V | Light=off Fan=off Heat=off | Door=OPEN Win=OPEN Motion=no
+2026-04-11 07:54:52,573 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:54:52,573 [INFO]   Stress: 50 temps [20.2..30.1 avg=24.8] | 4 DI active/10 | 20 switches
+2026-04-11 07:54:54,575 [INFO] T=24.9°C H=56.3% P=147W V=231V | Light=off Fan=off Heat=off | Door=OPEN Win=OPEN Motion=YES
+2026-04-11 07:54:54,575 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:54:54,575 [INFO]   Stress: 50 temps [20.2..30.2 avg=24.9] | 4 DI active/10 | 20 switches
+2026-04-11 07:54:56,577 [INFO] T=24.8°C H=57.0% P=148W V=232V | Light=off Fan=off Heat=off | Door=OPEN Win=OPEN Motion=YES
+2026-04-11 07:54:56,577 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:54:56,577 [INFO]   Stress: 50 temps [20.3..30.2 avg=24.8] | 3 DI active/10 | 20 switches
+2026-04-11 07:54:58,580 [INFO] T=24.7°C H=57.5% P=148W V=230V | Light=off Fan=off Heat=off | Door=OPEN Win=OPEN Motion=YES
+2026-04-11 07:54:58,580 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:54:58,580 [INFO]   Stress: 50 temps [20.3..30.3 avg=24.9] | 4 DI active/10 | 20 switches
+2026-04-11 07:55:00,582 [INFO] T=24.5°C H=57.2% P=147W V=228V | Light=off Fan=off Heat=off | Door=OPEN Win=OPEN Motion=YES
+2026-04-11 07:55:00,582 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:55:00,582 [INFO]   Stress: 50 temps [20.5..30.5 avg=24.9] | 4 DI active/10 | 20 switches
+2026-04-11 07:55:02,585 [INFO] T=24.7°C H=57.9% P=150W V=230V | Light=off Fan=off Heat=off | Door=OPEN Win=OPEN Motion=YES
+2026-04-11 07:55:02,585 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:55:02,585 [INFO]   Stress: 50 temps [20.5..30.5 avg=24.9] | 4 DI active/10 | 20 switches
+2026-04-11 07:55:04,586 [INFO] T=24.7°C H=57.2% P=150W V=232V | Light=off Fan=off Heat=off | Door=OPEN Win=OPEN Motion=YES
+2026-04-11 07:55:04,586 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:55:04,586 [INFO]   Stress: 50 temps [20.5..30.4 avg=24.9] | 5 DI active/10 | 20 switches
+2026-04-11 07:55:06,589 [INFO] T=24.6°C H=57.5% P=149W V=231V | Light=off Fan=off Heat=off | Door=OPEN Win=OPEN Motion=YES
+2026-04-11 07:55:06,589 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:55:06,589 [INFO]   Stress: 50 temps [20.5..30.4 avg=24.9] | 5 DI active/10 | 20 switches
+2026-04-11 07:55:08,591 [INFO] T=24.6°C H=58.0% P=143W V=232V | Light=off Fan=off Heat=off | Door=OPEN Win=OPEN Motion=no
+2026-04-11 07:55:08,591 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:55:08,591 [INFO]   Stress: 50 temps [20.5..30.2 avg=24.9] | 5 DI active/10 | 20 switches
+2026-04-11 07:55:10,594 [INFO] T=24.7°C H=57.9% P=157W V=231V | Light=off Fan=off Heat=off | Door=OPEN Win=OPEN Motion=no
+2026-04-11 07:55:10,594 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:55:10,594 [INFO]   Stress: 50 temps [20.4..30.1 avg=24.9] | 4 DI active/10 | 20 switches
+2026-04-11 07:55:12,596 [INFO] T=24.8°C H=58.5% P=158W V=229V | Light=off Fan=off Heat=off | Door=OPEN Win=OPEN Motion=no
+2026-04-11 07:55:12,596 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:55:12,596 [INFO]   Stress: 50 temps [20.5..30.2 avg=24.9] | 4 DI active/10 | 20 switches
+2026-04-11 07:55:14,597 [INFO] T=24.7°C H=57.9% P=148W V=227V | Light=off Fan=off Heat=off | Door=OPEN Win=OPEN Motion=no
+2026-04-11 07:55:14,597 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:55:14,597 [INFO]   Stress: 50 temps [20.5..30.2 avg=24.8] | 4 DI active/10 | 20 switches
+2026-04-11 07:55:16,600 [INFO] T=24.4°C H=58.3% P=159W V=228V | Light=off Fan=off Heat=off | Door=OPEN Win=OPEN Motion=no
+2026-04-11 07:55:16,600 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:55:16,600 [INFO]   Stress: 50 temps [20.3..30.3 avg=24.9] | 4 DI active/10 | 20 switches
+2026-04-11 07:55:18,603 [INFO] T=24.7°C H=58.9% P=148W V=226V | Light=off Fan=off Heat=off | Door=OPEN Win=OPEN Motion=no
+2026-04-11 07:55:18,603 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:55:18,603 [INFO]   Stress: 50 temps [20.3..30.5 avg=24.8] | 4 DI active/10 | 20 switches
+2026-04-11 07:55:20,605 [INFO] T=24.5°C H=59.7% P=152W V=224V | Light=off Fan=off Heat=off | Door=OPEN Win=OPEN Motion=no
+2026-04-11 07:55:20,605 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:55:20,605 [INFO]   Stress: 50 temps [20.3..30.6 avg=24.9] | 4 DI active/10 | 20 switches
+2026-04-11 07:55:22,608 [INFO] T=24.2°C H=58.9% P=152W V=226V | Light=off Fan=off Heat=off | Door=OPEN Win=OPEN Motion=no
+2026-04-11 07:55:22,608 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:55:22,608 [INFO]   Stress: 50 temps [20.3..30.7 avg=24.9] | 5 DI active/10 | 20 switches
+2026-04-11 07:55:24,609 [INFO] T=24.4°C H=59.2% P=156W V=225V | Light=off Fan=off Heat=off | Door=OPEN Win=OPEN Motion=no
+2026-04-11 07:55:24,610 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:55:24,610 [INFO]   Stress: 50 temps [20.2..30.7 avg=24.9] | 6 DI active/10 | 20 switches
+2026-04-11 07:55:26,612 [INFO] T=24.6°C H=59.7% P=148W V=224V | Light=off Fan=off Heat=off | Door=OPEN Win=OPEN Motion=no
+2026-04-11 07:55:26,612 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:55:26,613 [INFO]   Stress: 50 temps [20.3..30.7 avg=24.9] | 6 DI active/10 | 20 switches
+2026-04-11 07:55:28,615 [INFO] T=24.6°C H=60.3% P=153W V=226V | Light=off Fan=off Heat=off | Door=OPEN Win=OPEN Motion=no
+2026-04-11 07:55:28,616 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:55:28,616 [INFO]   Stress: 50 temps [20.4..30.9 avg=24.9] | 6 DI active/10 | 20 switches
+2026-04-11 07:55:30,618 [INFO] T=24.3°C H=60.7% P=144W V=226V | Light=off Fan=off Heat=off | Door=OPEN Win=OPEN Motion=no
+2026-04-11 07:55:30,618 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:55:30,618 [INFO]   Stress: 50 temps [20.3..30.9 avg=24.9] | 6 DI active/10 | 20 switches
+2026-04-11 07:55:32,620 [INFO] T=24.0°C H=60.3% P=150W V=226V | Light=off Fan=off Heat=off | Door=OPEN Win=OPEN Motion=YES
+2026-04-11 07:55:32,620 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:55:32,620 [INFO]   Stress: 50 temps [20.4..31.1 avg=24.9] | 5 DI active/10 | 20 switches
+2026-04-11 07:55:34,621 [INFO] T=24.2°C H=61.1% P=159W V=225V | Light=off Fan=off Heat=off | Door=OPEN Win=OPEN Motion=YES
+2026-04-11 07:55:34,621 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:55:34,622 [INFO]   Stress: 50 temps [20.2..31.0 avg=24.8] | 5 DI active/10 | 20 switches
+2026-04-11 07:55:36,624 [INFO] T=24.0°C H=61.3% P=157W V=223V | Light=off Fan=off Heat=off | Door=OPEN Win=OPEN Motion=YES
+2026-04-11 07:55:36,624 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:55:36,624 [INFO]   Stress: 50 temps [20.3..31.1 avg=24.9] | 5 DI active/10 | 20 switches
+2026-04-11 07:55:38,627 [INFO] T=24.1°C H=61.2% P=144W V=222V | Light=off Fan=off Heat=off | Door=OPEN Win=OPEN Motion=YES
+2026-04-11 07:55:38,627 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:55:38,627 [INFO]   Stress: 50 temps [20.3..31.1 avg=24.8] | 6 DI active/10 | 20 switches
+2026-04-11 07:55:40,629 [INFO] T=24.3°C H=60.9% P=151W V=223V | Light=off Fan=off Heat=off | Door=OPEN Win=OPEN Motion=YES
+2026-04-11 07:55:40,629 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:55:40,629 [INFO]   Stress: 50 temps [20.4..31.3 avg=24.8] | 5 DI active/10 | 20 switches
+2026-04-11 07:55:42,632 [INFO] T=24.3°C H=60.4% P=148W V=225V | Light=off Fan=off Heat=off | Door=OPEN Win=OPEN Motion=YES
+2026-04-11 07:55:42,632 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:55:42,632 [INFO]   Stress: 50 temps [20.2..31.3 avg=24.8] | 5 DI active/10 | 20 switches
+2026-04-11 07:55:44,633 [INFO] T=24.3°C H=60.9% P=161W V=225V | Light=off Fan=off Heat=off | Door=OPEN Win=OPEN Motion=YES
+2026-04-11 07:55:44,634 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:55:44,634 [INFO]   Stress: 50 temps [20.2..31.3 avg=24.8] | 6 DI active/10 | 20 switches
+2026-04-11 07:55:46,636 [INFO] T=24.0°C H=60.0% P=150W V=223V | Light=off Fan=off Heat=off | Door=OPEN Win=OPEN Motion=YES
+2026-04-11 07:55:46,636 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:55:46,636 [INFO]   Stress: 50 temps [20.0..31.4 avg=24.8] | 5 DI active/10 | 20 switches
+2026-04-11 07:55:48,639 [INFO] T=23.8°C H=59.1% P=153W V=223V | Light=off Fan=off Heat=off | Door=OPEN Win=OPEN Motion=no
+2026-04-11 07:55:48,639 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:55:48,639 [INFO]   Stress: 50 temps [19.8..31.5 avg=24.8] | 6 DI active/10 | 20 switches
+2026-04-11 07:55:50,641 [INFO] T=23.7°C H=59.7% P=152W V=221V | Light=off Fan=off Heat=off | Door=OPEN Win=OPEN Motion=no
+2026-04-11 07:55:50,641 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:55:50,641 [INFO]   Stress: 50 temps [19.8..31.4 avg=24.9] | 6 DI active/10 | 20 switches
+2026-04-11 07:55:52,643 [INFO] T=23.7°C H=60.2% P=154W V=223V | Light=off Fan=off Heat=off | Door=OPEN Win=OPEN Motion=no
+2026-04-11 07:55:52,644 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:55:52,644 [INFO]   Stress: 50 temps [19.7..31.6 avg=24.8] | 6 DI active/10 | 20 switches
+2026-04-11 07:55:54,645 [INFO] T=23.8°C H=61.0% P=150W V=225V | Light=off Fan=off Heat=off | Door=OPEN Win=OPEN Motion=no
+2026-04-11 07:55:54,645 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:55:54,645 [INFO]   Stress: 50 temps [19.6..31.7 avg=24.9] | 5 DI active/10 | 20 switches
+2026-04-11 07:55:56,647 [INFO] T=23.8°C H=61.5% P=154W V=227V | Light=off Fan=off Heat=off | Door=OPEN Win=OPEN Motion=no
+2026-04-11 07:55:56,647 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:55:56,647 [INFO]   Stress: 50 temps [19.5..31.5 avg=24.9] | 5 DI active/10 | 20 switches
+2026-04-11 07:55:58,649 [INFO] T=23.6°C H=62.4% P=159W V=229V | Light=off Fan=off Heat=off | Door=OPEN Win=OPEN Motion=no
+2026-04-11 07:55:58,649 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:55:58,649 [INFO]   Stress: 50 temps [19.4..31.5 avg=24.8] | 5 DI active/10 | 20 switches
+2026-04-11 07:56:00,651 [INFO] T=23.6°C H=62.6% P=145W V=229V | Light=off Fan=off Heat=off | Door=OPEN Win=OPEN Motion=no
+2026-04-11 07:56:00,651 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:56:00,651 [INFO]   Stress: 50 temps [19.5..31.5 avg=24.8] | 5 DI active/10 | 20 switches
+2026-04-11 07:56:02,653 [INFO] T=23.7°C H=62.5% P=142W V=228V | Light=off Fan=off Heat=off | Door=OPEN Win=OPEN Motion=no
+2026-04-11 07:56:02,653 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:56:02,653 [INFO]   Stress: 50 temps [19.6..31.4 avg=24.9] | 5 DI active/10 | 20 switches
+2026-04-11 07:56:04,654 [INFO] T=23.7°C H=62.3% P=144W V=226V | Light=off Fan=off Heat=off | Door=OPEN Win=OPEN Motion=no
+2026-04-11 07:56:04,655 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:56:04,655 [INFO]   Stress: 50 temps [19.6..31.2 avg=24.8] | 6 DI active/10 | 20 switches
+2026-04-11 07:56:06,657 [INFO] T=23.6°C H=62.4% P=148W V=225V | Light=off Fan=off Heat=off | Door=OPEN Win=OPEN Motion=no
+2026-04-11 07:56:06,657 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:56:06,657 [INFO]   Stress: 50 temps [19.6..31.1 avg=24.9] | 6 DI active/10 | 20 switches
+2026-04-11 07:56:08,660 [INFO] T=23.7°C H=63.0% P=155W V=223V | Light=off Fan=off Heat=off | Door=OPEN Win=OPEN Motion=no
+2026-04-11 07:56:08,660 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:56:08,660 [INFO]   Stress: 50 temps [19.5..31.2 avg=24.9] | 6 DI active/10 | 20 switches
+2026-04-11 07:56:10,662 [INFO] T=23.5°C H=63.1% P=149W V=223V | Light=off Fan=off Heat=off | Door=OPEN Win=OPEN Motion=no
+2026-04-11 07:56:10,662 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:56:10,662 [INFO]   Stress: 50 temps [19.5..31.3 avg=24.8] | 7 DI active/10 | 20 switches
+2026-04-11 07:56:12,664 [INFO] T=23.4°C H=62.2% P=151W V=223V | Light=off Fan=off Heat=off | Door=shut Win=OPEN Motion=no
+2026-04-11 07:56:12,664 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:56:12,664 [INFO]   Stress: 50 temps [19.6..31.1 avg=24.8] | 6 DI active/10 | 20 switches
+2026-04-11 07:56:14,665 [INFO] T=23.4°C H=62.3% P=162W V=224V | Light=off Fan=off Heat=off | Door=shut Win=OPEN Motion=no
+2026-04-11 07:56:14,665 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:56:14,666 [INFO]   Stress: 50 temps [19.6..31.0 avg=24.8] | 8 DI active/10 | 20 switches
+2026-04-11 07:56:16,667 [INFO] T=23.3°C H=62.2% P=160W V=223V | Light=off Fan=off Heat=off | Door=shut Win=OPEN Motion=YES
+2026-04-11 07:56:16,667 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:56:16,667 [INFO]   Stress: 50 temps [19.5..31.0 avg=24.8] | 7 DI active/10 | 20 switches
+2026-04-11 07:56:18,670 [INFO] T=23.4°C H=62.5% P=142W V=222V | Light=off Fan=off Heat=off | Door=shut Win=OPEN Motion=YES
+2026-04-11 07:56:18,670 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:56:18,670 [INFO]   Stress: 50 temps [19.5..31.0 avg=24.8] | 6 DI active/10 | 20 switches
+2026-04-11 07:56:20,672 [INFO] T=23.5°C H=62.6% P=156W V=222V | Light=off Fan=off Heat=off | Door=shut Win=OPEN Motion=YES
+2026-04-11 07:56:20,673 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:56:20,673 [INFO]   Stress: 50 temps [19.5..31.1 avg=24.8] | 6 DI active/10 | 20 switches
+2026-04-11 07:56:22,675 [INFO] T=23.5°C H=62.4% P=148W V=221V | Light=off Fan=off Heat=off | Door=shut Win=OPEN Motion=YES
+2026-04-11 07:56:22,676 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:56:22,676 [INFO]   Stress: 50 temps [19.6..31.0 avg=24.8] | 6 DI active/10 | 20 switches
+2026-04-11 07:56:24,678 [INFO] T=23.3°C H=61.6% P=157W V=219V | Light=off Fan=off Heat=off | Door=shut Win=shut Motion=YES
+2026-04-11 07:56:24,678 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:56:24,678 [INFO]   Stress: 50 temps [19.7..31.1 avg=24.8] | 5 DI active/10 | 20 switches
+2026-04-11 07:56:26,681 [INFO] T=23.1°C H=61.1% P=154W V=219V | Light=off Fan=off Heat=off | Door=shut Win=shut Motion=YES
+2026-04-11 07:56:26,681 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:56:26,681 [INFO]   Stress: 50 temps [19.6..31.0 avg=24.8] | 5 DI active/10 | 20 switches
+2026-04-11 07:56:28,683 [INFO] T=23.3°C H=60.4% P=149W V=218V | Light=off Fan=off Heat=off | Door=shut Win=shut Motion=YES
+2026-04-11 07:56:28,683 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:56:28,683 [INFO]   Stress: 50 temps [19.5..30.9 avg=24.8] | 5 DI active/10 | 20 switches
+2026-04-11 07:56:30,685 [INFO] T=23.3°C H=60.3% P=150W V=219V | Light=off Fan=off Heat=off | Door=shut Win=shut Motion=YES
+2026-04-11 07:56:30,685 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:56:30,685 [INFO]   Stress: 50 temps [19.6..30.9 avg=24.8] | 5 DI active/10 | 20 switches
+2026-04-11 07:56:32,687 [INFO] T=23.2°C H=60.9% P=152W V=219V | Light=off Fan=off Heat=off | Door=shut Win=shut Motion=YES
+2026-04-11 07:56:32,687 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:56:32,687 [INFO]   Stress: 50 temps [19.7..31.0 avg=24.8] | 5 DI active/10 | 20 switches
+2026-04-11 07:56:34,688 [INFO] T=23.3°C H=61.4% P=158W V=221V | Light=off Fan=off Heat=off | Door=shut Win=shut Motion=YES
+2026-04-11 07:56:34,688 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:56:34,688 [INFO]   Stress: 50 temps [19.9..31.1 avg=24.8] | 6 DI active/10 | 20 switches
+2026-04-11 07:56:36,690 [INFO] T=23.6°C H=61.9% P=159W V=220V | Light=off Fan=off Heat=off | Door=shut Win=shut Motion=no
+2026-04-11 07:56:36,690 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:56:36,690 [INFO]   Stress: 50 temps [19.7..31.1 avg=24.8] | 6 DI active/10 | 20 switches
+2026-04-11 07:56:38,692 [INFO] T=23.6°C H=62.4% P=148W V=222V | Light=off Fan=off Heat=off | Door=shut Win=shut Motion=no
+2026-04-11 07:56:38,692 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:56:38,692 [INFO]   Stress: 50 temps [19.6..31.2 avg=24.9] | 6 DI active/10 | 20 switches
+2026-04-11 07:56:40,694 [INFO] T=23.7°C H=63.0% P=152W V=220V | Light=off Fan=off Heat=off | Door=shut Win=shut Motion=no
+2026-04-11 07:56:40,695 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:56:40,695 [INFO]   Stress: 50 temps [19.7..31.3 avg=24.9] | 6 DI active/10 | 20 switches
+2026-04-11 07:56:42,697 [INFO] T=23.5°C H=62.7% P=158W V=221V | Light=off Fan=off Heat=off | Door=shut Win=shut Motion=no
+2026-04-11 07:56:42,698 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:56:42,698 [INFO]   Stress: 50 temps [19.7..31.2 avg=24.9] | 6 DI active/10 | 20 switches
+2026-04-11 07:56:44,699 [INFO] T=23.4°C H=63.6% P=155W V=221V | Light=off Fan=off Heat=off | Door=shut Win=shut Motion=no
+2026-04-11 07:56:44,699 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:56:44,700 [INFO]   Stress: 50 temps [19.8..31.3 avg=24.9] | 6 DI active/10 | 20 switches
+2026-04-11 07:56:46,702 [INFO] T=23.6°C H=63.9% P=151W V=223V | Light=off Fan=off Heat=off | Door=shut Win=shut Motion=no
+2026-04-11 07:56:46,703 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:56:46,703 [INFO]   Stress: 50 temps [19.6..31.5 avg=24.9] | 6 DI active/10 | 20 switches
+2026-04-11 07:56:48,705 [INFO] T=23.4°C H=63.4% P=145W V=222V | Light=off Fan=off Heat=off | Door=shut Win=shut Motion=no
+2026-04-11 07:56:48,705 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:56:48,705 [INFO]   Stress: 50 temps [19.4..31.6 avg=24.9] | 6 DI active/10 | 20 switches
+2026-04-11 07:56:50,708 [INFO] T=23.3°C H=63.8% P=147W V=220V | Light=off Fan=off Heat=off | Door=shut Win=shut Motion=no
+2026-04-11 07:56:50,708 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:56:50,709 [INFO]   Stress: 50 temps [19.5..31.6 avg=24.9] | 6 DI active/10 | 20 switches
+2026-04-11 07:56:52,712 [INFO] T=23.6°C H=63.0% P=147W V=221V | Light=off Fan=off Heat=off | Door=shut Win=shut Motion=no
+2026-04-11 07:56:52,712 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:56:52,712 [INFO]   Stress: 50 temps [19.5..31.6 avg=24.9] | 7 DI active/10 | 20 switches
+2026-04-11 07:56:54,713 [INFO] T=23.6°C H=63.6% P=154W V=221V | Light=off Fan=off Heat=off | Door=shut Win=shut Motion=no
+2026-04-11 07:56:54,714 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:56:54,714 [INFO]   Stress: 50 temps [19.5..31.7 avg=25.0] | 7 DI active/10 | 20 switches
+2026-04-11 07:56:56,716 [INFO] T=23.4°C H=63.5% P=160W V=222V | Light=off Fan=off Heat=off | Door=shut Win=shut Motion=no
+2026-04-11 07:56:56,716 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:56:56,716 [INFO]   Stress: 50 temps [19.4..31.9 avg=25.0] | 7 DI active/10 | 20 switches
+2026-04-11 07:56:58,719 [INFO] T=23.2°C H=63.8% P=145W V=224V | Light=off Fan=off Heat=off | Door=shut Win=shut Motion=no
+2026-04-11 07:56:58,719 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:56:58,719 [INFO]   Stress: 50 temps [19.2..32.0 avg=25.0] | 7 DI active/10 | 20 switches
+2026-04-11 07:57:00,721 [INFO] T=23.1°C H=63.5% P=161W V=223V | Light=off Fan=off Heat=off | Door=shut Win=shut Motion=no
+2026-04-11 07:57:00,721 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:57:00,721 [INFO]   Stress: 50 temps [19.3..32.1 avg=25.0] | 7 DI active/10 | 20 switches
+2026-04-11 07:57:02,723 [INFO] T=23.4°C H=63.4% P=160W V=222V | Light=off Fan=off Heat=off | Door=shut Win=shut Motion=no
+2026-04-11 07:57:02,723 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:57:02,723 [INFO]   Stress: 50 temps [19.1..32.1 avg=25.0] | 7 DI active/10 | 20 switches
+2026-04-11 07:57:04,724 [INFO] T=23.2°C H=62.6% P=155W V=224V | Light=off Fan=off Heat=off | Door=shut Win=shut Motion=no
+2026-04-11 07:57:04,725 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:57:04,725 [INFO]   Stress: 50 temps [19.2..32.3 avg=25.0] | 6 DI active/10 | 20 switches
+2026-04-11 07:57:06,727 [INFO] T=23.3°C H=62.5% P=156W V=222V | Light=off Fan=off Heat=off | Door=shut Win=shut Motion=YES
+2026-04-11 07:57:06,728 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:57:06,728 [INFO]   Stress: 50 temps [19.1..32.1 avg=24.9] | 5 DI active/10 | 20 switches
+2026-04-11 07:57:08,730 [INFO] T=23.3°C H=62.3% P=145W V=224V | Light=off Fan=off Heat=off | Door=shut Win=shut Motion=YES
+2026-04-11 07:57:08,730 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:57:08,730 [INFO]   Stress: 50 temps [19.1..32.2 avg=25.0] | 5 DI active/10 | 20 switches
+2026-04-11 07:57:10,733 [INFO] T=23.2°C H=61.4% P=153W V=222V | Light=off Fan=off Heat=off | Door=shut Win=shut Motion=YES
+2026-04-11 07:57:10,733 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:57:10,733 [INFO]   Stress: 50 temps [19.2..32.2 avg=24.9] | 6 DI active/10 | 20 switches
+2026-04-11 07:57:12,736 [INFO] T=23.0°C H=60.5% P=159W V=221V | Light=off Fan=off Heat=off | Door=shut Win=shut Motion=YES
+2026-04-11 07:57:12,736 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:57:12,736 [INFO]   Stress: 50 temps [19.3..32.3 avg=24.9] | 7 DI active/10 | 20 switches
+2026-04-11 07:57:14,738 [INFO] T=23.2°C H=59.6% P=149W V=223V | Light=off Fan=off Heat=off | Door=shut Win=shut Motion=YES
+2026-04-11 07:57:14,738 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:57:14,738 [INFO]   Stress: 50 temps [19.4..32.3 avg=25.0] | 7 DI active/10 | 20 switches
+2026-04-11 07:57:16,741 [INFO] T=23.0°C H=59.7% P=151W V=225V | Light=off Fan=off Heat=off | Door=shut Win=shut Motion=YES
+2026-04-11 07:57:16,741 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:57:16,741 [INFO]   Stress: 50 temps [19.4..32.2 avg=25.0] | 6 DI active/10 | 20 switches
+2026-04-11 07:57:18,744 [INFO] T=23.1°C H=60.1% P=142W V=223V | Light=off Fan=off Heat=off | Door=shut Win=shut Motion=YES
+2026-04-11 07:57:18,744 [INFO]   Light2: ON bri=255 ct=2000K | Climate: mode=off target=22.0 action=off | Cover: pos=0% closed | Fan2: off spd=off
+2026-04-11 07:57:18,744 [INFO]   Stress: 50 temps [19.5..32.4 avg=24.9] | 6 DI active/10 | 20 switches

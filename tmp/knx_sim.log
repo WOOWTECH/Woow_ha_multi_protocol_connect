@@ -1,0 +1,151 @@
+2026-04-11 07:54:13,266 [INFO] ============================================================
+2026-04-11 07:54:13,266 [INFO] Woow KNXnet/IP Tunnelling 模擬伺服器
+2026-04-11 07:54:13,266 [INFO] ============================================================
+2026-04-11 07:54:13,266 [INFO] Local IP: 192.168.2.191
+2026-04-11 07:54:13,266 [INFO] 監聽: 0.0.0.0:3671 (UDP Tunnelling)
+2026-04-11 07:54:13,267 [INFO] 
+2026-04-11 07:54:13,267 [INFO] 模擬設備 (12 entity types + 80 stress-test entities):
+2026-04-11 07:54:13,267 [INFO]   燈光開關    GA 1/0/1(cmd) 1/0/2(state)         DPT 1.001
+2026-04-11 07:54:13,267 [INFO]   調光燈      GA 1/0/3(cmd) 1/0/4(bri) 1/0/5(st) DPT 1/5
+2026-04-11 07:54:13,267 [INFO]   溫度感測器  GA 2/0/1(value)                     DPT 9.001
+2026-04-11 07:54:13,267 [INFO]   濕度感測器  GA 2/0/2(value)                     DPT 9.007
+2026-04-11 07:54:13,267 [INFO]   窗簾        GA 3/0/1(updn) 3/0/2(pos) 3/0/3(st) DPT 1/5
+2026-04-11 07:54:13,267 [INFO]   開關        GA 4/0/1(cmd) 4/0/2(state)         DPT 1.001
+2026-04-11 07:54:13,267 [INFO]   二進制感測  GA 4/0/3(state, read-only)         DPT 1.002
+2026-04-11 07:54:13,267 [INFO]   空調        GA 5/0/1-2(temp) 5/0/3-4(mode) 5/0/5-6(on)
+2026-04-11 07:54:13,267 [INFO]   風扇        GA 6/0/1-2(on) 6/0/3-4(speed)     DPT 1/5
+2026-04-11 07:54:13,267 [INFO]   數值        GA 7/0/1(cmd) 7/0/2(state)         DPT 9.001
+2026-04-11 07:54:13,267 [INFO]   場景        GA 7/0/3(activate)                  DPT 17.001
+2026-04-11 07:54:13,267 [INFO]   選擇器      GA 7/0/4(cmd) 7/0/5(state)         DPT 5.005
+2026-04-11 07:54:13,267 [INFO] 
+2026-04-11 07:54:13,267 [INFO] Stress-test entities (80):
+2026-04-11 07:54:13,267 [INFO]   50 temps    GA 10/0/1..10/0/50 (read-only)      DPT 9.001
+2026-04-11 07:54:13,267 [INFO]   20 switches GA 11/0/1..11/0/40 (odd=cmd,even=st) DPT 1.001
+2026-04-11 07:54:13,267 [INFO]   10 lights   GA 12/0/1..12/0/20 (odd=cmd,even=st) DPT 1.001
+2026-04-11 07:54:13,267 [INFO] 
+2026-04-11 07:54:13,267 [INFO] 等待 KNXnet/IP 連線...
+2026-04-11 07:54:13,267 [INFO] ============================================================
+2026-04-11 07:54:13,267 [INFO] Joined multicast group 224.0.23.12
+2026-04-11 07:54:53,409 [INFO] ConnectRequest from ('192.168.2.191', 56487) (type=4, layer=2)
+2026-04-11 07:54:53,409 [INFO] ConnectResponse → ('192.168.2.191', 56487) (channel=1, IA=1.0.241)
+2026-04-11 07:54:53,412 [INFO] DescriptionRequest from ('192.168.2.191', 56487)
+2026-04-11 07:54:53,412 [INFO] DescriptionResponse → ('192.168.2.191', 56487)
+2026-04-11 07:54:53,746 [INFO] RX GroupValueRead GA 1/0/2
+2026-04-11 07:54:53,746 [INFO] TX GroupValueResponse GA 1/0/2 (Light state)
+2026-04-11 07:54:53,749 [INFO] Broadcast 95 telegrams to 1 client(s) | Temp=23.6°C Hum=55.4% Light=OFF Dimmer=OFF(0%) Cover=100% Switch=OFF Climate=ON(22.0°C,m=0) Fan=OFF(0%) Num=50.0 Sel=0 | stress: 50 temps, 0/20 sw ON, 0/10 lt ON
+2026-04-11 07:54:53,754 [INFO] RX GroupValueRead GA 1/0/5
+2026-04-11 07:54:53,754 [INFO] TX GroupValueResponse GA 1/0/5 (Dimmer state)
+2026-04-11 07:55:03,844 [INFO] Broadcast 95 telegrams to 1 client(s) | Temp=23.5°C Hum=55.6% Light=OFF Dimmer=OFF(0%) Cover=100% Switch=OFF Climate=ON(22.0°C,m=0) Fan=OFF(0%) Num=50.0 Sel=0 | stress: 50 temps, 0/20 sw ON, 0/10 lt ON
+2026-04-11 07:55:13,952 [INFO] Broadcast 95 telegrams to 1 client(s) | Temp=23.5°C Hum=55.8% Light=OFF Dimmer=OFF(0%) Cover=100% Switch=OFF Climate=ON(22.0°C,m=0) Fan=OFF(0%) Num=50.0 Sel=0 | stress: 50 temps, 0/20 sw ON, 0/10 lt ON
+2026-04-11 07:55:24,041 [INFO] Broadcast 95 telegrams to 1 client(s) | Temp=23.6°C Hum=55.5% Light=OFF Dimmer=OFF(0%) Cover=100% Switch=OFF Climate=ON(22.0°C,m=0) Fan=OFF(0%) Num=50.0 Sel=0 | stress: 50 temps, 0/20 sw ON, 0/10 lt ON
+2026-04-11 07:55:34,164 [INFO] Broadcast 95 telegrams to 1 client(s) | Temp=23.8°C Hum=55.8% Light=OFF Dimmer=OFF(0%) Cover=100% Switch=OFF Climate=ON(22.0°C,m=0) Fan=OFF(0%) Num=50.0 Sel=0 | stress: 50 temps, 0/20 sw ON, 0/10 lt ON
+2026-04-11 07:55:44,246 [INFO] Broadcast 95 telegrams to 1 client(s) | Temp=23.9°C Hum=55.4% Light=OFF Dimmer=OFF(0%) Cover=100% Switch=OFF Climate=ON(22.0°C,m=0) Fan=OFF(0%) Num=50.0 Sel=0 | stress: 50 temps, 0/20 sw ON, 0/10 lt ON
+2026-04-11 07:55:54,365 [INFO] Broadcast 95 telegrams to 1 client(s) | Temp=23.7°C Hum=55.7% Light=OFF Dimmer=OFF(0%) Cover=100% Switch=OFF Climate=ON(22.0°C,m=0) Fan=OFF(0%) Num=50.0 Sel=0 | stress: 50 temps, 0/20 sw ON, 0/10 lt ON
+2026-04-11 07:56:04,423 [INFO] Broadcast 95 telegrams to 1 client(s) | Temp=24.0°C Hum=56.2% Light=OFF Dimmer=OFF(0%) Cover=100% Switch=OFF Climate=ON(22.0°C,m=0) Fan=OFF(0%) Num=50.0 Sel=0 | stress: 50 temps, 0/20 sw ON, 0/10 lt ON
+2026-04-11 07:56:14,533 [INFO] Broadcast 95 telegrams to 1 client(s) | Temp=24.1°C Hum=55.9% Light=OFF Dimmer=OFF(0%) Cover=100% Switch=OFF Climate=ON(22.0°C,m=0) Fan=OFF(0%) Num=50.0 Sel=0 | stress: 50 temps, 0/20 sw ON, 0/10 lt ON
+2026-04-11 07:56:24,648 [INFO] Broadcast 95 telegrams to 1 client(s) | Temp=24.0°C Hum=55.5% Light=OFF Dimmer=OFF(0%) Cover=100% Switch=OFF Climate=ON(22.0°C,m=0) Fan=OFF(0%) Num=50.0 Sel=0 | stress: 50 temps, 0/20 sw ON, 0/10 lt ON
+2026-04-11 07:56:31,071 [INFO] RX GroupValueWrite GA 11/0/1 = 1 (short)
+2026-04-11 07:56:31,072 [INFO] Stress switch #1 → ON
+2026-04-11 07:56:31,077 [INFO] RX GroupValueWrite GA 11/0/3 = 1 (short)
+2026-04-11 07:56:31,077 [INFO] Stress switch #2 → ON
+2026-04-11 07:56:31,082 [INFO] RX GroupValueWrite GA 11/0/5 = 1 (short)
+2026-04-11 07:56:31,082 [INFO] Stress switch #3 → ON
+2026-04-11 07:56:31,087 [INFO] RX GroupValueWrite GA 11/0/7 = 1 (short)
+2026-04-11 07:56:31,087 [INFO] Stress switch #4 → ON
+2026-04-11 07:56:31,092 [INFO] RX GroupValueWrite GA 11/0/9 = 1 (short)
+2026-04-11 07:56:31,092 [INFO] Stress switch #5 → ON
+2026-04-11 07:56:31,098 [INFO] RX GroupValueWrite GA 11/0/11 = 1 (short)
+2026-04-11 07:56:31,098 [INFO] Stress switch #6 → ON
+2026-04-11 07:56:31,102 [INFO] RX GroupValueWrite GA 11/0/13 = 1 (short)
+2026-04-11 07:56:31,102 [INFO] Stress switch #7 → ON
+2026-04-11 07:56:31,107 [INFO] RX GroupValueWrite GA 11/0/15 = 1 (short)
+2026-04-11 07:56:31,107 [INFO] Stress switch #8 → ON
+2026-04-11 07:56:31,112 [INFO] RX GroupValueWrite GA 11/0/17 = 1 (short)
+2026-04-11 07:56:31,112 [INFO] Stress switch #9 → ON
+2026-04-11 07:56:31,118 [INFO] RX GroupValueWrite GA 11/0/19 = 1 (short)
+2026-04-11 07:56:31,118 [INFO] Stress switch #10 → ON
+2026-04-11 07:56:31,123 [INFO] RX GroupValueWrite GA 11/0/21 = 1 (short)
+2026-04-11 07:56:31,123 [INFO] Stress switch #11 → ON
+2026-04-11 07:56:31,129 [INFO] RX GroupValueWrite GA 11/0/23 = 1 (short)
+2026-04-11 07:56:31,129 [INFO] Stress switch #12 → ON
+2026-04-11 07:56:31,135 [INFO] RX GroupValueWrite GA 11/0/25 = 1 (short)
+2026-04-11 07:56:31,135 [INFO] Stress switch #13 → ON
+2026-04-11 07:56:31,141 [INFO] RX GroupValueWrite GA 11/0/27 = 1 (short)
+2026-04-11 07:56:31,141 [INFO] Stress switch #14 → ON
+2026-04-11 07:56:31,146 [INFO] RX GroupValueWrite GA 11/0/29 = 1 (short)
+2026-04-11 07:56:31,146 [INFO] Stress switch #15 → ON
+2026-04-11 07:56:31,153 [INFO] RX GroupValueWrite GA 11/0/31 = 1 (short)
+2026-04-11 07:56:31,153 [INFO] Stress switch #16 → ON
+2026-04-11 07:56:31,159 [INFO] RX GroupValueWrite GA 11/0/33 = 1 (short)
+2026-04-11 07:56:31,159 [INFO] Stress switch #17 → ON
+2026-04-11 07:56:31,165 [INFO] RX GroupValueWrite GA 11/0/35 = 1 (short)
+2026-04-11 07:56:31,166 [INFO] Stress switch #18 → ON
+2026-04-11 07:56:31,170 [INFO] RX GroupValueWrite GA 11/0/37 = 1 (short)
+2026-04-11 07:56:31,170 [INFO] Stress switch #19 → ON
+2026-04-11 07:56:31,175 [INFO] RX GroupValueWrite GA 11/0/39 = 1 (short)
+2026-04-11 07:56:31,176 [INFO] Stress switch #20 → ON
+2026-04-11 07:56:31,181 [INFO] RX GroupValueWrite GA 12/0/1 = 1 (short)
+2026-04-11 07:56:31,181 [INFO] Stress light #1 → ON
+2026-04-11 07:56:31,186 [INFO] RX GroupValueWrite GA 12/0/3 = 1 (short)
+2026-04-11 07:56:31,187 [INFO] Stress light #2 → ON
+2026-04-11 07:56:31,193 [INFO] RX GroupValueWrite GA 12/0/5 = 1 (short)
+2026-04-11 07:56:31,193 [INFO] Stress light #3 → ON
+2026-04-11 07:56:31,198 [INFO] RX GroupValueWrite GA 12/0/7 = 1 (short)
+2026-04-11 07:56:31,198 [INFO] Stress light #4 → ON
+2026-04-11 07:56:31,204 [INFO] RX GroupValueWrite GA 12/0/9 = 1 (short)
+2026-04-11 07:56:31,204 [INFO] Stress light #5 → ON
+2026-04-11 07:56:31,210 [INFO] RX GroupValueWrite GA 12/0/11 = 1 (short)
+2026-04-11 07:56:31,210 [INFO] Stress light #6 → ON
+2026-04-11 07:56:31,216 [INFO] RX GroupValueWrite GA 12/0/13 = 1 (short)
+2026-04-11 07:56:31,216 [INFO] Stress light #7 → ON
+2026-04-11 07:56:31,222 [INFO] RX GroupValueWrite GA 12/0/15 = 1 (short)
+2026-04-11 07:56:31,223 [INFO] Stress light #8 → ON
+2026-04-11 07:56:31,229 [INFO] RX GroupValueWrite GA 12/0/17 = 1 (short)
+2026-04-11 07:56:31,229 [INFO] Stress light #9 → ON
+2026-04-11 07:56:31,234 [INFO] RX GroupValueWrite GA 12/0/19 = 1 (short)
+2026-04-11 07:56:31,235 [INFO] Stress light #10 → ON
+2026-04-11 07:56:31,833 [INFO] RX GroupValueWrite GA 11/0/1 = 0 (short)
+2026-04-11 07:56:31,833 [INFO] Stress switch #1 → OFF
+2026-04-11 07:56:31,844 [INFO] RX GroupValueWrite GA 11/0/3 = 0 (short)
+2026-04-11 07:56:31,844 [INFO] Stress switch #2 → OFF
+2026-04-11 07:56:31,855 [INFO] RX GroupValueWrite GA 11/0/5 = 0 (short)
+2026-04-11 07:56:31,855 [INFO] Stress switch #3 → OFF
+2026-04-11 07:56:31,866 [INFO] RX GroupValueWrite GA 11/0/7 = 0 (short)
+2026-04-11 07:56:31,866 [INFO] Stress switch #4 → OFF
+2026-04-11 07:56:31,878 [INFO] RX GroupValueWrite GA 11/0/9 = 0 (short)
+2026-04-11 07:56:31,878 [INFO] Stress switch #5 → OFF
+2026-04-11 07:56:31,890 [INFO] RX GroupValueWrite GA 11/0/11 = 0 (short)
+2026-04-11 07:56:31,890 [INFO] Stress switch #6 → OFF
+2026-04-11 07:56:31,903 [INFO] RX GroupValueWrite GA 11/0/13 = 0 (short)
+2026-04-11 07:56:31,903 [INFO] Stress switch #7 → OFF
+2026-04-11 07:56:31,916 [INFO] RX GroupValueWrite GA 11/0/15 = 0 (short)
+2026-04-11 07:56:31,916 [INFO] Stress switch #8 → OFF
+2026-04-11 07:56:31,929 [INFO] RX GroupValueWrite GA 11/0/17 = 0 (short)
+2026-04-11 07:56:31,929 [INFO] Stress switch #9 → OFF
+2026-04-11 07:56:31,940 [INFO] RX GroupValueWrite GA 11/0/19 = 0 (short)
+2026-04-11 07:56:31,940 [INFO] Stress switch #10 → OFF
+2026-04-11 07:56:31,952 [INFO] RX GroupValueWrite GA 11/0/21 = 0 (short)
+2026-04-11 07:56:31,952 [INFO] Stress switch #11 → OFF
+2026-04-11 07:56:31,964 [INFO] RX GroupValueWrite GA 11/0/23 = 0 (short)
+2026-04-11 07:56:31,964 [INFO] Stress switch #12 → OFF
+2026-04-11 07:56:31,975 [INFO] RX GroupValueWrite GA 11/0/25 = 0 (short)
+2026-04-11 07:56:31,976 [INFO] Stress switch #13 → OFF
+2026-04-11 07:56:31,989 [INFO] RX GroupValueWrite GA 11/0/27 = 0 (short)
+2026-04-11 07:56:31,989 [INFO] Stress switch #14 → OFF
+2026-04-11 07:56:31,999 [INFO] RX GroupValueWrite GA 11/0/29 = 0 (short)
+2026-04-11 07:56:31,999 [INFO] Stress switch #15 → OFF
+2026-04-11 07:56:32,011 [INFO] RX GroupValueWrite GA 11/0/31 = 0 (short)
+2026-04-11 07:56:32,011 [INFO] Stress switch #16 → OFF
+2026-04-11 07:56:32,023 [INFO] RX GroupValueWrite GA 11/0/33 = 0 (short)
+2026-04-11 07:56:32,023 [INFO] Stress switch #17 → OFF
+2026-04-11 07:56:32,035 [INFO] RX GroupValueWrite GA 11/0/35 = 0 (short)
+2026-04-11 07:56:32,035 [INFO] Stress switch #18 → OFF
+2026-04-11 07:56:32,046 [INFO] RX GroupValueWrite GA 11/0/37 = 0 (short)
+2026-04-11 07:56:32,046 [INFO] Stress switch #19 → OFF
+2026-04-11 07:56:32,058 [INFO] RX GroupValueWrite GA 11/0/39 = 0 (short)
+2026-04-11 07:56:32,058 [INFO] Stress switch #20 → OFF
+2026-04-11 07:56:35,067 [INFO] Broadcast 95 telegrams to 1 client(s) | Temp=23.8°C Hum=55.5% Light=OFF Dimmer=OFF(0%) Cover=100% Switch=OFF Climate=ON(22.0°C,m=0) Fan=OFF(0%) Num=50.0 Sel=0 | stress: 50 temps, 0/20 sw ON, 10/10 lt ON
+2026-04-11 07:56:45,167 [INFO] Broadcast 95 telegrams to 1 client(s) | Temp=24.0°C Hum=55.3% Light=OFF Dimmer=OFF(0%) Cover=100% Switch=OFF Climate=ON(22.0°C,m=0) Fan=OFF(0%) Num=50.0 Sel=0 | stress: 50 temps, 0/20 sw ON, 10/10 lt ON
+2026-04-11 07:56:55,282 [INFO] Broadcast 95 telegrams to 1 client(s) | Temp=24.3°C Hum=55.1% Light=OFF Dimmer=OFF(0%) Cover=100% Switch=OFF Climate=ON(22.0°C,m=0) Fan=OFF(0%) Num=50.0 Sel=0 | stress: 50 temps, 0/20 sw ON, 10/10 lt ON
+2026-04-11 07:57:05,377 [INFO] Broadcast 95 telegrams to 1 client(s) | Temp=24.3°C Hum=54.6% Light=OFF Dimmer=OFF(0%) Cover=100% Switch=OFF Climate=ON(22.0°C,m=0) Fan=OFF(0%) Num=50.0 Sel=0 | stress: 50 temps, 0/20 sw ON, 10/10 lt ON
+2026-04-11 07:57:15,435 [INFO] Broadcast 95 telegrams to 1 client(s) | Temp=24.3°C Hum=54.3% Light=OFF Dimmer=OFF(0%) Cover=100% Switch=OFF Climate=ON(22.0°C,m=0) Fan=OFF(0%) Num=50.0 Sel=0 | stress: 50 temps, 0/20 sw ON, 10/10 lt ON
