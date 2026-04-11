@@ -20754,3 +20754,17 @@
   Binary Sw    Ch 16     Val=  0 (off)
   Fixed Out    Ch 17     Out=255
 2026-04-11 13:41:29,596 [INFO] RX DMX Universe 0 (70 channels) from 192.168.2.191  [frame #9365]
+2026-04-11 13:41:41,380 [INFO] RX DMX Universe 0 (70 channels) from 192.168.2.191  [frame #9370]
+2026-04-11 13:41:43,502 [INFO] Status: 9371 frames received total
+2026-04-11 13:41:51,955 [INFO] RX DMX Universe 0 (70 channels) from 192.168.2.191  [frame #9375]
+2026-04-11 13:42:02,725 [INFO] RX DMX Universe 0 (70 channels) from 192.168.2.191  [frame #9380]
+2026-04-11 13:42:13,502 [INFO] Status: 9384 frames received total
+2026-04-11 13:42:13,564 [INFO] RX DMX Universe 0 (70 channels) from 192.168.2.191  [frame #9385]
+2026-04-11 13:42:24,210 [INFO] RX DMX Universe 0 (70 channels) from 192.168.2.191  [frame #9390]
+2026-04-11 13:42:34,907 [INFO] RX DMX Universe 0 (70 channels) from 192.168.2.191  [frame #9395]
+2026-04-11 13:42:43,503 [INFO] Status: 9398 frames received total
+2026-04-11 13:42:45,662 [INFO] RX DMX Universe 0 (70 channels) from 192.168.2.191  [frame #9400]
+2026-04-11 13:42:57,535 [INFO] RX DMX Universe 0 (70 channels) from 192.168.2.191  [frame #9405]
+2026-04-11 13:43:08,139 [INFO] RX DMX Universe 0 (70 channels) from 192.168.2.191  [frame #9410]
+2026-04-11 13:43:13,504 [INFO] Status: 9412 frames received total
+2026-04-11 13:43:20,070 [INFO] RX DMX Universe 0 (70 channels) from 192.168.2.191  [frame #9415]
