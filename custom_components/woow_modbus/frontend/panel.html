@@ -4,536 +4,1604 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Woow Modbus 設定指南</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   <style>
+    /* === WOOW Protocol Panel Design System === */
     :root {
-      --primary: #ff5722;
-      --primary-dark: #e64a19;
-      --accent: #ff9800;
-      --danger: #f44336;
-      --danger-dark: #d32f2f;
-      --success: #4caf50;
-      --bg: #f5f5f5;
-      --card-bg: #ffffff;
-      --text: #212121;
-      --text-secondary: #616161;
-      --border: #e0e0e0;
-      --shadow: 0 2px 8px rgba(0,0,0,0.1);
-      --radius: 12px;
+      /* Neutrals -- warm industrial gray */
+      --bg-base: #0F1114;
+      --bg-surface: #181B20;
+      --bg-elevated: #1F2329;
+      --bg-input: #14171B;
+      --border-subtle: rgba(255,255,255,0.06);
+      --border-default: rgba(255,255,255,0.10);
+      --border-strong: rgba(255,255,255,0.16);
+      --text-primary: #E8EAED;
+      --text-secondary: #9AA0A6;
+      --text-muted: #5F6368;
+      --text-inverse: #0F1114;
+
+      /* Status */
+      --status-success: #34A853;
+      --status-warning: #FBBC04;
+      --status-danger: #EA4335;
+      --status-info: #4285F4;
+
+      /* Typography */
+      --font-display: 'DM Sans', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+      /* Spacing */
+      --space-xs: 4px;
+      --space-sm: 8px;
+      --space-md: 16px;
+      --space-lg: 24px;
+      --space-xl: 32px;
+      --space-2xl: 48px;
+
+      /* Radius */
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+
+      /* Shadows */
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.4);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.5);
+      --shadow-lg: 0 8px 32px rgba(0,0,0,0.6);
+
+      /* Protocol-specific (Modbus) */
+      --protocol-primary: #FF5722;
+      --protocol-primary-dark: #E64A19;
+      --protocol-glow: rgba(255, 87, 34, 0.15);
+      --protocol-glow-strong: rgba(255, 87, 34, 0.25);
+      --protocol-gradient: linear-gradient(135deg, #FF5722, #E64A19);
+      --protocol-icon: "\1F50C";
+      --protocol-label: "Modbus";
     }
 
-    @media (prefers-color-scheme: dark) {
+    /* Light mode override */
+    @media (prefers-color-scheme: light) {
       :root {
-        --bg: #1c1c1c;
-        --card-bg: #2c2c2c;
-        --text: #e0e0e0;
-        --text-secondary: #9e9e9e;
-        --border: #404040;
-        --shadow: 0 2px 8px rgba(0,0,0,0.3);
+        --bg-base: #F4F5F7;
+        --bg-surface: #FFFFFF;
+        --bg-elevated: #FFFFFF;
+        --bg-input: #F0F1F3;
+        --border-subtle: rgba(0,0,0,0.04);
+        --border-default: rgba(0,0,0,0.08);
+        --border-strong: rgba(0,0,0,0.14);
+        --text-primary: #1F2329;
+        --text-secondary: #5F6368;
+        --text-muted: #9AA0A6;
+        --text-inverse: #FFFFFF;
+        --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+        --shadow-md: 0 4px 12px rgba(0,0,0,0.10);
+        --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
       }
     }
 
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    /* ================================================
+       Reset & Base
+       ================================================ */
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      font-size: 14px;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", sans-serif;
-      background: var(--bg);
-      color: var(--text);
+      font-family: var(--font-display);
+      background: var(--bg-base);
+      color: var(--text-primary);
       line-height: 1.6;
-      padding: 24px;
-      max-width: 960px;
+      min-height: 100vh;
+    }
+
+    a {
+      color: var(--protocol-primary);
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    a:hover {
+      color: var(--protocol-primary-dark);
+    }
+
+    code {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      background: var(--bg-input);
+      padding: 2px 6px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-subtle);
+    }
+
+    /* ================================================
+       Layout Container
+       ================================================ */
+    .panel-container {
+      max-width: 920px;
       margin: 0 auto;
+      padding: 0 var(--space-lg);
+      padding-bottom: var(--space-2xl);
     }
 
-    .header {
+    /* ================================================
+       Top Bar
+       ================================================ */
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-sm) var(--space-lg);
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-subtle);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .protocol-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      background: var(--protocol-glow);
+      border: 1px solid var(--protocol-primary);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--protocol-primary);
+    }
+
+    .protocol-pill .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--protocol-primary);
+      flex-shrink: 0;
+    }
+
+    .top-bar-brand {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-muted);
+      letter-spacing: 0.04em;
+    }
+
+    .top-bar-brand span {
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    /* ================================================
+       Hero Section
+       ================================================ */
+    .hero {
+      position: relative;
+      background: var(--protocol-gradient);
+      padding: var(--space-2xl) var(--space-xl);
       text-align: center;
-      margin-bottom: 32px;
-      padding: 32px 24px;
-      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-      border-radius: var(--radius);
-      color: #fff;
-      box-shadow: var(--shadow);
+      overflow: hidden;
+      margin-bottom: var(--space-xl);
     }
-    .header h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
-    .header p { font-size: 15px; opacity: 0.9; }
 
-    .card {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 24px;
-      margin-bottom: 20px;
-      box-shadow: var(--shadow);
-      transition: transform 0.15s ease;
+    /* Animated grid overlay */
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 39px,
+          rgba(255,255,255,0.04) 39px,
+          rgba(255,255,255,0.04) 40px
+        ),
+        repeating-linear-gradient(
+          90deg,
+          transparent,
+          transparent 39px,
+          rgba(255,255,255,0.04) 39px,
+          rgba(255,255,255,0.04) 40px
+        );
+      animation: gridShift 30s linear infinite;
+      pointer-events: none;
     }
-    .card:hover { transform: translateY(-1px); }
-    .card h2 { font-size: 20px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
-    .card h2 .icon { font-size: 24px; flex-shrink: 0; }
-    .card p, .card li { color: var(--text-secondary); font-size: 14px; line-height: 1.8; }
-    .card ul, .card ol { padding-left: 20px; margin-top: 8px; }
-    .card li { margin-bottom: 6px; }
 
-    a.btn {
-      display: inline-block; padding: 10px 24px; border-radius: 8px; font-size: 14px;
-      font-weight: 600; text-decoration: none; transition: all 0.2s ease; cursor: pointer;
-      border: none; text-align: center;
+    @keyframes gridShift {
+      0%   { transform: translate(0, 0); }
+      100% { transform: translate(40px, 40px); }
     }
-    .btn-primary { background: var(--primary); color: #fff; }
-    .btn-primary:hover { background: var(--primary-dark); }
-    .btn-accent { background: var(--accent); color: #fff; }
-    .btn-accent:hover { background: #f57c00; }
-    .btn-group { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
 
-    .step-badge {
-      display: inline-flex; align-items: center; justify-content: center;
-      width: 28px; height: 28px; border-radius: 50%;
-      background: var(--primary); color: #fff; font-size: 14px; font-weight: 700; flex-shrink: 0;
+    .hero::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 120%, rgba(0,0,0,0.3) 0%, transparent 70%);
+      pointer-events: none;
     }
-    .steps { margin-top: 12px; }
-    .step { display: flex; gap: 14px; margin-bottom: 16px; align-items: flex-start; }
-    .step-content { flex: 1; }
-    .step-content strong { display: block; font-size: 15px; color: var(--text); margin-bottom: 2px; }
-    .step-content span { font-size: 13px; color: var(--text-secondary); }
 
-    .warning-box {
-      background: #fff3e0; border: 2px solid var(--accent); border-radius: 8px;
-      padding: 16px; margin-top: 16px; margin-bottom: 16px;
+    .hero-content {
+      position: relative;
+      z-index: 1;
     }
-    .warning-box.danger { background: #ffebee; border-color: var(--danger); }
-    @media (prefers-color-scheme: dark) {
-      .warning-box { background: #3e2723; }
-      .warning-box.danger { background: #3e1e1e; }
+
+    .hero-icon {
+      font-size: 48px;
+      margin-bottom: var(--space-md);
+      display: block;
+      filter: drop-shadow(0 2px 8px rgba(0,0,0,0.3));
     }
-    .warning-box p { color: var(--text) !important; font-size: 13px; font-weight: 500; }
-    .warning-box .warning-title { font-weight: 700; font-size: 15px; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
 
-    button.btn-danger {
-      display: inline-flex; align-items: center; gap: 8px; padding: 12px 28px;
-      border-radius: 8px; font-size: 14px; font-weight: 700;
-      background: var(--danger); color: #fff; border: none; cursor: pointer; transition: all 0.2s ease;
+    .hero h1 {
+      font-family: var(--font-display);
+      font-size: 32px;
+      font-weight: 700;
+      color: #FFFFFF;
+      margin-bottom: var(--space-sm);
+      letter-spacing: -0.01em;
     }
-    button.btn-danger:hover { background: var(--danger-dark); }
-    button.btn-danger:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    .restart-section { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-top: 16px; }
-    .checkbox-confirm { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text-secondary); cursor: pointer; user-select: none; }
-    .checkbox-confirm input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
-    #restartStatus { margin-top: 12px; font-size: 13px; font-weight: 600; min-height: 20px; }
+    .hero p {
+      font-size: 15px;
+      color: rgba(255,255,255,0.85);
+      max-width: 520px;
+      margin: 0 auto;
+      line-height: 1.7;
+    }
 
-    .divider { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+    /* ================================================
+       Step Cards with Connecting Line
+       ================================================ */
+    .steps-container {
+      position: relative;
+      padding-left: 44px;
+      margin-bottom: var(--space-xl);
+    }
 
+    /* Vertical connecting line */
+    .steps-container::before {
+      content: '';
+      position: absolute;
+      left: 17px;
+      top: 20px;
+      bottom: 20px;
+      width: 2px;
+      background: linear-gradient(
+        to bottom,
+        var(--protocol-primary),
+        var(--protocol-primary-dark),
+        var(--border-default)
+      );
+      border-radius: 1px;
+    }
+
+    .step-card {
+      position: relative;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-left: 2px solid var(--protocol-primary);
+      border-radius: var(--radius-md);
+      padding: var(--space-lg);
+      margin-bottom: var(--space-md);
+      box-shadow: var(--shadow-sm);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .step-card:hover {
+      transform: scale(1.005);
+      box-shadow: var(--shadow-md);
+    }
+
+    .step-number {
+      position: absolute;
+      left: -44px;
+      top: var(--space-lg);
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--protocol-primary);
+      color: #FFFFFF;
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 0 4px var(--bg-base), 0 0 0 5px var(--protocol-primary);
+      z-index: 1;
+    }
+
+    @media (prefers-color-scheme: light) {
+      .step-number {
+        box-shadow: 0 0 0 4px var(--bg-base), 0 0 0 5px var(--protocol-primary);
+      }
+    }
+
+    .step-card h2 {
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--space-sm);
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+
+    .step-card h2 .icon {
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+
+    .step-card p {
+      color: var(--text-secondary);
+      font-size: 14px;
+      line-height: 1.8;
+      margin-bottom: var(--space-sm);
+    }
+
+    .step-card ul, .step-card ol {
+      padding-left: 20px;
+      margin-top: var(--space-sm);
+    }
+
+    .step-card li {
+      color: var(--text-secondary);
+      font-size: 14px;
+      line-height: 1.8;
+      margin-bottom: var(--space-xs);
+    }
+
+    .step-card li strong {
+      color: var(--text-primary);
+    }
+
+    /* ================================================
+       Buttons
+       ================================================ */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 20px;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-display);
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      border: none;
+      text-align: center;
+      line-height: 1;
+    }
+
+    .btn-filled {
+      background: var(--protocol-primary);
+      color: #FFFFFF;
+    }
+
+    .btn-filled:hover {
+      background: var(--protocol-primary-dark);
+      color: #FFFFFF;
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--protocol-primary);
+      border: 1px solid var(--protocol-primary);
+    }
+
+    .btn-ghost:hover {
+      background: var(--protocol-glow);
+      color: var(--protocol-primary);
+      transform: translateY(-1px);
+    }
+
+    .btn-danger {
+      background: var(--status-danger);
+      color: #FFFFFF;
+      padding: 12px 28px;
+      font-weight: 700;
+    }
+
+    .btn-danger:hover {
+      background: #C62828;
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .btn-danger:disabled,
+    .btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: var(--space-sm);
+      flex-wrap: wrap;
+      margin-top: var(--space-md);
+    }
+
+    .btn-arrow::after {
+      content: '\2192';
+      font-size: 14px;
+    }
+
+    /* ================================================
+       Sub-steps (inside Step 3)
+       ================================================ */
+    .sub-steps {
+      margin-top: var(--space-md);
+    }
+
+    .sub-step {
+      display: flex;
+      gap: 12px;
+      margin-bottom: var(--space-md);
+      align-items: flex-start;
+    }
+
+    .sub-step-number {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--protocol-glow-strong);
+      color: var(--protocol-primary);
+      font-family: var(--font-display);
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .sub-step-content {
+      flex: 1;
+    }
+
+    .sub-step-content strong {
+      display: block;
+      font-size: 14px;
+      color: var(--text-primary);
+      margin-bottom: 2px;
+      font-weight: 600;
+    }
+
+    .sub-step-content span,
+    .sub-step-content p {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    /* ================================================
+       Warning / Info Boxes
+       ================================================ */
+    .callout {
+      border-radius: var(--radius-sm);
+      padding: var(--space-md);
+      margin: var(--space-md) 0;
+      border: 1px solid;
+    }
+
+    .callout-warning {
+      background: rgba(251, 188, 4, 0.08);
+      border-color: rgba(251, 188, 4, 0.3);
+    }
+
+    .callout-danger {
+      background: rgba(234, 67, 53, 0.08);
+      border-color: rgba(234, 67, 53, 0.3);
+    }
+
+    .callout-info {
+      background: var(--protocol-glow);
+      border-color: rgba(255, 87, 34, 0.3);
+    }
+
+    .callout-success {
+      background: rgba(52, 168, 83, 0.08);
+      border-color: rgba(52, 168, 83, 0.3);
+    }
+
+    .callout-title {
+      font-weight: 700;
+      font-size: 14px;
+      margin-bottom: var(--space-xs);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-primary);
+    }
+
+    .callout p {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    .callout ul {
+      padding-left: 18px;
+      margin-top: var(--space-sm);
+    }
+
+    .callout li {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.8;
+      margin-bottom: var(--space-xs);
+    }
+
+    /* ================================================
+       Code Block
+       ================================================ */
     .code-block {
-      background: #263238; color: #eeffff; border-radius: 8px; padding: 16px; margin-top: 12px;
-      font-family: "Fira Code", "Consolas", monospace; font-size: 13px; overflow-x: auto; line-height: 1.6;
+      background: var(--bg-input);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-sm);
+      padding: var(--space-md);
+      margin: var(--space-md) 0;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      line-height: 1.7;
+      overflow-x: auto;
+      color: var(--text-primary);
+      white-space: pre;
     }
-    .success-box { background: #e8f5e9; border: 2px solid var(--success); border-radius: 8px; padding: 16px; margin-top: 16px; }
-    @media (prefers-color-scheme: dark) { .success-box { background: #1b3e1f; } }
-    .success-box p { color: var(--text) !important; font-size: 14px; }
 
-    /* YAML Editor */
-    .editor-section { border: 2px solid #ff5722; border-radius: var(--radius); margin-bottom: 20px; box-shadow: var(--shadow); overflow: hidden; }
+    /* ================================================
+       YAML Editor Section
+       ================================================ */
+    .editor-section {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      margin-bottom: var(--space-xl);
+      box-shadow: var(--shadow-md);
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Protocol accent corner */
+    .editor-section::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 60px;
+      background: var(--protocol-primary);
+      border-radius: 0 0 4px 0;
+      z-index: 2;
+    }
+
     .editor-header {
-      background: linear-gradient(135deg, #ff5722, #e64a19); color: #fff; padding: 14px 20px;
-      font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px;
+      background: var(--bg-elevated);
+      border-bottom: 1px solid var(--border-default);
+      padding: 14px var(--space-lg);
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
     }
-    .editor-header .ws-badge { margin-left: auto; display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 10px; font-size: 12px; font-weight: 600; }
-    .ws-badge.connected { background: rgba(76,175,80,0.25); color: #a5d6a7; }
-    .ws-badge.disconnected { background: rgba(244,67,54,0.25); color: #ef9a9a; }
-    .editor-toolbar { display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: var(--card-bg); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
-    .editor-toolbar select { flex: 1; min-width: 140px; padding: 7px 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 13px; }
-    .editor-toolbar button { padding: 7px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
-    .editor-toolbar button:hover { border-color: var(--primary); color: var(--primary); }
-    .editor-textarea { display: block; width: 100%; min-height: 400px; padding: 16px; background: #1a2328; color: #d4d4d4; border: none; font-family: "Fira Code", "Consolas", "Monaco", "Courier New", monospace; font-size: 14px; line-height: 1.6; resize: vertical; outline: none; tab-size: 2; }
-    .editor-textarea::placeholder { color: #546e72; }
-    .editor-textarea:focus { box-shadow: inset 0 0 0 2px rgba(255,87,34,0.3); }
-    .editor-footer { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; background: var(--card-bg); border-top: 1px solid var(--border); flex-wrap: wrap; gap: 8px; }
-    .editor-status { font-size: 13px; color: var(--text-secondary); flex: 1; min-width: 100px; }
-    .editor-footer-buttons { display: flex; gap: 8px; }
-    .btn-editor { padding: 8px 16px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
-    .btn-editor:hover { border-color: var(--primary); color: var(--primary); }
-    .btn-save { padding: 8px 20px; border-radius: 6px; border: none; background: var(--success); color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: background 0.15s; }
-    .btn-save:hover { background: #388e3c; }
-    .btn-save:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    @media (max-width: 600px) {
-      body { padding: 16px; }
-      .header h1 { font-size: 22px; }
-      .editor-toolbar { gap: 6px; }
-      .editor-textarea { min-height: 300px; font-size: 12px; }
+    .editor-header-title {
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+
+    .ws-badge {
+      margin-left: auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    .ws-badge.connected {
+      background: rgba(52, 168, 83, 0.15);
+      color: var(--status-success);
+      border: 1px solid rgba(52, 168, 83, 0.3);
+    }
+
+    .ws-badge.disconnected {
+      background: rgba(234, 67, 53, 0.15);
+      color: var(--status-danger);
+      border: 1px solid rgba(234, 67, 53, 0.3);
+    }
+
+    .editor-toolbar {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      padding: var(--space-sm) var(--space-md);
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-subtle);
+      flex-wrap: wrap;
+    }
+
+    .editor-toolbar select {
+      flex: 1;
+      min-width: 160px;
+      padding: 7px 10px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-default);
+      background: var(--bg-input);
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
+
+    .editor-toolbar select:focus {
+      border-color: var(--protocol-primary);
+    }
+
+    .editor-toolbar button {
+      padding: 7px 12px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-default);
+      background: var(--bg-elevated);
+      color: var(--text-secondary);
+      font-family: var(--font-display);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .editor-toolbar button:hover {
+      border-color: var(--protocol-primary);
+      color: var(--protocol-primary);
+      background: var(--protocol-glow);
+    }
+
+    .editor-textarea {
+      display: block;
+      width: 100%;
+      min-height: 400px;
+      padding: var(--space-md);
+      background: var(--bg-input);
+      color: var(--text-primary);
+      border: none;
+      font-family: var(--font-mono);
+      font-size: 14px;
+      line-height: 1.7;
+      resize: vertical;
+      outline: none;
+      tab-size: 2;
+    }
+
+    .editor-textarea::placeholder {
+      color: var(--text-muted);
+    }
+
+    .editor-textarea:focus {
+      box-shadow: inset 0 0 0 2px var(--protocol-glow-strong);
+    }
+
+    .editor-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-sm) var(--space-md);
+      background: var(--bg-surface);
+      border-top: 1px solid var(--border-subtle);
+      flex-wrap: wrap;
+      gap: var(--space-sm);
+    }
+
+    .editor-status {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-muted);
+      flex: 1;
+      min-width: 100px;
+    }
+
+    .editor-footer-buttons {
+      display: flex;
+      gap: var(--space-sm);
+    }
+
+    .btn-editor {
+      padding: 8px 14px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-default);
+      background: var(--bg-elevated);
+      color: var(--text-secondary);
+      font-family: var(--font-display);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-editor:hover {
+      border-color: var(--protocol-primary);
+      color: var(--protocol-primary);
+      background: var(--protocol-glow);
+    }
+
+    .btn-save {
+      padding: 8px 20px;
+      border-radius: var(--radius-sm);
+      border: none;
+      background: var(--status-success);
+      color: #FFFFFF;
+      font-family: var(--font-display);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-save:hover {
+      background: #2E7D32;
+      transform: translateY(-1px);
+    }
+
+    .btn-save:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* ================================================
+       Restart HA Section
+       ================================================ */
+    .card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-left: 2px solid var(--protocol-primary);
+      border-radius: var(--radius-md);
+      padding: var(--space-lg);
+      margin-bottom: var(--space-lg);
+      box-shadow: var(--shadow-sm);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .card:hover {
+      transform: scale(1.005);
+      box-shadow: var(--shadow-md);
+    }
+
+    .card h2 {
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--space-sm);
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+
+    .card p {
+      color: var(--text-secondary);
+      font-size: 14px;
+      line-height: 1.8;
+    }
+
+    .restart-section {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+      flex-wrap: wrap;
+      margin-top: var(--space-md);
+    }
+
+    .checkbox-confirm {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      font-size: 13px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .checkbox-confirm input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: var(--protocol-primary);
+    }
+
+    #restartStatus {
+      margin-top: var(--space-sm);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 500;
+      min-height: 20px;
+      color: var(--text-secondary);
+    }
+
+    /* ================================================
+       Footer
+       ================================================ */
+    .panel-footer {
+      text-align: center;
+      padding: var(--space-xl) 0 var(--space-lg);
+      border-top: 1px solid var(--border-subtle);
+      margin-top: var(--space-xl);
+    }
+
+    .panel-footer p {
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 0.04em;
+    }
+
+    .panel-footer a {
+      color: var(--protocol-primary);
+      font-weight: 600;
+    }
+
+    /* ================================================
+       Section Divider
+       ================================================ */
+    .section-divider {
+      border: none;
+      height: 1px;
+      background: var(--border-subtle);
+      margin: var(--space-xl) 0;
+    }
+
+    /* ================================================
+       Responsive
+       ================================================ */
+    @media (max-width: 640px) {
+      .panel-container {
+        padding: 0 var(--space-md);
+      }
+
+      .hero {
+        padding: var(--space-xl) var(--space-md);
+      }
+
+      .hero h1 {
+        font-size: 24px;
+      }
+
+      .hero p {
+        font-size: 13px;
+      }
+
+      .steps-container {
+        padding-left: 36px;
+      }
+
+      .steps-container::before {
+        left: 13px;
+      }
+
+      .step-number {
+        left: -36px;
+        width: 28px;
+        height: 28px;
+        font-size: 12px;
+      }
+
+      .step-card,
+      .card {
+        padding: var(--space-md);
+      }
+
+      .editor-textarea {
+        min-height: 300px;
+        font-size: 12px;
+      }
+
+      .top-bar {
+        padding: var(--space-sm) var(--space-md);
+      }
     }
   </style>
 </head>
 <body>
 
-  <div class="header">
-    <h1>Woow Modbus 設定指南</h1>
-    <p>透過官方文檔 + AI 助手，輕鬆完成 Modbus 裝置 YAML 設定</p>
-  </div>
-
-  <!-- Section 1: Official Documentation -->
-  <div class="card">
-    <h2><span class="icon">📖</span> Step 1：閱讀 Modbus 官方設定文檔</h2>
-    <p>
-      Modbus 是工業自動化中最常用的通訊協議之一，Home Assistant 內建完整的 Modbus 整合支援。
-      在開始設定前，請了解以下基本概念：
-    </p>
-    <ul>
-      <li><strong>Modbus TCP</strong> — 透過網路 (TCP/IP) 連接 Modbus 裝置，需要 IP 和埠號</li>
-      <li><strong>Modbus RTU</strong> — 透過串列埠 (RS-485/RS-232) 連接，需要串列裝置路徑</li>
-      <li><strong>Slave ID</strong> — 每個 Modbus 裝置的唯一識別編號 (1-247)</li>
-      <li><strong>Register 類型</strong> — Coil (線圈)、Discrete Input (離散輸入)、Holding Register (保持寄存器)、Input Register (輸入寄存器)</li>
-      <li><strong>Register 地址</strong> — 每個資料點的寄存器地址（通常由裝置手冊提供）</li>
-    </ul>
-    <div class="btn-group">
-      <a class="btn btn-primary" href="https://www.home-assistant.io/integrations/modbus" target="_blank" rel="noopener">
-        前往 Modbus 官方文檔
-      </a>
+  <!-- ===== Top Bar ===== -->
+  <div class="top-bar">
+    <div class="protocol-pill">
+      <span class="dot"></span>
+      MODBUS SETUP
+    </div>
+    <div class="top-bar-brand">
+      <span>Woow Tech</span> &middot; v2.1.0
     </div>
   </div>
 
-  <!-- Section 2: AI Assistant -->
-  <div class="card">
-    <h2><span class="icon">🤖</span> Step 2：使用 Woow AI 助手取得設定參數</h2>
-    <p>
-      透過 Woow AI 助手，您可以根據特定的 Modbus 裝置型號和通訊協議，
-      快速生成正確的 YAML 設定。AI 助手能幫助您：
-    </p>
-    <ul>
-      <li>判斷使用 Modbus TCP 或 RTU 連線方式</li>
-      <li>正確設定 Slave ID 和寄存器地址</li>
-      <li>配置感測器、開關、氣候控制等實體類型</li>
-      <li>處理資料型別轉換（int16、uint32、float 等）</li>
-      <li>設定掃描間隔和錯誤處理</li>
-    </ul>
-    <div class="btn-group">
-      <a class="btn btn-accent" href="https://aiot.woowtech.io/blog" target="_blank" rel="noopener">
-        前往 Woow AI 助手
-      </a>
+  <!-- ===== Hero Section ===== -->
+  <div class="hero">
+    <div class="hero-content">
+      <span class="hero-icon">&#x1F3ED;</span>
+      <h1>Modbus 設定指南</h1>
+      <p>透過官方文檔 + AI 助手，輕鬆完成 Modbus 裝置 YAML 設定</p>
     </div>
   </div>
 
-  <!-- Section 3: How-to Guide -->
-  <div class="card">
-    <h2><span class="icon">📝</span> Step 3：完整 Modbus 設定流程教學</h2>
-    <p>以下是從零開始完成 Modbus 裝置設定的完整步驟：</p>
-    <div class="steps">
-      <div class="step">
-        <span class="step-badge">1</span>
-        <div class="step-content">
-          <strong>確認 Modbus 裝置資訊</strong>
-          <span>從裝置手冊取得：連線方式（TCP/RTU）、IP 或串列埠路徑、Slave ID、寄存器地址對照表。</span>
+  <div class="panel-container">
+
+    <!-- ===== Step Cards ===== -->
+    <div class="steps-container">
+
+      <!-- Step 1 -->
+      <div class="step-card">
+        <div class="step-number">1</div>
+        <h2><span class="icon">&#x1F4D6;</span> 閱讀 Modbus 官方設定文檔</h2>
+        <p>
+          Modbus 是工業自動化中最廣泛使用的通訊協定。Home Assistant 內建 Modbus 整合支援，
+          涵蓋所有設定參數的說明。建議在開始設定前，先瀏覽官方文檔了解 Modbus 整合的基本架構，包含：
+        </p>
+        <ul>
+          <li><strong>連線方式</strong> -- Modbus TCP (網路) 或 RTU (串列埠 RS-485/RS-232)</li>
+          <li><strong>Slave ID</strong> -- 每個裝置的唯一識別編號 (1-247)</li>
+          <li><strong>Register 類型</strong> -- Coil、Discrete Input、Holding Register、Input Register</li>
+          <li><strong>資料型別</strong> -- int16、uint16、int32、float32 等資料格式轉換</li>
+          <li><strong>YAML 設定範例</strong> -- 各種實體類型的設定範例與參數說明</li>
+        </ul>
+        <div class="btn-group">
+          <a class="btn btn-filled btn-arrow" href="https://www.home-assistant.io/integrations/modbus" target="_blank" rel="noopener">
+            前往 Modbus 官方文檔
+          </a>
         </div>
       </div>
-      <div class="step">
-        <span class="step-badge">2</span>
-        <div class="step-content">
-          <strong>瀏覽官方文檔</strong>
-          <span>前往 <a href="https://www.home-assistant.io/integrations/modbus" target="_blank">HA Modbus 文檔</a>，了解 YAML 設定結構。重點關注您需要的實體類型（sensor、switch、climate、binary_sensor 等）。</span>
+
+      <!-- Step 2 -->
+      <div class="step-card">
+        <div class="step-number">2</div>
+        <h2><span class="icon">&#x1F916;</span> 使用 Woow AI 助手取得設定參數</h2>
+        <p>
+          閱讀官方文檔後，您可以透過我們提供的 AI 助手來取得針對您特定設備的 Modbus YAML 設定。
+          AI 助手能根據您的裝置型號、寄存器地址、資料型別與 Slave ID 等資訊，生成精確的設定內容。
+        </p>
+        <p>
+          <strong>使用方式：</strong>將您從官方文檔中了解到的參數需求，搭配您的實際設備資訊，
+          向 AI 助手詢問，即可獲得可直接使用的 YAML 設定。
+        </p>
+        <div class="btn-group">
+          <a class="btn btn-ghost btn-arrow" href="https://aiot.woowtech.io/blog" target="_blank" rel="noopener">
+            前往 Woow AI 助手
+          </a>
         </div>
       </div>
-      <div class="step">
-        <span class="step-badge">3</span>
-        <div class="step-content">
-          <strong>向 AI 助手提問</strong>
-          <span>前往 <a href="https://aiot.woowtech.io/blog" target="_blank">Woow AI 助手</a>，提供以下資訊：<br />
-            ‣ 裝置型號和品牌<br />
-            ‣ 連線方式（TCP IP:Port 或 RTU 串列埠路徑）<br />
-            ‣ Slave ID<br />
-            ‣ 需要讀取的資料（溫度、濕度、電壓、電流等）<br />
-            ‣ 寄存器地址（如有手冊提供）
-          </span>
+
+      <!-- Step 3 -->
+      <div class="step-card">
+        <div class="step-number">3</div>
+        <h2><span class="icon">&#x1F4DD;</span> 完整設定流程教學</h2>
+        <p>
+          以下是從零開始，透過官方文檔搭配 AI 助手完成 Modbus YAML 設定的完整步驟：
+        </p>
+
+        <div class="sub-steps">
+          <div class="sub-step">
+            <span class="sub-step-number">1</span>
+            <div class="sub-step-content">
+              <strong>確認 Modbus 裝置資訊</strong>
+              <span>從裝置手冊取得連線方式（TCP/RTU）、IP 或串列埠路徑、Slave ID、寄存器地址對照表。</span>
+            </div>
+          </div>
+          <div class="sub-step">
+            <span class="sub-step-number">2</span>
+            <div class="sub-step-content">
+              <strong>瀏覽官方文檔</strong>
+              <span>前往 <a href="https://www.home-assistant.io/integrations/modbus" target="_blank" rel="noopener">HA Modbus 文檔</a>，了解 YAML 設定的結構和各參數的意義。重點關注您需要的實體類型（如 sensor、switch、binary_sensor、climate 等）。</span>
+            </div>
+          </div>
+          <div class="sub-step">
+            <span class="sub-step-number">3</span>
+            <div class="sub-step-content">
+              <strong>向 AI 助手提問</strong>
+              <p>前往 <a href="https://aiot.woowtech.io/blog" target="_blank" rel="noopener">Woow AI 助手</a>，提供以下資訊以獲得設定建議：</p>
+              <p style="padding-left:8px; margin-top:4px;">
+                &#x2023; 裝置型號與連線方式（TCP IP:Port 或 RTU 串列埠路徑）<br />
+                &#x2023; Slave ID<br />
+                &#x2023; 要讀取的資料（溫度、濕度、電壓、電流等）<br />
+                &#x2023; 寄存器地址與資料型別
+              </p>
+            </div>
+          </div>
+          <div class="sub-step">
+            <span class="sub-step-number">4</span>
+            <div class="sub-step-content">
+              <strong>使用下方編輯器寫入 YAML 設定</strong>
+              <span>將 AI 助手產生的 YAML 設定，透過下方的<strong>內建 YAML 編輯器</strong>直接編輯
+                <code>configuration.yaml</code> 或其他設定檔，無需額外安裝任何套件。</span>
+            </div>
+          </div>
+          <div class="sub-step">
+            <span class="sub-step-number">5</span>
+            <div class="sub-step-content">
+              <strong>重新啟動 Home Assistant</strong>
+              <span>儲存設定後，需要重新啟動 Home Assistant 以載入新的 Modbus 設定。請使用下方的重啟按鈕或至 <em>設定 &#x2192; 系統 &#x2192; 重新啟動</em>。</span>
+            </div>
+          </div>
+          <div class="sub-step">
+            <span class="sub-step-number">6</span>
+            <div class="sub-step-content">
+              <strong>驗證裝置與實體</strong>
+              <span>重啟後，前往 <em>開發者工具 &#x2192; 狀態</em> 確認 Modbus 實體已正確載入並顯示數據。您也可以在 <em>設定 &#x2192; 裝置與服務 &#x2192; Modbus</em> 中查看整合狀態。</span>
+            </div>
+          </div>
+        </div>
+
+        <p style="margin-top: 16px;">
+          <strong>YAML 設定範例（以 Modbus TCP 裝置為例）：</strong>
+        </p>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">&#x1F4A1; Modbus 為 HA 內建整合</div>
+          <p>
+            Modbus 是 Home Assistant 內建整合，無需透過 HACS 安裝。直接在 YAML 中設定即可使用。
+          </p>
+        </div>
+
+        <div class="code-block"># configuration.yaml -- Modbus 設定範例
+modbus:
+  - name: "main_hub"
+    type: tcp
+    host: 192.168.1.200
+    port: 502
+
+    sensors:
+      - name: "室內溫度"
+        slave: 1
+        address: 0
+        input_type: input
+        data_type: int16
+        scale: 0.1
+        unit_of_measurement: "°C"
+        device_class: temperature
+
+    switches:
+      - name: "設備開關"
+        slave: 1
+        address: 0
+        write_type: coil</div>
+
+        <div class="callout callout-success">
+          <p>
+            <strong>完成！</strong>透過以上步驟，您已成功透過官方文檔參考與 AI 助手協作，
+            完成了 Modbus 裝置的 YAML 設定。設定生效後，您就可以在 Home Assistant 中監控和管理 Modbus 裝置與實體了。
+          </p>
         </div>
       </div>
-      <div class="step">
-        <span class="step-badge">4</span>
-        <div class="step-content">
-          <strong>使用下方編輯器寫入 YAML 設定</strong>
-          <span>將 AI 助手產生的 YAML 設定，透過下方的<strong>內建 YAML 編輯器</strong>直接編輯 <code>configuration.yaml</code>。</span>
+
+    </div><!-- /steps-container -->
+
+    <hr class="section-divider" />
+
+    <!-- ===== YAML Editor Section ===== -->
+    <div class="editor-section" id="editorSection">
+      <div class="editor-header">
+        <div class="editor-header-title">
+          &#x270F;&#xFE0F; YAML 設定檔編輯器
         </div>
+        <span class="ws-badge disconnected" id="wsStatus">&#x25CF; 未連線</span>
       </div>
-      <div class="step">
-        <span class="step-badge">5</span>
-        <div class="step-content">
-          <strong>重新啟動 Home Assistant</strong>
-          <span>儲存設定後，重新啟動 Home Assistant 以載入 Modbus 設定。</span>
-        </div>
+      <div class="editor-toolbar">
+        <select id="fileSelect" onchange="loadSelectedFile()">
+          <option value="">-- 選擇檔案 --</option>
+        </select>
+        <button onclick="refreshFileList()" title="重新整理檔案清單">&#x1F504; 重新整理</button>
+        <button onclick="changeFontSize(-1)" title="縮小字體">A-</button>
+        <button onclick="changeFontSize(1)" title="放大字體">A+</button>
       </div>
-      <div class="step">
-        <span class="step-badge">6</span>
-        <div class="step-content">
-          <strong>驗證裝置與實體</strong>
-          <span>重啟後，前往 <em>開發者工具 → 狀態</em> 查看 Modbus 實體是否正確讀取資料。</span>
+      <textarea
+        id="editorArea"
+        class="editor-textarea"
+        placeholder="選擇上方檔案開始編輯，或直接貼上 AI 產出的 Modbus YAML 設定..."
+        spellcheck="false"
+      ></textarea>
+      <div class="editor-footer">
+        <span class="editor-status" id="editorStatus">準備就緒</span>
+        <div class="editor-footer-buttons">
+          <button class="btn-editor" onclick="newFile()">+ 新增檔案</button>
+          <button class="btn-save" id="saveBtn" onclick="saveFile()" disabled>
+            &#x1F4BE; 儲存
+          </button>
         </div>
       </div>
     </div>
 
-    <p style="margin-top: 12px;"><strong>YAML 設定範例（Modbus TCP 感測器）：</strong></p>
-    <div class="warning-box">
-      <p class="warning-title">💡 注意：Modbus 為 HA 內建整合</p>
-      <p>Modbus 是 Home Assistant 內建整合，無需額外安裝。直接在 YAML 中設定即可使用。</p>
-    </div>
-    <div class="code-block">
-# configuration.yaml — Modbus 設定範例<br />
-modbus:<br />
-&nbsp;&nbsp;- name: "main_hub"<br />
-&nbsp;&nbsp;&nbsp;&nbsp;type: tcp<br />
-&nbsp;&nbsp;&nbsp;&nbsp;host: 192.168.1.200<br />
-&nbsp;&nbsp;&nbsp;&nbsp;port: 502<br />
-<br />
-&nbsp;&nbsp;&nbsp;&nbsp;sensors:<br />
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- name: "室內溫度"<br />
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;slave: 1<br />
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;address: 0<br />
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;input_type: input<br />
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;count: 1<br />
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;data_type: int16<br />
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;scale: 0.1<br />
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;unit_of_measurement: "°C"<br />
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;device_class: temperature<br />
-<br />
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- name: "室內濕度"<br />
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;slave: 1<br />
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;address: 1<br />
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;input_type: input<br />
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;count: 1<br />
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;data_type: int16<br />
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;scale: 0.1<br />
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;unit_of_measurement: "%"<br />
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;device_class: humidity<br />
-<br />
-&nbsp;&nbsp;&nbsp;&nbsp;switches:<br />
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- name: "空調開關"<br />
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;slave: 1<br />
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;address: 0<br />
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;write_type: coil<br />
-    </div>
+    <hr class="section-divider" />
 
-    <div class="success-box">
+    <!-- ===== Restart HA Section ===== -->
+    <div class="card">
+      <h2>&#x1F504; 重新啟動 Home Assistant</h2>
       <p>
-        <strong>完成！</strong>透過以上步驟，您已成功設定 Modbus 裝置連線。
-        現在可以在 Home Assistant 中監控和控制 Modbus 裝置，並建立自動化規則。
+        修改 <code>configuration.yaml</code> 後，必須重新啟動 Home Assistant 才能使設定生效。
+        新增的 Modbus 裝置與實體將在重啟後出現。
       </p>
-    </div>
-  </div>
 
-  <hr class="divider" />
-
-  <!-- Section 4: Built-in YAML Editor -->
-  <div class="editor-section" id="editorSection">
-    <div class="editor-header">
-      ✏️ YAML 設定檔編輯器
-      <span class="ws-badge disconnected" id="wsStatus">● 未連線</span>
-    </div>
-    <div class="editor-toolbar">
-      <select id="fileSelect" onchange="loadSelectedFile()">
-        <option value="">-- 選擇檔案 --</option>
-      </select>
-      <button onclick="refreshFileList()" title="重新整理檔案清單">🔄 重新整理</button>
-      <button onclick="changeFontSize(-1)" title="縮小字體">A-</button>
-      <button onclick="changeFontSize(1)" title="放大字體">A+</button>
-    </div>
-    <textarea id="editorArea" class="editor-textarea"
-      placeholder="選擇上方檔案開始編輯，或直接貼上 AI 產出的 Modbus YAML 設定..."
-      spellcheck="false"></textarea>
-    <div class="editor-footer">
-      <span class="editor-status" id="editorStatus">準備就緒</span>
-      <div class="editor-footer-buttons">
-        <button class="btn-editor" onclick="newFile()">+ 新增檔案</button>
-        <button class="btn-save" id="saveBtn" onclick="saveFile()" disabled>💾 儲存</button>
+      <div class="callout callout-danger">
+        <div class="callout-title">&#x26A0;&#xFE0F; 重要警告</div>
+        <p>
+          重新啟動 Home Assistant 將會<strong>暫時中斷所有自動化、裝置連線與服務</strong>。
+          請確認以下事項後再執行：
+        </p>
+        <ul>
+          <li>所有 YAML 設定已正確儲存，且格式無誤</li>
+          <li>目前沒有關鍵的自動化正在執行中</li>
+          <li>已通知家中成員系統將短暫無法使用</li>
+          <li>建議在非尖峰時段執行重啟操作</li>
+        </ul>
       </div>
-    </div>
-  </div>
 
-  <hr class="divider" />
+      <div class="callout callout-info">
+        <div class="callout-title">&#x1F4A1; 提示</div>
+        <p>
+          如果只是修改了自動化或腳本，可以嘗試使用 <em>設定 &#x2192; 系統 &#x2192; 重新載入</em> 中的「重新載入 YAML」功能，
+          這不需要完全重啟系統。但 Modbus 裝置的新增或修改，通常需要完整重啟。
+        </p>
+      </div>
 
-  <!-- Section 5: Restart HA -->
-  <div class="card">
-    <h2><span class="icon">🔄</span> 重新啟動 Home Assistant</h2>
-    <p>修改 <code>configuration.yaml</code> 後，必須重新啟動 Home Assistant 才能使 Modbus 設定生效。</p>
-    <div class="warning-box danger">
-      <p class="warning-title">⚠️ 重要警告</p>
-      <p>重新啟動將會<strong>暫時中斷所有自動化、裝置連線與服務</strong>。請確認設定已正確儲存後再執行。</p>
+      <div class="restart-section">
+        <label class="checkbox-confirm">
+          <input type="checkbox" id="confirmRestart" onchange="toggleRestartBtn()" />
+          我確認已儲存設定，並了解重啟將暫時中斷服務
+        </label>
+      </div>
+      <div class="restart-section">
+        <button class="btn btn-danger" id="restartBtn" disabled onclick="restartHA()">
+          &#x1F504; 重新啟動 Home Assistant
+        </button>
+      </div>
+      <div id="restartStatus"></div>
     </div>
-    <div class="restart-section">
-      <label class="checkbox-confirm">
-        <input type="checkbox" id="confirmRestart" onchange="toggleRestartBtn()" />
-        我確認已儲存設定，並了解重啟將暫時中斷服務
-      </label>
-    </div>
-    <div class="restart-section">
-      <button class="btn-danger" id="restartBtn" disabled onclick="restartHA()">🔄 重新啟動 Home Assistant</button>
-    </div>
-    <div id="restartStatus"></div>
-  </div>
 
-  <div style="text-align: center; margin-top: 32px; color: var(--text-secondary); font-size: 12px;">
-    <p>Woow Modbus Setup Guide v2.0.0 — Powered by <a href="https://aiot.woowtech.io/blog" target="_blank" style="color: var(--primary);">Woow Tech</a></p>
-  </div>
+    <!-- ===== Footer ===== -->
+    <div class="panel-footer">
+      <p>Woow Modbus Setup Guide v2.1.0 &mdash; Powered by <a href="https://aiot.woowtech.io/blog" target="_blank" rel="noopener">Woow Tech</a></p>
+    </div>
+
+  </div><!-- /panel-container -->
 
   <script>
-    const WS_TYPE = "woow_modbus/ws";
-    const CACHE_PREFIX = "woow_modbus";
+    /* ==========================================================
+       Shared WebSocket Manager
+       ========================================================== */
+    var WS = {
+      socket: null,
+      msgId: 1,
+      pending: {},
+      authenticated: false,
+      _reconnectTimer: null,
 
-    /* WebSocket Manager */
-    const WS = {
-      socket: null, msgId: 1, pending: {}, authenticated: false, _reconnectTimer: null,
-      connect() {
+      connect: function() {
         if (this.socket && this.socket.readyState <= 1) return;
-        const proto = location.protocol === "https:" ? "wss:" : "ws:";
+        var proto = location.protocol === "https:" ? "wss:" : "ws:";
         this.socket = new WebSocket(proto + "//" + location.host + "/api/websocket");
-        this.socket.onmessage = (e) => this._onMessage(JSON.parse(e.data));
-        this.socket.onclose = () => this._onClose();
-        this.socket.onerror = () => {};
+        this.socket.onmessage = function(e) { WS._onMessage(JSON.parse(e.data)); };
+        this.socket.onclose = function() { WS._onClose(); };
+        this.socket.onerror = function() {};
       },
-      _onMessage(msg) {
+
+      _onMessage: function(msg) {
         if (msg.type === "auth_required") {
-          const token = getHAToken();
-          if (!token) { this._setStatus(false); return; }
+          var token = getHAToken();
+          if (!token) {
+            this._setStatus(false);
+            return;
+          }
           this.socket.send(JSON.stringify({ type: "auth", access_token: token }));
         } else if (msg.type === "auth_ok") {
-          this.authenticated = true; this._setStatus(true); refreshFileList();
+          this.authenticated = true;
+          this._setStatus(true);
+          refreshFileList();
         } else if (msg.type === "auth_invalid") {
-          this.authenticated = false; this._setStatus(false);
+          this.authenticated = false;
+          this._setStatus(false);
         } else if (msg.type === "result") {
-          const cb = this.pending[msg.id];
-          if (cb) { delete this.pending[msg.id]; msg.success ? cb.resolve(msg.result) : cb.reject(msg.error || { message: "Unknown error" }); }
+          var cb = this.pending[msg.id];
+          if (cb) {
+            delete this.pending[msg.id];
+            if (msg.success) {
+              cb.resolve(msg.result);
+            } else {
+              cb.reject(msg.error || { message: "Unknown error" });
+            }
+          }
         }
       },
-      _onClose() {
-        this.authenticated = false; this._setStatus(false);
+
+      _onClose: function() {
+        this.authenticated = false;
+        this._setStatus(false);
         clearTimeout(this._reconnectTimer);
-        this._reconnectTimer = setTimeout(() => this.connect(), 5000);
+        this._reconnectTimer = setTimeout(function() { WS.connect(); }, 5000);
       },
-      _setStatus(connected) {
-        const el = document.getElementById("wsStatus");
-        if (connected) { el.className = "ws-badge connected"; el.textContent = "● 已連線"; }
-        else { el.className = "ws-badge disconnected"; el.textContent = "● 未連線"; }
+
+      _setStatus: function(connected) {
+        var el = document.getElementById("wsStatus");
+        if (connected) {
+          el.className = "ws-badge connected";
+          el.innerHTML = "&#x25CF; 已連線";
+        } else {
+          el.className = "ws-badge disconnected";
+          el.innerHTML = "&#x25CF; 未連線";
+        }
       },
-      send(payload) {
-        return new Promise((resolve, reject) => {
-          if (!this.socket || !this.authenticated) { reject({ message: "WebSocket 未連線" }); return; }
-          const id = this.msgId++;
-          this.pending[id] = { resolve, reject };
-          this.socket.send(JSON.stringify({ id, ...payload }));
-          setTimeout(() => { if (this.pending[id]) { delete this.pending[id]; reject({ message: "請求逾時" }); } }, 30000);
+
+      send: function(payload) {
+        return new Promise(function(resolve, reject) {
+          if (!WS.socket || !WS.authenticated) {
+            reject({ message: "WebSocket 未連線" });
+            return;
+          }
+          var id = WS.msgId++;
+          WS.pending[id] = { resolve: resolve, reject: reject };
+          WS.socket.send(JSON.stringify(Object.assign({ id: id }, payload)));
+          setTimeout(function() {
+            if (WS.pending[id]) {
+              delete WS.pending[id];
+              reject({ message: "請求逾時" });
+            }
+          }, 30000);
         });
       }
     };
 
+    /* ==========================================================
+       Token Retrieval
+       ========================================================== */
     function getHAToken() {
-      try { if (window.parent && window.parent.hassConnection) return window.parent.hassConnection.options.auth.accessToken; } catch (e) {}
-      try { const s = localStorage.getItem("hassTokens"); if (s) return JSON.parse(s).access_token; } catch (e) {}
-      try { const ps = window.parent.localStorage.getItem("hassTokens"); if (ps) return JSON.parse(ps).access_token; } catch (e) {}
+      // Method 1: parent hassConnection
+      try {
+        if (window.parent && window.parent.hassConnection) {
+          return window.parent.hassConnection.options.auth.accessToken;
+        }
+      } catch (e) {}
+
+      // Method 2: own localStorage
+      try {
+        var stored = localStorage.getItem("hassTokens");
+        if (stored) return JSON.parse(stored).access_token;
+      } catch (e) {}
+
+      // Method 3: parent localStorage
+      try {
+        var ps = window.parent.localStorage.getItem("hassTokens");
+        if (ps) return JSON.parse(ps).access_token;
+      } catch (e) {}
+
       return "";
     }
 
-    /* Editor Logic */
-    let currentFile = "", editorDirty = false, originalContent = "", editorFontSize = 14;
+    /* ==========================================================
+       YAML Editor Logic
+       ========================================================== */
+    var currentFile = "";
+    var editorDirty = false;
+    var originalContent = "";
+    var editorFontSize = 14;
 
+    // --- File List ---
     async function refreshFileList() {
-      const select = document.getElementById("fileSelect");
-      const status = document.getElementById("editorStatus");
+      var select = document.getElementById("fileSelect");
+      var status = document.getElementById("editorStatus");
       try {
         status.textContent = "正在載入檔案清單...";
-        const result = await WS.send({ type: WS_TYPE, action: "list", ext: "yaml", depth: 10 });
-        const files = result.files || [];
+        var result = await WS.send({
+          type: "woow_modbus/ws",
+          action: "list",
+          ext: "yaml",
+          depth: 10
+        });
+        var files = result.files || [];
         select.innerHTML = '<option value="">-- 選擇檔案 --</option>';
-        files.forEach(f => { const opt = document.createElement("option"); opt.value = f; opt.textContent = f; select.appendChild(opt); });
+        files.forEach(function(f) {
+          var opt = document.createElement("option");
+          opt.value = f;
+          opt.textContent = f;
+          select.appendChild(opt);
+        });
         status.textContent = "找到 " + files.length + " 個 YAML 檔案";
-        if (currentFile) { for (let i = 0; i < select.options.length; i++) { if (select.options[i].value === currentFile) { select.value = currentFile; break; } } }
-      } catch (err) { status.textContent = "載入檔案清單失敗：" + (err.message || err); }
+        if (currentFile) {
+          for (var i = 0; i < select.options.length; i++) {
+            if (select.options[i].value === currentFile) {
+              select.value = currentFile;
+              break;
+            }
+          }
+        }
+      } catch (err) {
+        status.textContent = "載入檔案清單失敗：" + (err.message || err);
+      }
     }
 
+    // --- Load File ---
     async function loadSelectedFile() {
-      const select = document.getElementById("fileSelect"), textarea = document.getElementById("editorArea");
-      const status = document.getElementById("editorStatus"), saveBtn = document.getElementById("saveBtn");
-      const path = select.value;
-      if (!path) { textarea.value = ""; currentFile = ""; originalContent = ""; saveBtn.disabled = true; editorDirty = false; status.textContent = "準備就緒"; return; }
-      if (editorDirty && currentFile) { if (!confirm("目前的變更尚未儲存，確定要切換檔案嗎？")) { select.value = currentFile; return; } }
+      var select = document.getElementById("fileSelect");
+      var textarea = document.getElementById("editorArea");
+      var status = document.getElementById("editorStatus");
+      var saveBtn = document.getElementById("saveBtn");
+      var path = select.value;
+
+      if (!path) {
+        textarea.value = "";
+        currentFile = "";
+        originalContent = "";
+        saveBtn.disabled = true;
+        editorDirty = false;
+        status.textContent = "準備就緒";
+        return;
+      }
+
+      if (editorDirty && currentFile) {
+        if (!confirm("目前的變更尚未儲存，確定要切換檔案嗎？")) {
+          select.value = currentFile;
+          return;
+        }
+      }
+
       try {
         status.textContent = "正在載入 " + path + "...";
-        const result = await WS.send({ type: WS_TYPE, action: "load", path: path });
-        textarea.value = result.content; originalContent = result.content; currentFile = result.path || path;
-        editorDirty = false; saveBtn.disabled = false; status.textContent = "已載入：" + currentFile; cacheState();
-      } catch (err) { status.textContent = "載入失敗：" + (err.message || err); }
-    }
-
-    async function saveFile() {
-      const textarea = document.getElementById("editorArea"), status = document.getElementById("editorStatus"), saveBtn = document.getElementById("saveBtn");
-      if (!currentFile) { status.textContent = "請先選擇或新增檔案"; return; }
-      if (!confirm("確定要儲存 " + currentFile + " 嗎？")) return;
-      saveBtn.disabled = true; status.textContent = "正在儲存 " + currentFile + "..."; status.style.color = "";
-      try {
-        await WS.send({ type: WS_TYPE, action: "save", path: currentFile, content: textarea.value });
-        originalContent = textarea.value; editorDirty = false;
-        status.style.color = "var(--success)"; status.textContent = "✓ 已儲存：" + currentFile; cacheState();
-        setTimeout(() => { status.style.color = ""; }, 4000);
+        var result = await WS.send({
+          type: "woow_modbus/ws",
+          action: "load",
+          path: path
+        });
+        textarea.value = result.content;
+        originalContent = result.content;
+        currentFile = result.path || path;
+        editorDirty = false;
+        saveBtn.disabled = false;
+        status.textContent = "已載入：" + currentFile;
+        cacheState();
       } catch (err) {
-        status.style.color = "var(--danger)"; status.textContent = "儲存失敗：" + (err.message || err);
-        setTimeout(() => { status.style.color = ""; }, 5000);
-      } finally { saveBtn.disabled = false; }
+        status.textContent = "載入失敗：" + (err.message || err);
+      }
     }
 
+    // --- Save File ---
+    async function saveFile() {
+      var textarea = document.getElementById("editorArea");
+      var status = document.getElementById("editorStatus");
+      var saveBtn = document.getElementById("saveBtn");
+
+      if (!currentFile) {
+        status.textContent = "請先選擇或新增檔案";
+        return;
+      }
+
+      if (!confirm("確定要儲存 " + currentFile + " 嗎？")) return;
+
+      saveBtn.disabled = true;
+      status.textContent = "正在儲存 " + currentFile + "...";
+      status.style.color = "";
+
+      try {
+        await WS.send({
+          type: "woow_modbus/ws",
+          action: "save",
+          path: currentFile,
+          content: textarea.value
+        });
+        originalContent = textarea.value;
+        editorDirty = false;
+        status.style.color = "var(--status-success)";
+        status.textContent = "\u2713 已儲存：" + currentFile;
+        cacheState();
+        setTimeout(function() { status.style.color = ""; }, 4000);
+      } catch (err) {
+        status.style.color = "var(--status-danger)";
+        status.textContent = "儲存失敗：" + (err.message || err);
+        setTimeout(function() { status.style.color = ""; }, 5000);
+      } finally {
+        saveBtn.disabled = false;
+      }
+    }
+
+    // --- New File ---
     function newFile() {
-      let filename = prompt("請輸入新檔案名稱（儲存於 config/modbus/ 目錄下）：", "modbus_config.yaml");
+      var filename = prompt(
+        "請輸入新檔案名稱（儲存於 config/modbus/ 目錄下）：",
+        "modbus_config.yaml"
+      );
       if (!filename) return;
+
       filename = filename.replace(/\.\./g, "").trim();
-      if (!filename.endsWith(".yaml") && !filename.endsWith(".yml")) filename += ".yaml";
-      const textarea = document.getElementById("editorArea"), select = document.getElementById("fileSelect");
-      const status = document.getElementById("editorStatus"), saveBtn = document.getElementById("saveBtn");
-      let exists = false;
-      for (let i = 0; i < select.options.length; i++) { if (select.options[i].value === filename) { exists = true; break; } }
-      if (!exists) { const opt = document.createElement("option"); opt.value = filename; opt.textContent = filename; select.appendChild(opt); }
-      select.value = filename; currentFile = filename; textarea.value = ""; originalContent = "";
-      saveBtn.disabled = false; editorDirty = true; status.textContent = "新檔案：" + filename + "（尚未儲存）"; textarea.focus();
+      if (!filename.endsWith(".yaml") && !filename.endsWith(".yml")) {
+        filename += ".yaml";
+      }
+
+      var textarea = document.getElementById("editorArea");
+      var select = document.getElementById("fileSelect");
+      var status = document.getElementById("editorStatus");
+      var saveBtn = document.getElementById("saveBtn");
+
+      var exists = false;
+      for (var i = 0; i < select.options.length; i++) {
+        if (select.options[i].value === filename) { exists = true; break; }
+      }
+      if (!exists) {
+        var opt = document.createElement("option");
+        opt.value = filename;
+        opt.textContent = filename;
+        select.appendChild(opt);
+      }
+      select.value = filename;
+      currentFile = filename;
+      textarea.value = "";
+      originalContent = "";
+      saveBtn.disabled = false;
+      editorDirty = true;
+      status.textContent = "新檔案：" + filename + "（尚未儲存）";
+      textarea.focus();
     }
 
+    // --- Font Size ---
     function changeFontSize(delta) {
       editorFontSize = Math.max(10, Math.min(24, editorFontSize + delta));
       document.getElementById("editorArea").style.fontSize = editorFontSize + "px";
-      try { localStorage.setItem(CACHE_PREFIX + "_fontsize", editorFontSize); } catch(e) {}
+      try { localStorage.setItem("woow_modbus_fontsize", editorFontSize); } catch(e) {}
     }
 
     function restoreFontSize() {
-      try { const s = localStorage.getItem(CACHE_PREFIX + "_fontsize"); if (s) { editorFontSize = parseInt(s, 10) || 14; document.getElementById("editorArea").style.fontSize = editorFontSize + "px"; } } catch(e) {}
-    }
-
-    document.addEventListener("DOMContentLoaded", function() {
-      const textarea = document.getElementById("editorArea");
-      textarea.addEventListener("input", function() { editorDirty = (textarea.value !== originalContent); cacheState(); });
-      textarea.addEventListener("keydown", function(e) {
-        if (e.key === "Tab") { e.preventDefault(); const start = this.selectionStart, end = this.selectionEnd; this.value = this.value.substring(0, start) + "  " + this.value.substring(end); this.selectionStart = this.selectionEnd = start + 2; editorDirty = true; cacheState(); }
-      });
-      restoreFontSize(); restoreCache(); WS.connect();
-    });
-
-    document.addEventListener("keydown", function(e) { if ((e.ctrlKey || e.metaKey) && e.key === "s") { e.preventDefault(); if (currentFile) saveFile(); } });
-    window.addEventListener("beforeunload", function(e) { if (editorDirty) { e.preventDefault(); e.returnValue = ""; } });
-
-    function cacheState() {
-      try { localStorage.setItem(CACHE_PREFIX + "_cache", JSON.stringify({ file: currentFile, content: document.getElementById("editorArea").value, dirty: editorDirty, ts: Date.now() })); } catch(e) {}
-    }
-    function restoreCache() {
-      try { const raw = localStorage.getItem(CACHE_PREFIX + "_cache"); if (!raw) return; const data = JSON.parse(raw);
-        if (data.dirty && data.content && (Date.now() - data.ts) < 3600000) { document.getElementById("editorArea").value = data.content; currentFile = data.file || ""; editorDirty = true; document.getElementById("editorStatus").textContent = "已恢復未儲存的編輯內容" + (data.file ? "：" + data.file : ""); document.getElementById("saveBtn").disabled = !currentFile; }
+      try {
+        var saved = localStorage.getItem("woow_modbus_fontsize");
+        if (saved) {
+          editorFontSize = parseInt(saved, 10) || 14;
+          document.getElementById("editorArea").style.fontSize = editorFontSize + "px";
+        }
       } catch(e) {}
     }
 
-    /* Restart HA */
-    function toggleRestartBtn() { document.getElementById("restartBtn").disabled = !document.getElementById("confirmRestart").checked; }
+    // --- Dirty Tracking ---
+    document.addEventListener("DOMContentLoaded", function() {
+      var textarea = document.getElementById("editorArea");
+
+      textarea.addEventListener("input", function() {
+        editorDirty = (textarea.value !== originalContent);
+        cacheState();
+      });
+
+      // Tab key -> 2 spaces
+      textarea.addEventListener("keydown", function(e) {
+        if (e.key === "Tab") {
+          e.preventDefault();
+          var start = this.selectionStart;
+          var end = this.selectionEnd;
+          this.value = this.value.substring(0, start) + "  " + this.value.substring(end);
+          this.selectionStart = this.selectionEnd = start + 2;
+          editorDirty = true;
+          cacheState();
+        }
+      });
+
+      restoreFontSize();
+      restoreCache();
+      WS.connect();
+    });
+
+    // Ctrl+S / Cmd+S
+    document.addEventListener("keydown", function(e) {
+      if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+        e.preventDefault();
+        if (currentFile) saveFile();
+      }
+    });
+
+    // Warn before leaving with unsaved changes
+    window.addEventListener("beforeunload", function(e) {
+      if (editorDirty) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    });
+
+    // --- LocalStorage Cache (crash recovery) ---
+    function cacheState() {
+      try {
+        localStorage.setItem("woow_modbus_cache", JSON.stringify({
+          file: currentFile,
+          content: document.getElementById("editorArea").value,
+          dirty: editorDirty,
+          ts: Date.now()
+        }));
+      } catch(e) {}
+    }
+
+    function restoreCache() {
+      try {
+        var raw = localStorage.getItem("woow_modbus_cache");
+        if (!raw) return;
+        var data = JSON.parse(raw);
+        if (data.dirty && data.content && (Date.now() - data.ts) < 3600000) {
+          document.getElementById("editorArea").value = data.content;
+          currentFile = data.file || "";
+          editorDirty = true;
+          document.getElementById("editorStatus").textContent =
+            "已恢復未儲存的編輯內容" + (data.file ? "：" + data.file : "");
+          document.getElementById("saveBtn").disabled = !currentFile;
+        }
+      } catch(e) {}
+    }
+
+    /* ==========================================================
+       Restart HA (uses shared WS connection)
+       ========================================================== */
+    function toggleRestartBtn() {
+      var cb = document.getElementById("confirmRestart");
+      var btn = document.getElementById("restartBtn");
+      btn.disabled = !cb.checked;
+    }
 
     async function restartHA() {
-      const btn = document.getElementById("restartBtn"), status = document.getElementById("restartStatus");
-      btn.disabled = true; status.style.color = "var(--accent)"; status.textContent = "正在發送重啟指令...";
+      var btn = document.getElementById("restartBtn");
+      var status = document.getElementById("restartStatus");
+      var cb = document.getElementById("confirmRestart");
+
+      btn.disabled = true;
+      status.style.color = "var(--status-warning)";
+      status.textContent = "正在發送重啟指令...";
+
       try {
-        const resp = await fetch(window.location.origin + "/api/services/homeassistant/restart", {
-          method: "POST", headers: { "Content-Type": "application/json", "Authorization": "Bearer " + getHAToken() }
+        var hassUrl = window.location.origin;
+        var resp = await fetch(hassUrl + "/api/services/homeassistant/restart", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + getHAToken()
+          }
         });
-        if (resp.ok) { status.style.color = "var(--success)"; status.textContent = "重啟指令已送出！請稍候約 1-3 分鐘..."; }
-        else throw new Error("HTTP " + resp.status);
+        if (resp.ok) {
+          status.style.color = "var(--status-success)";
+          status.textContent = "重啟指令已送出！Home Assistant 正在重新啟動中，請稍候約 1-3 分鐘...";
+        } else {
+          throw new Error("HTTP " + resp.status);
+        }
       } catch (err) {
-        try { await WS.send({ type: "call_service", domain: "homeassistant", service: "restart" });
-          status.style.color = "var(--success)"; status.textContent = "重啟指令已送出！請稍候約 1-3 分鐘...";
-        } catch (e) { status.style.color = "var(--danger)"; status.textContent = "無法發送重啟指令。請至 設定 → 系統 → 重新啟動 手動執行。"; document.getElementById("confirmRestart").checked = false; }
+        try {
+          await WS.send({
+            type: "call_service",
+            domain: "homeassistant",
+            service: "restart"
+          });
+          status.style.color = "var(--status-success)";
+          status.textContent = "重啟指令已送出！Home Assistant 正在重新啟動中，請稍候約 1-3 分鐘...";
+        } catch (e) {
+          status.style.color = "var(--status-danger)";
+          status.textContent = "無法發送重啟指令。請至 設定 \u2192 系統 \u2192 重新啟動 手動執行。(" + err.message + ")";
+          cb.checked = false;
+        }
       }
     }
   </script>
