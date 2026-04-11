@@ -16446,3 +16446,232 @@
 2026-04-11 12:30:13,357 [INFO] Status: 7449 frames received total
 2026-04-11 12:30:17,834 [INFO] RX DMX Universe 0 (70 channels) from 192.168.2.191  [frame #7452]
 2026-04-11 12:30:28,691 [INFO] RX DMX Universe 0 (70 channels) from 192.168.2.191  [frame #7457]
+2026-04-11 12:30:39,529 [INFO] RX DMX Universe 0 (70 channels) from 192.168.2.191  [frame #7462]
+2026-04-11 12:30:43,358 [INFO] Status: 7463 frames received total
+2026-04-11 12:30:50,688 [INFO] RX DMX Universe 0 (70 channels) from 192.168.2.191  [frame #7467]
+2026-04-11 12:31:01,852 [INFO] RX DMX Universe 0 (70 channels) from 192.168.2.191  [frame #7472]
+2026-04-11 12:31:12,690 [INFO] RX DMX Universe 0 (70 channels) from 192.168.2.191  [frame #7477]
+2026-04-11 12:31:13,359 [INFO] Status: 7477 frames received total
+2026-04-11 12:31:23,566 [INFO] RX DMX Universe 0 (70 channels) from 192.168.2.191  [frame #7482]
+2026-04-11 12:31:35,118 [INFO] RX DMX Universe 0 (70 channels) from 192.168.2.191  [frame #7487]
+2026-04-11 12:31:43,360 [INFO] Status: 7490 frames received total
+2026-04-11 12:31:46,040 [INFO] RX DMX Universe 0 (70 channels) from 192.168.2.191  [frame #7492]
+2026-04-11 12:31:56,894 [INFO] RX DMX Universe 0 (70 channels) from 192.168.2.191  [frame #7497]
+2026-04-11 12:32:07,797 [INFO] RX DMX Universe 0 (70 channels) from 192.168.2.191  [frame #7502]
+2026-04-11 12:32:13,361 [INFO] Status: 7504 frames received total
+2026-04-11 12:32:18,563 [INFO] RX DMX Universe 0 (70 channels) from 192.168.2.191  [frame #7507]
+  Dimmer       Ch  1     Dim=128 (50%)
+  RGB Strip    Ch  2-4  R=200 G=  0 B=  0
+  RGBW Spot    Ch  5-8  R=  0 G=  0 B=180 W=  0
+  CCT Light    Ch  9-10  Cool=  0 Hot=  0
+  RGBWW Lamp   Ch 11-15  R=200 G= 78 B= 39 C=100 H= 50
+  Binary Sw    Ch 16     Val=  0 (off)
+  Fixed Out    Ch 17     Out=255
+  Dimmer       Ch  1     Dim=128 (50%)
+  RGB Strip    Ch  2-4  R=200 G=  0 B=  0
+  RGBW Spot    Ch  5-8  R=  0 G=  0 B=180 W=  0
+  CCT Light    Ch  9-10  Cool=  0 Hot=  0
+  RGBWW Lamp   Ch 11-15  R=200 G= 78 B= 39 C=100 H= 50
+  Binary Sw    Ch 16     Val=  0 (off)
+  Fixed Out    Ch 17     Out=255
+  Dimmer       Ch  1     Dim=128 (50%)
+  RGB Strip    Ch  2-4  R=200 G=  0 B=  0
+  RGBW Spot    Ch  5-8  R=  0 G=  0 B=180 W=  0
+  CCT Light    Ch  9-10  Cool=  0 Hot=  0
+  RGBWW Lamp   Ch 11-15  R=200 G= 78 B= 39 C=100 H= 50
+  Binary Sw    Ch 16     Val=  0 (off)
+  Fixed Out    Ch 17     Out=255
+  Dimmer       Ch  1     Dim=128 (50%)
+  RGB Strip    Ch  2-4  R=200 G=  0 B=  0
+  RGBW Spot    Ch  5-8  R=  0 G=  0 B=180 W=  0
+  CCT Light    Ch  9-10  Cool=  0 Hot=  0
+  RGBWW Lamp   Ch 11-15  R=200 G= 78 B= 39 C=100 H= 50
+  Binary Sw    Ch 16     Val=  0 (off)
+  Fixed Out    Ch 17     Out=255
+  Dimmer       Ch  1     Dim=128 (50%)
+  RGB Strip    Ch  2-4  R=200 G=  0 B=  0
+  RGBW Spot    Ch  5-8  R=  0 G=  0 B=180 W=  0
+  CCT Light    Ch  9-10  Cool=  0 Hot=  0
+  RGBWW Lamp   Ch 11-15  R=200 G= 78 B= 39 C=100 H= 50
+  Binary Sw    Ch 16     Val=  0 (off)
+  Fixed Out    Ch 17     Out=255
+  Dimmer       Ch  1     Dim=128 (50%)
+  RGB Strip    Ch  2-4  R=200 G=  0 B=  0
+  RGBW Spot    Ch  5-8  R=  0 G=  0 B=180 W=  0
+  CCT Light    Ch  9-10  Cool=  0 Hot=  0
+  RGBWW Lamp   Ch 11-15  R=200 G= 78 B= 39 C=100 H= 50
+  Binary Sw    Ch 16     Val=  0 (off)
+  Fixed Out    Ch 17     Out=255
+  Dimmer       Ch  1     Dim=128 (50%)
+  RGB Strip    Ch  2-4  R=200 G=  0 B=  0
+  RGBW Spot    Ch  5-8  R=  0 G=  0 B=180 W=  0
+  CCT Light    Ch  9-10  Cool=  0 Hot=  0
+  RGBWW Lamp   Ch 11-15  R=200 G= 78 B= 39 C=100 H= 50
+  Binary Sw    Ch 16     Val=  0 (off)
+  Fixed Out    Ch 17     Out=255
+  Dimmer       Ch  1     Dim=128 (50%)
+  RGB Strip    Ch  2-4  R=200 G=  0 B=  0
+  RGBW Spot    Ch  5-8  R=  0 G=  0 B=180 W=  0
+  CCT Light    Ch  9-10  Cool=  0 Hot=  0
+  RGBWW Lamp   Ch 11-15  R=200 G= 78 B= 39 C=100 H= 50
+  Binary Sw    Ch 16     Val=  0 (off)
+  Fixed Out    Ch 17     Out=255
+  Dimmer       Ch  1     Dim=128 (50%)
+  RGB Strip    Ch  2-4  R=200 G=  0 B=  0
+  RGBW Spot    Ch  5-8  R=  0 G=  0 B=180 W=  0
+  CCT Light    Ch  9-10  Cool=  0 Hot=  0
+  RGBWW Lamp   Ch 11-15  R=200 G= 78 B= 39 C=100 H= 50
+  Binary Sw    Ch 16     Val=  0 (off)
+  Fixed Out    Ch 17     Out=255
+  Dimmer       Ch  1     Dim=128 (50%)
+  RGB Strip    Ch  2-4  R=200 G=  0 B=  0
+  RGBW Spot    Ch  5-8  R=  0 G=  0 B=180 W=  0
+  CCT Light    Ch  9-10  Cool=  0 Hot=  0
+  RGBWW Lamp   Ch 11-15  R=200 G= 78 B= 39 C=100 H= 50
+  Binary Sw    Ch 16     Val=  0 (off)
+  Fixed Out    Ch 17     Out=255
+  Dimmer       Ch  1     Dim=128 (50%)
+  RGB Strip    Ch  2-4  R=200 G=  0 B=  0
+  RGBW Spot    Ch  5-8  R=  0 G=  0 B=180 W=  0
+  CCT Light    Ch  9-10  Cool=  0 Hot=  0
+  RGBWW Lamp   Ch 11-15  R=200 G= 78 B= 39 C=100 H= 50
+  Binary Sw    Ch 16     Val=  0 (off)
+  Fixed Out    Ch 17     Out=255
+  Dimmer       Ch  1     Dim=128 (50%)
+  RGB Strip    Ch  2-4  R=200 G=  0 B=  0
+  RGBW Spot    Ch  5-8  R=  0 G=  0 B=180 W=  0
+  CCT Light    Ch  9-10  Cool=  0 Hot=  0
+  RGBWW Lamp   Ch 11-15  R=200 G= 78 B= 39 C=100 H= 50
+  Binary Sw    Ch 16     Val=  0 (off)
+  Fixed Out    Ch 17     Out=255
+  Dimmer       Ch  1     Dim=128 (50%)
+  RGB Strip    Ch  2-4  R=200 G=  0 B=  0
+  RGBW Spot    Ch  5-8  R=  0 G=  0 B=180 W=  0
+  CCT Light    Ch  9-10  Cool=  0 Hot=  0
+  RGBWW Lamp   Ch 11-15  R=200 G= 78 B= 39 C=100 H= 50
+  Binary Sw    Ch 16     Val=  0 (off)
+  Fixed Out    Ch 17     Out=255
+  Dimmer       Ch  1     Dim=128 (50%)
+  RGB Strip    Ch  2-4  R=200 G=  0 B=  0
+  RGBW Spot    Ch  5-8  R=  0 G=  0 B=180 W=  0
+  CCT Light    Ch  9-10  Cool=  0 Hot=  0
+  RGBWW Lamp   Ch 11-15  R=200 G= 78 B= 39 C=100 H= 50
+  Binary Sw    Ch 16     Val=  0 (off)
+  Fixed Out    Ch 17     Out=255
+  Dimmer       Ch  1     Dim=128 (50%)
+  RGB Strip    Ch  2-4  R=200 G=  0 B=  0
+  RGBW Spot    Ch  5-8  R=  0 G=  0 B=180 W=  0
+  CCT Light    Ch  9-10  Cool=  0 Hot=  0
+  RGBWW Lamp   Ch 11-15  R=200 G= 78 B= 39 C=100 H= 50
+  Binary Sw    Ch 16     Val=  0 (off)
+  Fixed Out    Ch 17     Out=255
+  Dimmer       Ch  1     Dim=128 (50%)
+  RGB Strip    Ch  2-4  R=200 G=  0 B=  0
+  RGBW Spot    Ch  5-8  R=  0 G=  0 B=180 W=  0
+  CCT Light    Ch  9-10  Cool=  0 Hot=  0
+  RGBWW Lamp   Ch 11-15  R=200 G= 78 B= 39 C=100 H= 50
+  Binary Sw    Ch 16     Val=  0 (off)
+  Fixed Out    Ch 17     Out=255
+  Dimmer       Ch  1     Dim=128 (50%)
+  RGB Strip    Ch  2-4  R=200 G=  0 B=  0
+  RGBW Spot    Ch  5-8  R=  0 G=  0 B=180 W=  0
+  CCT Light    Ch  9-10  Cool=  0 Hot=  0
+  RGBWW Lamp   Ch 11-15  R=200 G= 78 B= 39 C=100 H= 50
+  Binary Sw    Ch 16     Val=  0 (off)
+  Fixed Out    Ch 17     Out=255
+  Dimmer       Ch  1     Dim=128 (50%)
+  RGB Strip    Ch  2-4  R=200 G=  0 B=  0
+  RGBW Spot    Ch  5-8  R=  0 G=  0 B=180 W=  0
+  CCT Light    Ch  9-10  Cool=  0 Hot=  0
+  RGBWW Lamp   Ch 11-15  R=200 G= 78 B= 39 C=100 H= 50
+  Binary Sw    Ch 16     Val=  0 (off)
+  Fixed Out    Ch 17     Out=255
+  Dimmer       Ch  1     Dim=128 (50%)
+  RGB Strip    Ch  2-4  R=200 G=  0 B=  0
+  RGBW Spot    Ch  5-8  R=  0 G=  0 B=180 W=  0
+  CCT Light    Ch  9-10  Cool=  0 Hot=  0
+  RGBWW Lamp   Ch 11-15  R=200 G= 78 B= 39 C=100 H= 50
+  Binary Sw    Ch 16     Val=  0 (off)
+  Fixed Out    Ch 17     Out=255
+  Dimmer       Ch  1     Dim=128 (50%)
+  RGB Strip    Ch  2-4  R=200 G=  0 B=  0
+  RGBW Spot    Ch  5-8  R=  0 G=  0 B=180 W=  0
+  CCT Light    Ch  9-10  Cool=  0 Hot=  0
+  RGBWW Lamp   Ch 11-15  R=200 G= 78 B= 39 C=100 H= 50
+  Binary Sw    Ch 16     Val=  0 (off)
+  Fixed Out    Ch 17     Out=255
+  Dimmer       Ch  1     Dim=128 (50%)
+  RGB Strip    Ch  2-4  R=200 G=  0 B=  0
+  RGBW Spot    Ch  5-8  R=  0 G=  0 B=180 W=  0
+  CCT Light    Ch  9-10  Cool=  0 Hot=  0
+  RGBWW Lamp   Ch 11-15  R=200 G= 78 B= 39 C=100 H= 50
+  Binary Sw    Ch 16     Val=  0 (off)
+  Fixed Out    Ch 17     Out=255
+  Dimmer       Ch  1     Dim=128 (50%)
+  RGB Strip    Ch  2-4  R=200 G=  0 B=  0
+  RGBW Spot    Ch  5-8  R=  0 G=  0 B=180 W=  0
+  CCT Light    Ch  9-10  Cool=  0 Hot=  0
+  RGBWW Lamp   Ch 11-15  R=200 G= 78 B= 39 C=100 H= 50
+  Binary Sw    Ch 16     Val=  0 (off)
+  Fixed Out    Ch 17     Out=255
+  Dimmer       Ch  1     Dim=128 (50%)
+  RGB Strip    Ch  2-4  R=200 G=  0 B=  0
+  RGBW Spot    Ch  5-8  R=  0 G=  0 B=180 W=  0
+  CCT Light    Ch  9-10  Cool=  0 Hot=  0
+  RGBWW Lamp   Ch 11-15  R=200 G= 78 B= 39 C=100 H= 50
+  Binary Sw    Ch 16     Val=  0 (off)
+  Fixed Out    Ch 17     Out=255
+  Dimmer       Ch  1     Dim=128 (50%)
+  RGB Strip    Ch  2-4  R=200 G=  0 B=  0
+  RGBW Spot    Ch  5-8  R=  0 G=  0 B=180 W=  0
+  CCT Light    Ch  9-10  Cool=  0 Hot=  0
+  RGBWW Lamp   Ch 11-15  R=200 G= 78 B= 39 C=100 H= 50
+  Binary Sw    Ch 16     Val=  0 (off)
+  Fixed Out    Ch 17     Out=255
+  Dimmer       Ch  1     Dim=128 (50%)
+  RGB Strip    Ch  2-4  R=200 G=  0 B=  0
+  RGBW Spot    Ch  5-8  R=  0 G=  0 B=180 W=  0
+  CCT Light    Ch  9-10  Cool=  0 Hot=  0
+  RGBWW Lamp   Ch 11-15  R=200 G= 78 B= 39 C=100 H= 50
+  Binary Sw    Ch 16     Val=  0 (off)
+  Fixed Out    Ch 17     Out=255
+  Dimmer       Ch  1     Dim=128 (50%)
+  RGB Strip    Ch  2-4  R=200 G=  0 B=  0
+  RGBW Spot    Ch  5-8  R=  0 G=  0 B=180 W=  0
+  CCT Light    Ch  9-10  Cool=  0 Hot=  0
+  RGBWW Lamp   Ch 11-15  R=200 G= 78 B= 39 C=100 H= 50
+  Binary Sw    Ch 16     Val=  0 (off)
+  Fixed Out    Ch 17     Out=255
+  Dimmer       Ch  1     Dim=128 (50%)
+  RGB Strip    Ch  2-4  R=200 G=  0 B=  0
+  RGBW Spot    Ch  5-8  R=  0 G=  0 B=180 W=  0
+  CCT Light    Ch  9-10  Cool=  0 Hot=  0
+  RGBWW Lamp   Ch 11-15  R=200 G= 78 B= 39 C=100 H= 50
+  Binary Sw    Ch 16     Val=  0 (off)
+  Fixed Out    Ch 17     Out=255
+2026-04-11 12:32:29,387 [INFO] RX DMX Universe 0 (70 channels) from 192.168.2.191  [frame #7512]
+2026-04-11 12:32:40,028 [INFO] RX DMX Universe 0 (70 channels) from 192.168.2.191  [frame #7517]
+2026-04-11 12:32:43,362 [INFO] Status: 7518 frames received total
+2026-04-11 12:32:50,611 [INFO] RX DMX Universe 0 (70 channels) from 192.168.2.191  [frame #7522]
+2026-04-11 12:33:02,208 [INFO] RX DMX Universe 0 (70 channels) from 192.168.2.191  [frame #7527]
+2026-04-11 12:33:13,363 [INFO] Status: 7531 frames received total
+2026-04-11 12:33:13,732 [INFO] RX DMX Universe 0 (70 channels) from 192.168.2.191  [frame #7532]
+2026-04-11 12:33:24,804 [INFO] RX DMX Universe 0 (70 channels) from 192.168.2.191  [frame #7537]
+2026-04-11 12:33:35,839 [INFO] RX DMX Universe 0 (70 channels) from 192.168.2.191  [frame #7542]
+2026-04-11 12:33:43,363 [INFO] Status: 7545 frames received total
+2026-04-11 12:33:46,717 [INFO] RX DMX Universe 0 (70 channels) from 192.168.2.191  [frame #7547]
+2026-04-11 12:33:58,541 [INFO] RX DMX Universe 0 (70 channels) from 192.168.2.191  [frame #7552]
+2026-04-11 12:34:09,302 [INFO] RX DMX Universe 0 (70 channels) from 192.168.2.191  [frame #7557]
+2026-04-11 12:34:13,363 [INFO] Status: 7558 frames received total
+2026-04-11 12:34:20,714 [INFO] RX DMX Universe 0 (70 channels) from 192.168.2.191  [frame #7562]
+2026-04-11 12:34:31,613 [INFO] RX DMX Universe 0 (70 channels) from 192.168.2.191  [frame #7567]
+2026-04-11 12:34:42,902 [INFO] RX DMX Universe 0 (70 channels) from 192.168.2.191  [frame #7572]
+2026-04-11 12:34:43,365 [INFO] Status: 7572 frames received total
+2026-04-11 12:34:54,065 [INFO] RX DMX Universe 0 (70 channels) from 192.168.2.191  [frame #7577]
+2026-04-11 12:35:04,897 [INFO] RX DMX Universe 0 (70 channels) from 192.168.2.191  [frame #7582]
+2026-04-11 12:35:13,366 [INFO] Status: 7585 frames received total
+2026-04-11 12:35:15,809 [INFO] RX DMX Universe 0 (70 channels) from 192.168.2.191  [frame #7587]
+2026-04-11 12:35:26,708 [INFO] RX DMX Universe 0 (70 channels) from 192.168.2.191  [frame #7592]
+2026-04-11 12:35:37,881 [INFO] RX DMX Universe 0 (70 channels) from 192.168.2.191  [frame #7597]
+2026-04-11 12:35:43,366 [INFO] Status: 7599 frames received total
+2026-04-11 12:35:49,100 [INFO] RX DMX Universe 0 (70 channels) from 192.168.2.191  [frame #7602]
