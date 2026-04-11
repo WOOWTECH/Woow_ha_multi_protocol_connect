@@ -1,0 +1,6 @@
+{
+  "name": "Woow HA Multi-Protocol Connect",
+  "homeassistant": "2026.1.0",
+  "render_readme": true,
+  "content_in_root": false
+}
