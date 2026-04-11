@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+sim_venv/
+venv/
+.venv/
+
+# Node.js
+node_modules/
+
+# Playwright
+tests/theme-sync/test-results/
+tests/theme-sync/report/
+tests/theme-sync/playwright-report/
+
+# Temporary files
+tmp/
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Vibe images (development artifacts)
+.vibe-images/
+
+# Environment
+.env
+*.env.local
