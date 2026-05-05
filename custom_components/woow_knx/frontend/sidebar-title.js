@@ -1,6 +1,11 @@
 /* Woow KNX — Sidebar Title i18n
  * Dynamically translates the sidebar panel title to match HA's language setting.
  * Loaded via frontend.add_extra_js_url() so it runs on every HA page.
+ *
+ * 3-phase approach:
+ *   Phase 1: Fast retry loop waiting for hass to be ready
+ *   Phase 2: Subscribe to core_config_updated for system-level language changes
+ *   Phase 3: Polling fallback for user-profile-level language changes
  */
 (function() {
   var PANEL_KEY = "woow_knx";
@@ -37,35 +42,49 @@
     // Mutate title
     hass.panels[PANEL_KEY].title = title;
     // Create new object references to trigger LitElement re-render
+    // Must create BOTH new hass AND new panels reference
     main.hass = Object.assign({}, main.hass, {
       panels: Object.assign({}, main.hass.panels)
     });
     return true;
   }
 
-  // Phase 1: Wait for hass to be ready, then apply
+  function applyTranslation() {
+    var obj = getHassObject();
+    if (!obj || !obj.hass || !obj.hass.panels) return false;
+    var lang = getLanguage(obj.hass);
+    var title = TITLES[lang] || TITLES["en"];
+    return updateTitle(obj.hass, obj.main, title);
+  }
+
+  // Phase 1: Fast retry loop — wait for hass to be ready, then apply
   var retries = 0;
   var initInterval = setInterval(function() {
     retries++;
-    if (retries > 30) { clearInterval(initInterval); return; }
-    var obj = getHassObject();
-    if (!obj || !obj.hass || !obj.hass.panels) return;
-    var lang = getLanguage(obj.hass);
-    var title = TITLES[lang] || TITLES["en"];
-    if (updateTitle(obj.hass, obj.main, title)) {
+    if (retries > 60) { clearInterval(initInterval); return; }
+    if (applyTranslation()) {
       clearInterval(initInterval);
-      startPolling();
+      startPhase2();
+      startPhase3();
     }
-  }, 2000);
+  }, 500);
 
-  // Phase 2+3: Polling fallback for language changes
-  function startPolling() {
-    setInterval(function() {
+  // Phase 2: Subscribe to core_config_updated event (system-level language change)
+  function startPhase2() {
+    try {
       var obj = getHassObject();
-      if (!obj || !obj.hass) return;
-      var lang = getLanguage(obj.hass);
-      var title = TITLES[lang] || TITLES["en"];
-      updateTitle(obj.hass, obj.main, title);
+      if (!obj || !obj.hass || !obj.hass.connection) return;
+      obj.hass.connection.subscribeEvents(function() {
+        // Delay slightly to let HA update its internal state
+        setTimeout(applyTranslation, 500);
+      }, "core_config_updated");
+    } catch (e) { /* ignore subscription errors */ }
+  }
+
+  // Phase 3: Polling fallback for user-profile-level language changes
+  function startPhase3() {
+    setInterval(function() {
+      applyTranslation();
     }, 5000);
   }
 })();
