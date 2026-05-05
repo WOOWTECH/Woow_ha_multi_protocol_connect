@@ -3,6 +3,7 @@
 import logging
 import os
 import stat
+import time
 
 import voluptuous as vol
 
@@ -50,6 +51,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         require_admin=False,
         config={"url": f"/{DOMAIN}/frontend/panel.html"},
     )
+
+    # Load sidebar title translation script on every HA page
+    cache_buster = int(time.time())
+    frontend.add_extra_js_url(hass, f"/{DOMAIN}/frontend/sidebar-title.js?v={cache_buster}")
 
     # Ensure the component's config subdirectory exists
     subdir = hass.config.path(CONFIG_SUBDIR)

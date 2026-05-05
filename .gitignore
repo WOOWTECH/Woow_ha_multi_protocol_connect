@@ -20,6 +20,7 @@ node_modules/
 tests/theme-sync/test-results/
 tests/theme-sync/report/
 tests/theme-sync/playwright-report/
+.playwright-cli/
 
 # Temporary files
 tmp/

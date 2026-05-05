@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Woow KNX 設定指南</title>
+  <title>Woow KNX Setup Guide</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
@@ -950,8 +950,8 @@
   <div class="hero">
     <div class="hero-content">
       <span class="hero-icon">&#x1F50C;</span>
-      <h1>KNX 設定指南</h1>
-      <p>透過官方文檔 + AI 助手，輕鬆完成 KNX 裝置 YAML 設定</p>
+      <h1 data-i18n="hero_title">KNX Setup Guide</h1>
+      <p data-i18n="hero_subtitle">Complete KNX device YAML configuration with official docs + AI assistant</p>
     </div>
   </div>
 
@@ -963,20 +963,19 @@
       <!-- Step 1 -->
       <div class="step-card">
         <div class="step-number">1</div>
-        <h2><span class="icon">&#x1F4D6;</span> 閱讀 KNX 官方設定文檔</h2>
-        <p>
-          Home Assistant 官方提供了完整的 KNX 整合文檔，涵蓋所有設定參數的說明。
-          建議在開始設定前，先瀏覽官方文檔了解 KNX 整合的基本架構，包含：
+        <h2 data-i18n-html="step1_title"><span class="icon">&#x1F4D6;</span> Read KNX Official Documentation</h2>
+        <p data-i18n="step1_desc">
+          Home Assistant provides comprehensive KNX integration documentation covering all configuration parameters. Before starting, review the official docs to understand the KNX integration architecture, including:
         </p>
         <ul>
-          <li><strong>連線設定</strong> -- KNX/IP Gateway 或 Tunneling 的連線方式</li>
-          <li><strong>Group Address</strong> -- 群組地址的對應與格式</li>
-          <li><strong>裝置類型</strong> -- 支援的實體類型（light, switch, cover, climate, sensor 等）</li>
-          <li><strong>YAML 設定範例</strong> -- 各種裝置的設定範例與參數說明</li>
+          <li data-i18n-html="step1_li1"><strong>Connection Settings</strong> -- KNX/IP Gateway or Tunneling connection methods</li>
+          <li data-i18n-html="step1_li2"><strong>Group Address</strong> -- Group address mapping and format</li>
+          <li data-i18n-html="step1_li3"><strong>Device Types</strong> -- Supported entity types (light, switch, cover, climate, sensor, etc.)</li>
+          <li data-i18n-html="step1_li4"><strong>YAML Examples</strong> -- Configuration examples and parameter descriptions for various devices</li>
         </ul>
         <div class="btn-group">
-          <a class="btn btn-filled btn-arrow" href="https://www.home-assistant.io/integrations/knx" target="_blank" rel="noopener">
-            前往 KNX 官方文檔
+          <a class="btn btn-filled btn-arrow" href="https://www.home-assistant.io/integrations/knx" target="_blank" rel="noopener" data-i18n="step1_btn">
+            Go to KNX Official Docs
           </a>
         </div>
       </div>
@@ -984,18 +983,16 @@
       <!-- Step 2 -->
       <div class="step-card">
         <div class="step-number">2</div>
-        <h2><span class="icon">&#x1F916;</span> 使用 Woow AI 助手取得設定參數</h2>
-        <p>
-          閱讀官方文檔後，您可以透過我們提供的 AI 助手來取得針對您特定設備的 KNX YAML 設定。
-          AI 助手能根據您的裝置型號、群組地址等資訊，生成精確的設定內容。
+        <h2 data-i18n-html="step2_title"><span class="icon">&#x1F916;</span> Use Woow AI Assistant for Configuration</h2>
+        <p data-i18n="step2_desc1">
+          After reading the official docs, use our AI assistant to get KNX YAML configurations tailored to your specific devices. The AI can generate precise configurations based on your device model, group addresses, and other details.
         </p>
-        <p>
-          <strong>使用方式：</strong>將您從官方文檔中了解到的參數需求，搭配您的實際設備資訊，
-          向 AI 助手詢問，即可獲得可直接使用的 YAML 設定。
+        <p data-i18n-html="step2_desc2">
+          <strong>How to use:</strong> Combine the parameter requirements from the official docs with your actual device information, and ask the AI assistant to get ready-to-use YAML configurations.
         </p>
         <div class="btn-group">
-          <a class="btn btn-ghost btn-arrow" href="https://aiot.woowtech.io/blog" target="_blank" rel="noopener">
-            前往 Woow AI 助手
+          <a class="btn btn-ghost btn-arrow" href="https://aiot.woowtech.io/blog" target="_blank" rel="noopener" data-i18n="step2_btn">
+            Go to Woow AI Assistant
           </a>
         </div>
       </div>
@@ -1003,79 +1000,76 @@
       <!-- Step 3 -->
       <div class="step-card">
         <div class="step-number">3</div>
-        <h2><span class="icon">&#x1F4DD;</span> 完整設定流程教學</h2>
-        <p>
-          以下是從零開始，透過官方文檔搭配 AI 助手完成 KNX YAML 設定的完整步驟：
+        <h2 data-i18n-html="step3_title"><span class="icon">&#x1F4DD;</span> Complete Setup Tutorial</h2>
+        <p data-i18n="step3_desc">
+          Follow these steps to complete KNX YAML configuration from scratch using official docs and AI assistant:
         </p>
 
         <div class="sub-steps">
           <div class="sub-step">
             <span class="sub-step-number">1</span>
             <div class="sub-step-content">
-              <strong>確認 KNX 硬體資訊</strong>
-              <span>記下您的 KNX/IP Gateway IP 位址、埠號，以及每個裝置對應的 Group Address。</span>
+              <strong data-i18n="sub1_title">Confirm KNX Hardware Info</strong>
+              <span data-i18n="sub1_desc">Note your KNX/IP Gateway IP address, port number, and the Group Address for each device.</span>
             </div>
           </div>
           <div class="sub-step">
             <span class="sub-step-number">2</span>
             <div class="sub-step-content">
-              <strong>瀏覽官方文檔</strong>
-              <span>前往 <a href="https://www.home-assistant.io/integrations/knx" target="_blank" rel="noopener">HA KNX 文檔</a>，了解 YAML 設定的結構和各參數的意義。重點關注您需要的裝置類型（如 light、switch、climate 等）。</span>
+              <strong data-i18n="sub2_title">Browse Official Documentation</strong>
+              <span data-i18n-html="sub2_desc">Visit <a href="https://www.home-assistant.io/integrations/knx" target="_blank" rel="noopener">HA KNX Documentation</a> to understand the YAML structure and parameter meanings. Focus on the device types you need (e.g., light, switch, climate, etc.).</span>
             </div>
           </div>
           <div class="sub-step">
             <span class="sub-step-number">3</span>
             <div class="sub-step-content">
-              <strong>向 AI 助手提問</strong>
-              <p>前往 <a href="https://aiot.woowtech.io/blog" target="_blank" rel="noopener">Woow AI 助手</a>，提供以下資訊以獲得設定建議：</p>
-              <p style="padding-left:8px; margin-top:4px;">
-                &#x2023; 裝置類型（燈具、開關、窗簾、溫控等）<br />
-                &#x2023; Group Address（如 1/0/1）<br />
-                &#x2023; 需要的功能（調光、狀態回報、溫度讀取等）
+              <strong data-i18n="sub3_title">Ask the AI Assistant</strong>
+              <p data-i18n-html="sub3_desc">Visit <a href="https://aiot.woowtech.io/blog" target="_blank" rel="noopener">Woow AI Assistant</a> and provide the following information for configuration suggestions:</p>
+              <p data-i18n-html="sub3_list" style="padding-left:8px; margin-top:4px;">
+                &#x2023; Device type (lights, switches, covers, thermostats, etc.)<br />
+                &#x2023; Group Address (e.g., 1/0/1)<br />
+                &#x2023; Required features (dimming, status feedback, temperature reading, etc.)
               </p>
             </div>
           </div>
           <div class="sub-step">
             <span class="sub-step-number">4</span>
             <div class="sub-step-content">
-              <strong>透過 UI 新增 KNX 整合（連線設定）</strong>
-              <span>前往 <em>設定 &#x2192; 裝置與服務 &#x2192; 新增整合</em>，搜尋「KNX」並依指示輸入 Gateway IP 與連線方式（Tunneling / Routing）。此步驟僅需執行一次。</span>
+              <strong data-i18n="sub4_title">Add KNX Integration via UI (Connection Setup)</strong>
+              <span data-i18n-html="sub4_desc">Go to <em>Settings &#x2192; Devices &amp; Services &#x2192; Add Integration</em>, search for &quot;KNX&quot; and follow the prompts to enter Gateway IP and connection method (Tunneling / Routing). This step only needs to be done once.</span>
             </div>
           </div>
           <div class="sub-step">
             <span class="sub-step-number">5</span>
             <div class="sub-step-content">
-              <strong>使用下方編輯器寫入 YAML 設定</strong>
-              <span>將 AI 助手產生的 YAML 設定，透過下方的<strong>內建 YAML 編輯器</strong>直接編輯
-                <code>configuration.yaml</code> 或其他設定檔，無需額外安裝任何套件。</span>
+              <strong data-i18n="sub5_title">Use the Editor Below to Write YAML Configuration</strong>
+              <span data-i18n-html="sub5_desc">Paste the AI-generated YAML configuration into the <strong>built-in YAML editor</strong> below to directly edit <code>configuration.yaml</code> or other config files, without installing any additional packages.</span>
             </div>
           </div>
           <div class="sub-step">
             <span class="sub-step-number">6</span>
             <div class="sub-step-content">
-              <strong>重新啟動 Home Assistant</strong>
-              <span>儲存設定後，需要重新啟動 Home Assistant 以載入新的 KNX 設定。請使用下方的重啟按鈕或至 <em>設定 &#x2192; 系統 &#x2192; 重新啟動</em>。</span>
+              <strong data-i18n="sub6_title">Restart Home Assistant</strong>
+              <span data-i18n-html="sub6_desc">After saving, restart Home Assistant to load the new KNX configuration. Use the restart button below or go to <em>Settings &#x2192; System &#x2192; Restart</em>.</span>
             </div>
           </div>
           <div class="sub-step">
             <span class="sub-step-number">7</span>
             <div class="sub-step-content">
-              <strong>驗證裝置與實體</strong>
-              <span>重啟後，前往 <em>設定 &#x2192; 裝置與服務 &#x2192; KNX</em> 確認裝置已正確載入。您也可以在 <em>開發者工具 &#x2192; 狀態</em> 中查看新建立的實體狀態。</span>
+              <strong data-i18n="sub7_title">Verify Devices and Entities</strong>
+              <span data-i18n-html="sub7_desc">After restarting, go to <em>Settings &#x2192; Devices &amp; Services &#x2192; KNX</em> to confirm devices loaded correctly. You can also check new entity states in <em>Developer Tools &#x2192; States</em>.</span>
             </div>
           </div>
         </div>
 
-        <p style="margin-top: 16px;">
-          <strong>YAML 設定範例（以 KNX 燈具為例）：</strong>
+        <p data-i18n-html="yaml_example_label" style="margin-top: 16px;">
+          <strong>YAML Configuration Example (KNX Light):</strong>
         </p>
 
         <div class="callout callout-warning">
-          <div class="callout-title">&#x1F4A1; 注意：連線設定需透過 UI</div>
-          <p>
-            在新版 Home Assistant 中，KNX 的連線設定（Tunneling / Routing）需透過
-            <em>設定 &#x2192; 裝置與服務 &#x2192; 新增整合 &#x2192; KNX</em> 介面完成。<br />
-            YAML 僅用於定義裝置與實體，連線參數不再寫在 <code>configuration.yaml</code> 中。
+          <div class="callout-title" data-i18n-html="callout_ui_title">&#x1F4A1; Note: Connection settings via UI</div>
+          <p data-i18n-html="callout_ui_desc">
+            In newer versions of Home Assistant, KNX connection settings (Tunneling / Routing) must be configured through <em>Settings &#x2192; Devices &amp; Services &#x2192; Add Integration &#x2192; KNX</em>.<br />YAML is only used to define devices and entities; connection parameters are no longer placed in <code>configuration.yaml</code>.
           </p>
         </div>
 
@@ -1099,9 +1093,8 @@ knx:
       type: "temperature"</div>
 
         <div class="callout callout-success">
-          <p>
-            <strong>完成！</strong>透過以上步驟，您已成功透過官方文檔參考與 AI 助手協作，
-            完成了 KNX 裝置的 YAML 設定。設定生效後，您就可以在 Home Assistant 中控制和管理 KNX 裝置與實體了。
+          <p data-i18n-html="callout_done">
+            <strong>Done!</strong> By following the steps above, you have successfully completed the KNX device YAML configuration using official documentation and AI assistant collaboration. After the settings take effect, you can control and manage KNX devices and entities in Home Assistant.
           </p>
         </div>
       </div>
@@ -1113,31 +1106,32 @@ knx:
     <!-- ===== YAML Editor Section ===== -->
     <div class="editor-section" id="editorSection">
       <div class="editor-header">
-        <div class="editor-header-title">
-          &#x270F;&#xFE0F; YAML 設定檔編輯器
+        <div class="editor-header-title" data-i18n-html="editor_title">
+          &#x270F;&#xFE0F; YAML Configuration Editor
         </div>
-        <span class="ws-badge disconnected" id="wsStatus">&#x25CF; 未連線</span>
+        <span class="ws-badge disconnected" id="wsStatus">&#x25CF; Disconnected</span>
       </div>
       <div class="editor-toolbar">
         <select id="fileSelect" onchange="loadSelectedFile()">
-          <option value="">-- 選擇檔案 --</option>
+          <option value="" data-i18n="editor_select_placeholder">-- Select File --</option>
         </select>
-        <button onclick="refreshFileList()" title="重新整理檔案清單">&#x1F504; 重新整理</button>
-        <button onclick="changeFontSize(-1)" title="縮小字體">A-</button>
-        <button onclick="changeFontSize(1)" title="放大字體">A+</button>
+        <button onclick="refreshFileList()" data-i18n="editor_refresh" data-i18n-title="editor_refresh_title" title="Refresh file list">&#x1F504; Refresh</button>
+        <button onclick="changeFontSize(-1)" data-i18n-title="editor_font_smaller" title="Decrease font size">A-</button>
+        <button onclick="changeFontSize(1)" data-i18n-title="editor_font_larger" title="Increase font size">A+</button>
       </div>
       <textarea
         id="editorArea"
         class="editor-textarea"
-        placeholder="選擇上方檔案開始編輯，或直接貼上 AI 產出的 YAML 設定..."
+        data-i18n-placeholder="editor_placeholder"
+        placeholder="Select a file above to start editing, or paste AI-generated YAML configuration..."
         spellcheck="false"
       ></textarea>
       <div class="editor-footer">
-        <span class="editor-status" id="editorStatus">準備就緒</span>
+        <span class="editor-status" id="editorStatus" data-i18n="editor_ready">Ready</span>
         <div class="editor-footer-buttons">
-          <button class="btn-editor" onclick="newFile()">+ 新增檔案</button>
-          <button class="btn-save" id="saveBtn" onclick="saveFile()" disabled>
-            &#x1F4BE; 儲存
+          <button class="btn-editor" onclick="newFile()" data-i18n="editor_new_file">+ New File</button>
+          <button class="btn-save" id="saveBtn" onclick="saveFile()" disabled data-i18n-html="editor_save">
+            &#x1F4BE; Save
           </button>
         </div>
       </div>
@@ -1147,43 +1141,40 @@ knx:
 
     <!-- ===== Restart HA Section ===== -->
     <div class="card">
-      <h2>&#x1F504; 重新啟動 Home Assistant</h2>
-      <p>
-        修改 <code>configuration.yaml</code> 後，必須重新啟動 Home Assistant 才能使設定生效。
-        新增的 KNX 裝置與實體將在重啟後出現。
+      <h2 data-i18n-html="restart_title">&#x1F504; Restart Home Assistant</h2>
+      <p data-i18n-html="restart_desc">
+        After modifying <code>configuration.yaml</code>, you must restart Home Assistant for changes to take effect. New KNX devices and entities will appear after restart.
       </p>
 
       <div class="callout callout-danger">
-        <div class="callout-title">&#x26A0;&#xFE0F; 重要警告</div>
-        <p>
-          重新啟動 Home Assistant 將會<strong>暫時中斷所有自動化、裝置連線與服務</strong>。
-          請確認以下事項後再執行：
+        <div class="callout-title" data-i18n-html="restart_warning_title">&#x26A0;&#xFE0F; Important Warning</div>
+        <p data-i18n-html="restart_warning_desc">
+          Restarting Home Assistant will <strong>temporarily interrupt all automations, device connections, and services</strong>. Please confirm the following before proceeding:
         </p>
         <ul>
-          <li>所有 YAML 設定已正確儲存，且格式無誤</li>
-          <li>目前沒有關鍵的自動化正在執行中</li>
-          <li>已通知家中成員系統將短暫無法使用</li>
-          <li>建議在非尖峰時段執行重啟操作</li>
+          <li data-i18n="restart_li1">All YAML configurations have been saved correctly with proper formatting</li>
+          <li data-i18n="restart_li2">No critical automations are currently running</li>
+          <li data-i18n="restart_li3">Household members have been notified of temporary system unavailability</li>
+          <li data-i18n="restart_li4">It is recommended to restart during off-peak hours</li>
         </ul>
       </div>
 
       <div class="callout callout-info">
-        <div class="callout-title">&#x1F4A1; 提示</div>
-        <p>
-          如果只是修改了自動化或腳本，可以嘗試使用 <em>設定 &#x2192; 系統 &#x2192; 重新載入</em> 中的「重新載入 YAML」功能，
-          這不需要完全重啟系統。但 KNX 裝置的新增或修改，通常需要完整重啟。
+        <div class="callout-title" data-i18n-html="restart_tip_title">&#x1F4A1; Tip</div>
+        <p data-i18n-html="restart_tip_desc">
+          If you only modified automations or scripts, try using the "Reload YAML" function in <em>Settings &#x2192; System &#x2192; Reload</em>, which doesn't require a full restart. However, adding or modifying KNX devices usually requires a complete restart.
         </p>
       </div>
 
       <div class="restart-section">
         <label class="checkbox-confirm">
           <input type="checkbox" id="confirmRestart" onchange="toggleRestartBtn()" />
-          我確認已儲存設定，並了解重啟將暫時中斷服務
+          <span data-i18n="restart_confirm_label">I confirm settings are saved and understand restart will temporarily interrupt services</span>
         </label>
       </div>
       <div class="restart-section">
-        <button class="btn btn-danger" id="restartBtn" disabled onclick="restartHA()">
-          &#x1F504; 重新啟動 Home Assistant
+        <button class="btn btn-danger" id="restartBtn" disabled onclick="restartHA()" data-i18n-html="restart_btn">
+          &#x1F504; Restart Home Assistant
         </button>
       </div>
       <div id="restartStatus"></div>
@@ -1191,12 +1182,255 @@ knx:
 
     <!-- ===== Footer ===== -->
     <div class="panel-footer">
-      <p>Woow KNX Setup Guide v2.1.0 &mdash; Powered by <a href="https://aiot.woowtech.io/blog" target="_blank" rel="noopener">Woow Tech</a></p>
+      <p data-i18n-html="footer">Woow KNX Setup Guide v2.1.0 &mdash; Powered by <a href="https://aiot.woowtech.io/blog" target="_blank" rel="noopener">Woow Tech</a></p>
     </div>
 
   </div><!-- /panel-container -->
 
   <script>
+    /* ==========================================================
+       i18n — Bilingual Support (EN / zh-Hant)
+       ========================================================== */
+    var _lastLang = "";
+    var TRANSLATIONS = {
+      en: {
+        hero_title: "KNX Setup Guide",
+        hero_subtitle: "Complete KNX device YAML configuration with official docs + AI assistant",
+        step1_title: '<span class="icon">&#x1F4D6;</span> Read KNX Official Documentation',
+        step1_desc: "Home Assistant provides comprehensive KNX integration documentation covering all configuration parameters. Before starting, review the official docs to understand the KNX integration architecture, including:",
+        step1_li1: "<strong>Connection Settings</strong> -- KNX/IP Gateway or Tunneling connection methods",
+        step1_li2: "<strong>Group Address</strong> -- Group address mapping and format",
+        step1_li3: "<strong>Device Types</strong> -- Supported entity types (light, switch, cover, climate, sensor, etc.)",
+        step1_li4: "<strong>YAML Examples</strong> -- Configuration examples and parameter descriptions for various devices",
+        step1_btn: "Go to KNX Official Docs",
+        step2_title: '<span class="icon">&#x1F916;</span> Use Woow AI Assistant for Configuration',
+        step2_desc1: "After reading the official docs, use our AI assistant to get KNX YAML configurations tailored to your specific devices. The AI can generate precise configurations based on your device model, group addresses, and other details.",
+        step2_desc2: "<strong>How to use:</strong> Combine the parameter requirements from the official docs with your actual device information, and ask the AI assistant to get ready-to-use YAML configurations.",
+        step2_btn: "Go to Woow AI Assistant",
+        step3_title: '<span class="icon">&#x1F4DD;</span> Complete Setup Tutorial',
+        step3_desc: "Follow these steps to complete KNX YAML configuration from scratch using official docs and AI assistant:",
+        sub1_title: "Confirm KNX Hardware Info",
+        sub1_desc: "Note your KNX/IP Gateway IP address, port number, and the Group Address for each device.",
+        sub2_title: "Browse Official Documentation",
+        sub2_desc: 'Visit <a href="https://www.home-assistant.io/integrations/knx" target="_blank" rel="noopener">HA KNX Documentation</a> to understand the YAML structure and parameter meanings. Focus on the device types you need (e.g., light, switch, climate, etc.).',
+        sub3_title: "Ask the AI Assistant",
+        sub3_desc: 'Visit <a href="https://aiot.woowtech.io/blog" target="_blank" rel="noopener">Woow AI Assistant</a> and provide the following information for configuration suggestions:',
+        sub3_list: "&#x2023; Device type (lights, switches, covers, thermostats, etc.)<br />&#x2023; Group Address (e.g., 1/0/1)<br />&#x2023; Required features (dimming, status feedback, temperature reading, etc.)",
+        sub4_title: "Add KNX Integration via UI (Connection Setup)",
+        sub4_desc: 'Go to <em>Settings &#x2192; Devices &amp; Services &#x2192; Add Integration</em>, search for "KNX" and follow the prompts to enter Gateway IP and connection method (Tunneling / Routing). This step only needs to be done once.',
+        sub5_title: "Use the Editor Below to Write YAML Configuration",
+        sub5_desc: 'Paste the AI-generated YAML configuration into the <strong>built-in YAML editor</strong> below to directly edit <code>configuration.yaml</code> or other config files, without installing any additional packages.',
+        sub6_title: "Restart Home Assistant",
+        sub6_desc: 'After saving, restart Home Assistant to load the new KNX configuration. Use the restart button below or go to <em>Settings &#x2192; System &#x2192; Restart</em>.',
+        sub7_title: "Verify Devices and Entities",
+        sub7_desc: 'After restarting, go to <em>Settings &#x2192; Devices &amp; Services &#x2192; KNX</em> to confirm devices loaded correctly. You can also check new entity states in <em>Developer Tools &#x2192; States</em>.',
+        yaml_example_label: "<strong>YAML Configuration Example (KNX Light):</strong>",
+        callout_ui_title: "&#x1F4A1; Note: Connection settings via UI",
+        callout_ui_desc: 'In newer versions of Home Assistant, KNX connection settings (Tunneling / Routing) must be configured through <em>Settings &#x2192; Devices &amp; Services &#x2192; Add Integration &#x2192; KNX</em>.<br />YAML is only used to define devices and entities; connection parameters are no longer placed in <code>configuration.yaml</code>.',
+        callout_done: "<strong>Done!</strong> By following the steps above, you have successfully completed the KNX device YAML configuration using official documentation and AI assistant collaboration. After the settings take effect, you can control and manage KNX devices and entities in Home Assistant.",
+        editor_title: "&#x270F;&#xFE0F; YAML Configuration Editor",
+        editor_select_placeholder: "-- Select File --",
+        editor_refresh: "&#x1F504; Refresh",
+        editor_refresh_title: "Refresh file list",
+        editor_font_smaller: "Decrease font size",
+        editor_font_larger: "Increase font size",
+        editor_placeholder: "Select a file above to start editing, or paste AI-generated YAML configuration...",
+        editor_ready: "Ready",
+        editor_new_file: "+ New File",
+        editor_save: "&#x1F4BE; Save",
+        restart_title: "&#x1F504; Restart Home Assistant",
+        restart_desc: 'After modifying <code>configuration.yaml</code>, you must restart Home Assistant for changes to take effect. New KNX devices and entities will appear after restart.',
+        restart_warning_title: "&#x26A0;&#xFE0F; Important Warning",
+        restart_warning_desc: 'Restarting Home Assistant will <strong>temporarily interrupt all automations, device connections, and services</strong>. Please confirm the following before proceeding:',
+        restart_li1: "All YAML configurations have been saved correctly with proper formatting",
+        restart_li2: "No critical automations are currently running",
+        restart_li3: "Household members have been notified of temporary system unavailability",
+        restart_li4: "It is recommended to restart during off-peak hours",
+        restart_tip_title: "&#x1F4A1; Tip",
+        restart_tip_desc: 'If you only modified automations or scripts, try using the "Reload YAML" function in <em>Settings &#x2192; System &#x2192; Reload</em>, which doesn\'t require a full restart. However, adding or modifying KNX devices usually requires a complete restart.',
+        restart_confirm_label: "I confirm settings are saved and understand restart will temporarily interrupt services",
+        restart_btn: "&#x1F504; Restart Home Assistant",
+        footer: 'Woow KNX Setup Guide v2.1.0 &mdash; Powered by <a href="https://aiot.woowtech.io/blog" target="_blank" rel="noopener">Woow Tech</a>',
+        ws_connected: "&#x25CF; Connected",
+        ws_disconnected: "&#x25CF; Disconnected",
+        ws_not_connected: "WebSocket not connected",
+        loading_files: "Loading file list...",
+        found_files: "Found {0} YAML files",
+        load_failed: "Failed to load file list: {0}",
+        loading_file: "Loading {0}...",
+        loaded_file: "Loaded: {0}",
+        file_load_failed: "Load failed: {0}",
+        select_or_new: "Please select or create a file first",
+        confirm_save: "Are you sure you want to save {0}?",
+        saving_file: "Saving {0}...",
+        saved_file: "\u2713 Saved: {0}",
+        save_failed: "Save failed: {0}",
+        new_file_prompt: "Enter new file name (saved in config/knx/ directory):",
+        new_file_status: "New file: {0} (not saved yet)",
+        unsaved_switch: "Current changes are not saved. Switch file anyway?",
+        cache_restored: "Restored unsaved edits",
+        cache_restored_file: "Restored unsaved edits: {0}",
+        sending_restart: "Sending restart command...",
+        restart_sent: "Restart command sent! Home Assistant is restarting, please wait 1-3 minutes...",
+        restart_failed: "Unable to send restart command. Please go to Settings \u2192 System \u2192 Restart to restart manually. ({0})",
+        request_timeout: "Request timeout"
+      },
+      "zh-Hant": {
+        hero_title: "KNX \u8A2D\u5B9A\u6307\u5357",
+        hero_subtitle: "\u900F\u904E\u5B98\u65B9\u6587\u6A94 + AI \u52A9\u624B\uFF0C\u8F15\u9B06\u5B8C\u6210 KNX \u88DD\u7F6E YAML \u8A2D\u5B9A",
+        step1_title: '<span class="icon">&#x1F4D6;</span> \u95B1\u8B80 KNX \u5B98\u65B9\u8A2D\u5B9A\u6587\u6A94',
+        step1_desc: "Home Assistant \u5B98\u65B9\u63D0\u4F9B\u4E86\u5B8C\u6574\u7684 KNX \u6574\u5408\u6587\u6A94\uFF0C\u6DB5\u84CB\u6240\u6709\u8A2D\u5B9A\u53C3\u6578\u7684\u8AAA\u660E\u3002\u5EFA\u8B70\u5728\u958B\u59CB\u8A2D\u5B9A\u524D\uFF0C\u5148\u700F\u89BD\u5B98\u65B9\u6587\u6A94\u4E86\u89E3 KNX \u6574\u5408\u7684\u57FA\u672C\u67B6\u69CB\uFF0C\u5305\u542B\uFF1A",
+        step1_li1: "<strong>\u9023\u7DDA\u8A2D\u5B9A</strong> -- KNX/IP Gateway \u6216 Tunneling \u7684\u9023\u7DDA\u65B9\u5F0F",
+        step1_li2: "<strong>Group Address</strong> -- \u7FA4\u7D44\u5730\u5740\u7684\u5C0D\u61C9\u8207\u683C\u5F0F",
+        step1_li3: "<strong>\u88DD\u7F6E\u985E\u578B</strong> -- \u652F\u63F4\u7684\u5BE6\u9AD4\u985E\u578B\uFF08light, switch, cover, climate, sensor \u7B49\uFF09",
+        step1_li4: "<strong>YAML \u8A2D\u5B9A\u7BC4\u4F8B</strong> -- \u5404\u7A2E\u88DD\u7F6E\u7684\u8A2D\u5B9A\u7BC4\u4F8B\u8207\u53C3\u6578\u8AAA\u660E",
+        step1_btn: "\u524D\u5F80 KNX \u5B98\u65B9\u6587\u6A94",
+        step2_title: '<span class="icon">&#x1F916;</span> \u4F7F\u7528 Woow AI \u52A9\u624B\u53D6\u5F97\u8A2D\u5B9A\u53C3\u6578',
+        step2_desc1: "\u95B1\u8B80\u5B98\u65B9\u6587\u6A94\u5F8C\uFF0C\u60A8\u53EF\u4EE5\u900F\u904E\u6211\u5011\u63D0\u4F9B\u7684 AI \u52A9\u624B\u4F86\u53D6\u5F97\u91DD\u5C0D\u60A8\u7279\u5B9A\u8A2D\u5099\u7684 KNX YAML \u8A2D\u5B9A\u3002AI \u52A9\u624B\u80FD\u6839\u64DA\u60A8\u7684\u88DD\u7F6E\u578B\u865F\u3001\u7FA4\u7D44\u5730\u5740\u7B49\u8CC7\u8A0A\uFF0C\u751F\u6210\u7CBE\u78BA\u7684\u8A2D\u5B9A\u5167\u5BB9\u3002",
+        step2_desc2: "<strong>\u4F7F\u7528\u65B9\u5F0F\uFF1A</strong>\u5C07\u60A8\u5F9E\u5B98\u65B9\u6587\u6A94\u4E2D\u4E86\u89E3\u5230\u7684\u53C3\u6578\u9700\u6C42\uFF0C\u642D\u914D\u60A8\u7684\u5BE6\u969B\u8A2D\u5099\u8CC7\u8A0A\uFF0C\u5411 AI \u52A9\u624B\u8A62\u554F\uFF0C\u5373\u53EF\u7372\u5F97\u53EF\u76F4\u63A5\u4F7F\u7528\u7684 YAML \u8A2D\u5B9A\u3002",
+        step2_btn: "\u524D\u5F80 Woow AI \u52A9\u624B",
+        step3_title: '<span class="icon">&#x1F4DD;</span> \u5B8C\u6574\u8A2D\u5B9A\u6D41\u7A0B\u6559\u5B78',
+        step3_desc: "\u4EE5\u4E0B\u662F\u5F9E\u96F6\u958B\u59CB\uFF0C\u900F\u904E\u5B98\u65B9\u6587\u6A94\u642D\u914D AI \u52A9\u624B\u5B8C\u6210 KNX YAML \u8A2D\u5B9A\u7684\u5B8C\u6574\u6B65\u9A5F\uFF1A",
+        sub1_title: "\u78BA\u8A8D KNX \u786C\u9AD4\u8CC7\u8A0A",
+        sub1_desc: "\u8A18\u4E0B\u60A8\u7684 KNX/IP Gateway IP \u4F4D\u5740\u3001\u57E0\u865F\uFF0C\u4EE5\u53CA\u6BCF\u500B\u88DD\u7F6E\u5C0D\u61C9\u7684 Group Address\u3002",
+        sub2_title: "\u700F\u89BD\u5B98\u65B9\u6587\u6A94",
+        sub2_desc: '\u524D\u5F80 <a href="https://www.home-assistant.io/integrations/knx" target="_blank" rel="noopener">HA KNX \u6587\u6A94</a>\uFF0C\u4E86\u89E3 YAML \u8A2D\u5B9A\u7684\u7D50\u69CB\u548C\u5404\u53C3\u6578\u7684\u610F\u7FA9\u3002\u91CD\u9EDE\u95DC\u6CE8\u60A8\u9700\u8981\u7684\u88DD\u7F6E\u985E\u578B\uFF08\u5982 light\u3001switch\u3001climate \u7B49\uFF09\u3002',
+        sub3_title: "\u5411 AI \u52A9\u624B\u63D0\u554F",
+        sub3_desc: '\u524D\u5F80 <a href="https://aiot.woowtech.io/blog" target="_blank" rel="noopener">Woow AI \u52A9\u624B</a>\uFF0C\u63D0\u4F9B\u4EE5\u4E0B\u8CC7\u8A0A\u4EE5\u7372\u5F97\u8A2D\u5B9A\u5EFA\u8B70\uFF1A',
+        sub3_list: "&#x2023; \u88DD\u7F6E\u985E\u578B\uFF08\u71C8\u5177\u3001\u958B\u95DC\u3001\u7A97\u7C3E\u3001\u6EAB\u63A7\u7B49\uFF09<br />&#x2023; Group Address\uFF08\u5982 1/0/1\uFF09<br />&#x2023; \u9700\u8981\u7684\u529F\u80FD\uFF08\u8ABF\u5149\u3001\u72C0\u614B\u56DE\u5831\u3001\u6EAB\u5EA6\u8B80\u53D6\u7B49\uFF09",
+        sub4_title: "\u900F\u904E UI \u65B0\u589E KNX \u6574\u5408\uFF08\u9023\u7DDA\u8A2D\u5B9A\uFF09",
+        sub4_desc: '\u524D\u5F80 <em>\u8A2D\u5B9A &#x2192; \u88DD\u7F6E\u8207\u670D\u52D9 &#x2192; \u65B0\u589E\u6574\u5408</em>\uFF0C\u641C\u5C0B\u300CKNX\u300D\u4E26\u4F9D\u6307\u793A\u8F38\u5165 Gateway IP \u8207\u9023\u7DDA\u65B9\u5F0F\uFF08Tunneling / Routing\uFF09\u3002\u6B64\u6B65\u9A5F\u50C5\u9700\u57F7\u884C\u4E00\u6B21\u3002',
+        sub5_title: "\u4F7F\u7528\u4E0B\u65B9\u7DE8\u8F2F\u5668\u5BEB\u5165 YAML \u8A2D\u5B9A",
+        sub5_desc: '\u5C07 AI \u52A9\u624B\u7522\u751F\u7684 YAML \u8A2D\u5B9A\uFF0C\u900F\u904E\u4E0B\u65B9\u7684<strong>\u5167\u5EFA YAML \u7DE8\u8F2F\u5668</strong>\u76F4\u63A5\u7DE8\u8F2F <code>configuration.yaml</code> \u6216\u5176\u4ED6\u8A2D\u5B9A\u6A94\uFF0C\u7121\u9700\u984D\u5916\u5B89\u88DD\u4EFB\u4F55\u5957\u4EF6\u3002',
+        sub6_title: "\u91CD\u65B0\u555F\u52D5 Home Assistant",
+        sub6_desc: '\u5132\u5B58\u8A2D\u5B9A\u5F8C\uFF0C\u9700\u8981\u91CD\u65B0\u555F\u52D5 Home Assistant \u4EE5\u8F09\u5165\u65B0\u7684 KNX \u8A2D\u5B9A\u3002\u8ACB\u4F7F\u7528\u4E0B\u65B9\u7684\u91CD\u555F\u6309\u9215\u6216\u81F3 <em>\u8A2D\u5B9A &#x2192; \u7CFB\u7D71 &#x2192; \u91CD\u65B0\u555F\u52D5</em>\u3002',
+        sub7_title: "\u9A57\u8B49\u88DD\u7F6E\u8207\u5BE6\u9AD4",
+        sub7_desc: '\u91CD\u555F\u5F8C\uFF0C\u524D\u5F80 <em>\u8A2D\u5B9A &#x2192; \u88DD\u7F6E\u8207\u670D\u52D9 &#x2192; KNX</em> \u78BA\u8A8D\u88DD\u7F6E\u5DF2\u6B63\u78BA\u8F09\u5165\u3002\u60A8\u4E5F\u53EF\u4EE5\u5728 <em>\u958B\u767C\u8005\u5DE5\u5177 &#x2192; \u72C0\u614B</em> \u4E2D\u67E5\u770B\u65B0\u5EFA\u7ACB\u7684\u5BE6\u9AD4\u72C0\u614B\u3002',
+        yaml_example_label: "<strong>YAML \u8A2D\u5B9A\u7BC4\u4F8B\uFF08\u4EE5 KNX \u71C8\u5177\u70BA\u4F8B\uFF09\uFF1A</strong>",
+        callout_ui_title: "&#x1F4A1; \u6CE8\u610F\uFF1A\u9023\u7DDA\u8A2D\u5B9A\u9700\u900F\u904E UI",
+        callout_ui_desc: '\u5728\u65B0\u7248 Home Assistant \u4E2D\uFF0CKNX \u7684\u9023\u7DDA\u8A2D\u5B9A\uFF08Tunneling / Routing\uFF09\u9700\u900F\u904E <em>\u8A2D\u5B9A &#x2192; \u88DD\u7F6E\u8207\u670D\u52D9 &#x2192; \u65B0\u589E\u6574\u5408 &#x2192; KNX</em> \u4ECB\u9762\u5B8C\u6210\u3002<br />YAML \u50C5\u7528\u65BC\u5B9A\u7FA9\u88DD\u7F6E\u8207\u5BE6\u9AD4\uFF0C\u9023\u7DDA\u53C3\u6578\u4E0D\u518D\u5BEB\u5728 <code>configuration.yaml</code> \u4E2D\u3002',
+        callout_done: "<strong>\u5B8C\u6210\uFF01</strong>\u900F\u904E\u4EE5\u4E0A\u6B65\u9A5F\uFF0C\u60A8\u5DF2\u6210\u529F\u900F\u904E\u5B98\u65B9\u6587\u6A94\u53C3\u8003\u8207 AI \u52A9\u624B\u5354\u4F5C\uFF0C\u5B8C\u6210\u4E86 KNX \u88DD\u7F6E\u7684 YAML \u8A2D\u5B9A\u3002\u8A2D\u5B9A\u751F\u6548\u5F8C\uFF0C\u60A8\u5C31\u53EF\u4EE5\u5728 Home Assistant \u4E2D\u63A7\u5236\u548C\u7BA1\u7406 KNX \u88DD\u7F6E\u8207\u5BE6\u9AD4\u4E86\u3002",
+        editor_title: "&#x270F;&#xFE0F; YAML \u8A2D\u5B9A\u6A94\u7DE8\u8F2F\u5668",
+        editor_select_placeholder: "-- \u9078\u64C7\u6A94\u6848 --",
+        editor_refresh: "&#x1F504; \u91CD\u65B0\u6574\u7406",
+        editor_refresh_title: "\u91CD\u65B0\u6574\u7406\u6A94\u6848\u6E05\u55AE",
+        editor_font_smaller: "\u7E2E\u5C0F\u5B57\u9AD4",
+        editor_font_larger: "\u653E\u5927\u5B57\u9AD4",
+        editor_placeholder: "\u9078\u64C7\u4E0A\u65B9\u6A94\u6848\u958B\u59CB\u7DE8\u8F2F\uFF0C\u6216\u76F4\u63A5\u8CBC\u4E0A AI \u7522\u51FA\u7684 YAML \u8A2D\u5B9A...",
+        editor_ready: "\u6E96\u5099\u5C31\u7DD2",
+        editor_new_file: "+ \u65B0\u589E\u6A94\u6848",
+        editor_save: "&#x1F4BE; \u5132\u5B58",
+        restart_title: "&#x1F504; \u91CD\u65B0\u555F\u52D5 Home Assistant",
+        restart_desc: '\u4FEE\u6539 <code>configuration.yaml</code> \u5F8C\uFF0C\u5FC5\u9808\u91CD\u65B0\u555F\u52D5 Home Assistant \u624D\u80FD\u4F7F\u8A2D\u5B9A\u751F\u6548\u3002\u65B0\u589E\u7684 KNX \u88DD\u7F6E\u8207\u5BE6\u9AD4\u5C07\u5728\u91CD\u555F\u5F8C\u51FA\u73FE\u3002',
+        restart_warning_title: "&#x26A0;&#xFE0F; \u91CD\u8981\u8B66\u544A",
+        restart_warning_desc: '\u91CD\u65B0\u555F\u52D5 Home Assistant \u5C07\u6703<strong>\u66AB\u6642\u4E2D\u65B7\u6240\u6709\u81EA\u52D5\u5316\u3001\u88DD\u7F6E\u9023\u7DDA\u8207\u670D\u52D9</strong>\u3002\u8ACB\u78BA\u8A8D\u4EE5\u4E0B\u4E8B\u9805\u5F8C\u518D\u57F7\u884C\uFF1A',
+        restart_li1: "\u6240\u6709 YAML \u8A2D\u5B9A\u5DF2\u6B63\u78BA\u5132\u5B58\uFF0C\u4E14\u683C\u5F0F\u7121\u8AA4",
+        restart_li2: "\u76EE\u524D\u6C92\u6709\u95DC\u9375\u7684\u81EA\u52D5\u5316\u6B63\u5728\u57F7\u884C\u4E2D",
+        restart_li3: "\u5DF2\u901A\u77E5\u5BB6\u4E2D\u6210\u54E1\u7CFB\u7D71\u5C07\u77ED\u66AB\u7121\u6CD5\u4F7F\u7528",
+        restart_li4: "\u5EFA\u8B70\u5728\u975E\u5C16\u5CF0\u6642\u6BB5\u57F7\u884C\u91CD\u555F\u64CD\u4F5C",
+        restart_tip_title: "&#x1F4A1; \u63D0\u793A",
+        restart_tip_desc: '\u5982\u679C\u53EA\u662F\u4FEE\u6539\u4E86\u81EA\u52D5\u5316\u6216\u8173\u672C\uFF0C\u53EF\u4EE5\u5617\u8A66\u4F7F\u7528 <em>\u8A2D\u5B9A &#x2192; \u7CFB\u7D71 &#x2192; \u91CD\u65B0\u8F09\u5165</em> \u4E2D\u7684\u300C\u91CD\u65B0\u8F09\u5165 YAML\u300D\u529F\u80FD\uFF0C\u9019\u4E0D\u9700\u8981\u5B8C\u5168\u91CD\u555F\u7CFB\u7D71\u3002\u4F46 KNX \u88DD\u7F6E\u7684\u65B0\u589E\u6216\u4FEE\u6539\uFF0C\u901A\u5E38\u9700\u8981\u5B8C\u6574\u91CD\u555F\u3002',
+        restart_confirm_label: "\u6211\u78BA\u8A8D\u5DF2\u5132\u5B58\u8A2D\u5B9A\uFF0C\u4E26\u4E86\u89E3\u91CD\u555F\u5C07\u66AB\u6642\u4E2D\u65B7\u670D\u52D9",
+        restart_btn: "&#x1F504; \u91CD\u65B0\u555F\u52D5 Home Assistant",
+        footer: 'Woow KNX Setup Guide v2.1.0 &mdash; Powered by <a href="https://aiot.woowtech.io/blog" target="_blank" rel="noopener">Woow Tech</a>',
+        ws_connected: "&#x25CF; \u5DF2\u9023\u7DDA",
+        ws_disconnected: "&#x25CF; \u672A\u9023\u7DDA",
+        ws_not_connected: "WebSocket \u672A\u9023\u7DDA",
+        loading_files: "\u6B63\u5728\u8F09\u5165\u6A94\u6848\u6E05\u55AE...",
+        found_files: "\u627E\u5230 {0} \u500B YAML \u6A94\u6848",
+        load_failed: "\u8F09\u5165\u6A94\u6848\u6E05\u55AE\u5931\u6557\uFF1A{0}",
+        loading_file: "\u6B63\u5728\u8F09\u5165 {0}...",
+        loaded_file: "\u5DF2\u8F09\u5165\uFF1A{0}",
+        file_load_failed: "\u8F09\u5165\u5931\u6557\uFF1A{0}",
+        select_or_new: "\u8ACB\u5148\u9078\u64C7\u6216\u65B0\u589E\u6A94\u6848",
+        confirm_save: "\u78BA\u5B9A\u8981\u5132\u5B58 {0} \u55CE\uFF1F",
+        saving_file: "\u6B63\u5728\u5132\u5B58 {0}...",
+        saved_file: "\u2713 \u5DF2\u5132\u5B58\uFF1A{0}",
+        save_failed: "\u5132\u5B58\u5931\u6557\uFF1A{0}",
+        new_file_prompt: "\u8ACB\u8F38\u5165\u65B0\u6A94\u6848\u540D\u7A31\uFF08\u5132\u5B58\u65BC config/knx/ \u76EE\u9304\u4E0B\uFF09\uFF1A",
+        new_file_status: "\u65B0\u6A94\u6848\uFF1A{0}\uFF08\u5C1A\u672A\u5132\u5B58\uFF09",
+        unsaved_switch: "\u76EE\u524D\u7684\u8B8A\u66F4\u5C1A\u672A\u5132\u5B58\uFF0C\u78BA\u5B9A\u8981\u5207\u63DB\u6A94\u6848\u55CE\uFF1F",
+        cache_restored: "\u5DF2\u6062\u5FA9\u672A\u5132\u5B58\u7684\u7DE8\u8F2F\u5167\u5BB9",
+        cache_restored_file: "\u5DF2\u6062\u5FA9\u672A\u5132\u5B58\u7684\u7DE8\u8F2F\u5167\u5BB9\uFF1A{0}",
+        sending_restart: "\u6B63\u5728\u767C\u9001\u91CD\u555F\u6307\u4EE4...",
+        restart_sent: "\u91CD\u555F\u6307\u4EE4\u5DF2\u9001\u51FA\uFF01Home Assistant \u6B63\u5728\u91CD\u65B0\u555F\u52D5\u4E2D\uFF0C\u8ACB\u7A0D\u5019\u7D04 1-3 \u5206\u9418...",
+        restart_failed: "\u7121\u6CD5\u767C\u9001\u91CD\u555F\u6307\u4EE4\u3002\u8ACB\u81F3 \u8A2D\u5B9A \u2192 \u7CFB\u7D71 \u2192 \u91CD\u65B0\u555F\u52D5 \u624B\u52D5\u57F7\u884C\u3002({0})",
+        request_timeout: "\u8ACB\u6C42\u903E\u6642"
+      }
+    };
+
+    function t(key) {
+      var lang = _lastLang || "en";
+      var dict = TRANSLATIONS[lang] || TRANSLATIONS["en"];
+      var str = dict[key] || TRANSLATIONS["en"][key] || key;
+      for (var i = 1; i < arguments.length; i++) {
+        str = str.replace("{" + (i - 1) + "}", arguments[i]);
+      }
+      return str;
+    }
+
+    function getHALanguage() {
+      try {
+        if (!window.parent || window.parent === window) return "";
+        var ha = window.parent.document.querySelector("home-assistant");
+        if (!ha) return "";
+        var hass = null;
+        if (ha.hass) { hass = ha.hass; }
+        else if (ha.shadowRoot) {
+          var main = ha.shadowRoot.querySelector("home-assistant-main");
+          if (main && main.hass) hass = main.hass;
+        }
+        if (!hass) return "";
+        return hass.language || (hass.locale && hass.locale.language) || "";
+      } catch (e) { return ""; }
+    }
+
+    function mapLanguage(raw) {
+      if (!raw) return "en";
+      var lower = raw.toLowerCase();
+      if (lower === "zh-hant" || lower === "zh-tw" || lower === "zh-hk") return "zh-Hant";
+      if (lower.startsWith("zh")) return "zh-Hant";
+      if (TRANSLATIONS[raw]) return raw;
+      return "en";
+    }
+
+    function applyTranslations(lang) {
+      if (lang === _lastLang) return;
+      _lastLang = lang;
+      document.documentElement.lang = lang === "zh-Hant" ? "zh-Hant" : "en";
+      document.title = t("hero_title");
+      // data-i18n -> textContent
+      document.querySelectorAll("[data-i18n]").forEach(function(el) {
+        var key = el.getAttribute("data-i18n");
+        var val = (TRANSLATIONS[lang] || TRANSLATIONS["en"])[key];
+        if (val !== undefined) el.textContent = val;
+      });
+      // data-i18n-html -> innerHTML
+      document.querySelectorAll("[data-i18n-html]").forEach(function(el) {
+        var key = el.getAttribute("data-i18n-html");
+        var val = (TRANSLATIONS[lang] || TRANSLATIONS["en"])[key];
+        if (val !== undefined) el.innerHTML = val;
+      });
+      // data-i18n-placeholder -> placeholder
+      document.querySelectorAll("[data-i18n-placeholder]").forEach(function(el) {
+        var key = el.getAttribute("data-i18n-placeholder");
+        var val = (TRANSLATIONS[lang] || TRANSLATIONS["en"])[key];
+        if (val !== undefined) el.placeholder = val;
+      });
+      // data-i18n-title -> title
+      document.querySelectorAll("[data-i18n-title]").forEach(function(el) {
+        var key = el.getAttribute("data-i18n-title");
+        var val = (TRANSLATIONS[lang] || TRANSLATIONS["en"])[key];
+        if (val !== undefined) el.title = val;
+      });
+    }
+
+    function syncLanguageFromHA() {
+      var raw = getHALanguage();
+      var lang = mapLanguage(raw);
+      applyTranslations(lang);
+    }
+
     /* ==========================================================
        Shared WebSocket Manager
        ========================================================== */
@@ -1255,17 +1489,17 @@ knx:
         var el = document.getElementById("wsStatus");
         if (connected) {
           el.className = "ws-badge connected";
-          el.innerHTML = "&#x25CF; 已連線";
+          el.innerHTML = t("ws_connected");
         } else {
           el.className = "ws-badge disconnected";
-          el.innerHTML = "&#x25CF; 未連線";
+          el.innerHTML = t("ws_disconnected");
         }
       },
 
       send: function(payload) {
         return new Promise(function(resolve, reject) {
           if (!WS.socket || !WS.authenticated) {
-            reject({ message: "WebSocket 未連線" });
+            reject({ message: t("ws_not_connected") });
             return;
           }
           var id = WS.msgId++;
@@ -1274,7 +1508,7 @@ knx:
           setTimeout(function() {
             if (WS.pending[id]) {
               delete WS.pending[id];
-              reject({ message: "請求逾時" });
+              reject({ message: t("request_timeout") });
             }
           }, 30000);
         });
@@ -1320,7 +1554,7 @@ knx:
       var select = document.getElementById("fileSelect");
       var status = document.getElementById("editorStatus");
       try {
-        status.textContent = "正在載入檔案清單...";
+        status.textContent = t("loading_files");
         var result = await WS.send({
           type: "woow_knx/ws",
           action: "list",
@@ -1328,14 +1562,14 @@ knx:
           depth: 10
         });
         var files = result.files || [];
-        select.innerHTML = '<option value="">-- 選擇檔案 --</option>';
+        select.innerHTML = '<option value="">' + t("editor_select_placeholder") + '</option>';
         files.forEach(function(f) {
           var opt = document.createElement("option");
           opt.value = f;
           opt.textContent = f;
           select.appendChild(opt);
         });
-        status.textContent = "找到 " + files.length + " 個 YAML 檔案";
+        status.textContent = t("found_files", files.length);
         if (currentFile) {
           for (var i = 0; i < select.options.length; i++) {
             if (select.options[i].value === currentFile) {
@@ -1345,7 +1579,7 @@ knx:
           }
         }
       } catch (err) {
-        status.textContent = "載入檔案清單失敗：" + (err.message || err);
+        status.textContent = t("load_failed", err.message || err);
       }
     }
 
@@ -1363,19 +1597,19 @@ knx:
         originalContent = "";
         saveBtn.disabled = true;
         editorDirty = false;
-        status.textContent = "準備就緒";
+        status.textContent = t("editor_ready");
         return;
       }
 
       if (editorDirty && currentFile) {
-        if (!confirm("目前的變更尚未儲存，確定要切換檔案嗎？")) {
+        if (!confirm(t("unsaved_switch"))) {
           select.value = currentFile;
           return;
         }
       }
 
       try {
-        status.textContent = "正在載入 " + path + "...";
+        status.textContent = t("loading_file", path);
         var result = await WS.send({
           type: "woow_knx/ws",
           action: "load",
@@ -1386,10 +1620,10 @@ knx:
         currentFile = result.path || path;
         editorDirty = false;
         saveBtn.disabled = false;
-        status.textContent = "已載入：" + currentFile;
+        status.textContent = t("loaded_file", currentFile);
         cacheState();
       } catch (err) {
-        status.textContent = "載入失敗：" + (err.message || err);
+        status.textContent = t("file_load_failed", err.message || err);
       }
     }
 
@@ -1400,14 +1634,14 @@ knx:
       var saveBtn = document.getElementById("saveBtn");
 
       if (!currentFile) {
-        status.textContent = "請先選擇或新增檔案";
+        status.textContent = t("select_or_new");
         return;
       }
 
-      if (!confirm("確定要儲存 " + currentFile + " 嗎？")) return;
+      if (!confirm(t("confirm_save", currentFile))) return;
 
       saveBtn.disabled = true;
-      status.textContent = "正在儲存 " + currentFile + "...";
+      status.textContent = t("saving_file", currentFile);
       status.style.color = "";
 
       try {
@@ -1420,12 +1654,12 @@ knx:
         originalContent = textarea.value;
         editorDirty = false;
         status.style.color = "var(--status-success)";
-        status.textContent = "\u2713 已儲存：" + currentFile;
+        status.textContent = t("saved_file", currentFile);
         cacheState();
         setTimeout(function() { status.style.color = ""; }, 4000);
       } catch (err) {
         status.style.color = "var(--status-danger)";
-        status.textContent = "儲存失敗：" + (err.message || err);
+        status.textContent = t("save_failed", err.message || err);
         setTimeout(function() { status.style.color = ""; }, 5000);
       } finally {
         saveBtn.disabled = false;
@@ -1435,7 +1669,7 @@ knx:
     // --- New File ---
     function newFile() {
       var filename = prompt(
-        "請輸入新檔案名稱（儲存於 config/knx/ 目錄下）：",
+        t("new_file_prompt"),
         "knx_config.yaml"
       );
       if (!filename) return;
@@ -1466,7 +1700,7 @@ knx:
       originalContent = "";
       saveBtn.disabled = false;
       editorDirty = true;
-      status.textContent = "新檔案：" + filename + "（尚未儲存）";
+      status.textContent = t("new_file_status", filename);
       textarea.focus();
     }
 
@@ -1537,6 +1771,8 @@ knx:
       WS.connect();
       syncThemeFromHA();
       setInterval(syncThemeFromHA, 2000);
+      syncLanguageFromHA();
+      setInterval(syncLanguageFromHA, 5000);
     });
 
     // Ctrl+S / Cmd+S
@@ -1577,7 +1813,7 @@ knx:
           currentFile = data.file || "";
           editorDirty = true;
           document.getElementById("editorStatus").textContent =
-            "已恢復未儲存的編輯內容" + (data.file ? "：" + data.file : "");
+            data.file ? t("cache_restored_file", data.file) : t("cache_restored");
           document.getElementById("saveBtn").disabled = !currentFile;
         }
       } catch(e) {}
@@ -1599,7 +1835,7 @@ knx:
 
       btn.disabled = true;
       status.style.color = "var(--status-warning)";
-      status.textContent = "正在發送重啟指令...";
+      status.textContent = t("sending_restart");
 
       try {
         var hassUrl = window.location.origin;
@@ -1612,7 +1848,7 @@ knx:
         });
         if (resp.ok) {
           status.style.color = "var(--status-success)";
-          status.textContent = "重啟指令已送出！Home Assistant 正在重新啟動中，請稍候約 1-3 分鐘...";
+          status.textContent = t("restart_sent");
         } else {
           throw new Error("HTTP " + resp.status);
         }
@@ -1624,10 +1860,10 @@ knx:
             service: "restart"
           });
           status.style.color = "var(--status-success)";
-          status.textContent = "重啟指令已送出！Home Assistant 正在重新啟動中，請稍候約 1-3 分鐘...";
+          status.textContent = t("restart_sent");
         } catch (e) {
           status.style.color = "var(--status-danger)";
-          status.textContent = "無法發送重啟指令。請至 設定 \u2192 系統 \u2192 重新啟動 手動執行。(" + err.message + ")";
+          status.textContent = t("restart_failed", err.message);
           cb.checked = false;
         }
       }
