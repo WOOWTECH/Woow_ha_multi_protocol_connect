@@ -44,12 +44,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Register sidebar panel
     frontend.async_register_built_in_panel(
         hass,
-        component_name="iframe",
+        component_name="custom",
         sidebar_title=PANEL_TITLE,
         sidebar_icon=PANEL_ICON,
         frontend_url_path=DOMAIN,
         require_admin=False,
-        config={"url": f"/{DOMAIN}/frontend/panel.html"},
+        config={
+            "_panel_custom": {
+                "name": f"woow-{CONFIG_SUBDIR}-panel",
+                "js_url": f"/{DOMAIN}/frontend/woow-{CONFIG_SUBDIR}-panel.js",
+                "embed_iframe": False,
+            }
+        },
     )
 
     # Load sidebar title translation script on every HA page
