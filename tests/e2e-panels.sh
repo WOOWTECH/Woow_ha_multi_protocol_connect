@@ -3,6 +3,7 @@
 # E2E Panel Tests — Functional tests for KNX/DMX/Modbus panels
 # Uses: npx playwright-cli
 # Requires: HA container running at localhost:8123
+# Supports: English and zh-Hant HA language settings
 # ============================================================
 set -o pipefail
 
@@ -12,15 +13,21 @@ HA_PASS="admin"
 
 # --- Per-panel test data ---
 PANELS=("knx" "dmx" "modbus")
-declare -A PANEL_URL PANEL_TITLE PANEL_FILES PANEL_LINK1 PANEL_LINK2 PANEL_INFO
+declare -A PANEL_URL PANEL_FILES PANEL_LINK1 PANEL_LINK2 PANEL_INFO
+# Bilingual titles
+declare -A PANEL_TITLE_EN PANEL_TITLE_ZH
 
 PANEL_URL[knx]="/woow_knx"
 PANEL_URL[dmx]="/woow_dmx"
 PANEL_URL[modbus]="/woow_modbus"
 
-PANEL_TITLE[knx]="KNX 設定"
-PANEL_TITLE[dmx]="DMX 設定"
-PANEL_TITLE[modbus]="Modbus 設定"
+PANEL_TITLE_EN[knx]="KNX Settings"
+PANEL_TITLE_EN[dmx]="DMX Settings"
+PANEL_TITLE_EN[modbus]="Modbus Settings"
+
+PANEL_TITLE_ZH[knx]="KNX 設定"
+PANEL_TITLE_ZH[dmx]="DMX 設定"
+PANEL_TITLE_ZH[modbus]="Modbus 設定"
 
 PANEL_FILES[knx]=3
 PANEL_FILES[dmx]=4
@@ -37,6 +44,59 @@ PANEL_LINK2[modbus]="aiot.woowtech.io/blog"
 PANEL_INFO[knx]="KNX"
 PANEL_INFO[dmx]="Art-Net"
 PANEL_INFO[modbus]="Modbus"
+
+# --- Language-dependent strings (detected at runtime) ---
+LANG_MODE=""  # "en" or "zh"
+TAB_GUIDE=""
+TAB_EDITOR=""
+STR_CONNECTED=""
+STR_LOADED=""
+STR_NEW_BTN=""
+STR_SAVE_BTN=""
+STR_RESTART_TITLE=""
+STR_RESTART_BTN=""
+STR_CONFIRM_LABEL=""
+STR_REFRESH_TITLE=""
+STR_SELECT_PLACEHOLDER=""
+
+set_lang() {
+  if [[ "$1" == "zh" ]]; then
+    LANG_MODE="zh"
+    TAB_GUIDE="設定指南"
+    TAB_EDITOR="編輯器 & 系統"
+    STR_CONNECTED="已連線"
+    STR_LOADED="已載入"
+    STR_NEW_BTN="新增"
+    STR_SAVE_BTN="儲存"
+    STR_RESTART_TITLE="重新啟動"
+    STR_RESTART_BTN="重新啟動"
+    STR_CONFIRM_LABEL="確認"
+    STR_REFRESH_TITLE="重新整理檔案清單"
+    STR_SELECT_PLACEHOLDER="選擇檔案"
+  else
+    LANG_MODE="en"
+    TAB_GUIDE="Setup Guide"
+    TAB_EDITOR="Editor & System"
+    STR_CONNECTED="Connected"
+    STR_LOADED="Loaded"
+    STR_NEW_BTN="New"
+    STR_SAVE_BTN="Save"
+    STR_RESTART_TITLE="Restart"
+    STR_RESTART_BTN="Restart"
+    STR_CONFIRM_LABEL="confirm"
+    STR_REFRESH_TITLE="Refresh file list"
+    STR_SELECT_PLACEHOLDER="Select File"
+  fi
+}
+
+panel_title() {
+  local p="$1"
+  if [[ "$LANG_MODE" == "zh" ]]; then
+    echo "${PANEL_TITLE_ZH[$p]}"
+  else
+    echo "${PANEL_TITLE_EN[$p]}"
+  fi
+}
 
 # --- Counters ---
 TOTAL_PASS=0
@@ -56,7 +116,6 @@ snapshot() {
   local snap_file
   snap_file=$(echo "$out" | grep -oP '\[Snapshot\]\(\K[^)]+\.yml' | head -1)
   if [[ -n "$snap_file" ]]; then
-    # Try both relative and absolute paths
     if [[ -f "$snap_file" ]]; then
       echo "$out"
       cat "$snap_file"
@@ -64,7 +123,6 @@ snapshot() {
       echo "$out"
       cat "$PWD/$snap_file"
     else
-      # Snapshot file not found, return whatever we got
       echo "$out"
     fi
   else
@@ -123,24 +181,17 @@ assert_count() {
   fi
 }
 
-wait_for_snapshot() {
-  sleep "${1:-2}"
-  snapshot
-}
-
 # --- Login ---
 login() {
   echo "=== Opening browser and logging in ==="
   cli open "$HA_URL" >/dev/null
   sleep 3
 
-  # Take snapshot to find login form
   local snap
   snap=$(snapshot)
 
-  # Find username/password refs
   local user_ref pass_ref login_ref
-  user_ref=$(echo "$snap" | grep -oP 'textbox "Username[^"]*" \[.*?\] \[ref=\K[^\]]+' | head -1)
+  user_ref=$(echo "$snap" | grep -oP 'textbox "Username[^"]*".*?\[ref=\K[^\]]+' | head -1)
   pass_ref=$(echo "$snap" | grep -oP 'textbox "Password[^"]*" \[ref=\K[^\]]+' | head -1)
   login_ref=$(echo "$snap" | grep -oP 'button "Log in" \[ref=\K[^\]]+' | head -1)
 
@@ -157,28 +208,39 @@ login() {
   echo "  Logged in successfully"
 }
 
+# --- Language detection ---
+detect_language() {
+  local snap="$1"
+  if echo "$snap" | grep -qF "設定指南"; then
+    set_lang "zh"
+  else
+    set_lang "en"
+  fi
+  echo "  Detected language: $LANG_MODE"
+}
+
 # --- Test Groups ---
 
 test_panel_load() {
   local p="$1"
   echo "  --- T1: Panel Load ---"
 
-  # Navigate
   cli goto "${HA_URL}${PANEL_URL[$p]}" >/dev/null
   sleep 3
 
-  # Check console errors
   local console_out
   console_out=$(cli console)
   local errors
   errors=$(echo "$console_out" | grep -oP 'Errors: \K[0-9]+' || echo "0")
   assert_count "$p" "T1.1" 0 "$errors" "Zero console errors"
 
-  # Check page loaded (not 404)
   local snap
   snap=$(snapshot)
   assert_not_contains "$p" "T1.2" "404" "$snap" "Page does not show 404"
-  assert_contains "$p" "T1.3" "${PANEL_TITLE[$p]}" "$snap" "Panel title rendered"
+
+  local title
+  title=$(panel_title "$p")
+  assert_contains "$p" "T1.3" "$title" "$snap" "Panel title rendered"
 
   echo "$snap"
 }
@@ -187,7 +249,9 @@ test_top_bar() {
   local p="$1" snap="$2"
   echo "  --- T2: Top Bar ---"
 
-  assert_contains "$p" "T2.1" "${PANEL_TITLE[$p]}" "$snap" "Title shows protocol name"
+  local title
+  title=$(panel_title "$p")
+  assert_contains "$p" "T2.1" "$title" "$snap" "Title shows protocol name"
   assert_contains "$p" "T2.2" "v2.1.0" "$snap" "Version number visible"
   assert_regex "$p" "T2.3" "button.*cursor=pointer" "$snap" "Hamburger menu button exists"
 }
@@ -196,30 +260,27 @@ test_tab_switching() {
   local p="$1" snap="$2"
   echo "  --- T3: Tab Switching ---"
 
-  # Verify both tabs exist
-  assert_regex "$p" "T3.1" 'button "設定指南"' "$snap" "Guide tab button exists"
-  assert_regex "$p" "T3.2" 'button "編輯器 & 系統"' "$snap" "Editor tab button exists"
+  assert_regex "$p" "T3.1" "button \"$TAB_GUIDE\"" "$snap" "Guide tab button exists"
+  assert_regex "$p" "T3.2" "button \"$TAB_EDITOR\"" "$snap" "Editor tab button exists"
 
   # Click editor tab
   local editor_ref
-  editor_ref=$(echo "$snap" | grep -oP 'button "編輯器 & 系統" \[ref=\K[^\]]+' | head -1)
+  editor_ref=$(echo "$snap" | grep -oP "button \"$TAB_EDITOR\" \\[ref=\\K[^\\]]+" | head -1)
   if [[ -n "$editor_ref" ]]; then
     cli click "$editor_ref" >/dev/null
     sleep 1
     local editor_snap
     editor_snap=$(snapshot)
-    # Should now show editor elements (combobox, textarea)
     assert_regex "$p" "T3.3" "combobox" "$editor_snap" "Editor tab shows file dropdown"
 
     # Switch back to guide tab
     local guide_ref
-    guide_ref=$(echo "$editor_snap" | grep -oP 'button "設定指南" \[ref=\K[^\]]+' | head -1)
+    guide_ref=$(echo "$editor_snap" | grep -oP "button \"$TAB_GUIDE\" \\[ref=\\K[^\\]]+" | head -1)
     if [[ -n "$guide_ref" ]]; then
       cli click "$guide_ref" >/dev/null
       sleep 1
       local guide_snap
       guide_snap=$(snapshot)
-      # Guide tab should show numbered items and links, NOT the combobox/editor
       assert_not_contains "$p" "T3.4" "combobox" "$guide_snap" "Guide tab hides editor dropdown"
     else
       fail "$p" "T3.4" "Could not find guide tab ref to switch back"
@@ -234,11 +295,10 @@ test_guide_tab() {
   local p="$1"
   echo "  --- T4: Guide Tab ---"
 
-  # Make sure we're on guide tab
   local snap
   snap=$(snapshot)
   local guide_ref
-  guide_ref=$(echo "$snap" | grep -oP 'button "設定指南" \[ref=\K[^\]]+' | head -1)
+  guide_ref=$(echo "$snap" | grep -oP "button \"$TAB_GUIDE\" \\[ref=\\K[^\\]]+" | head -1)
   if [[ -n "$guide_ref" ]]; then
     cli click "$guide_ref" >/dev/null
     sleep 1
@@ -252,10 +312,7 @@ test_guide_tab() {
   step_count=$(echo "$panel_content" | grep -cP ': "[1-5]"' || echo "0")
   assert_count "$p" "T4.1" 5 "$step_count" "5 step numbers rendered (1-5)"
 
-  # Check step 1 link
   assert_contains "$p" "T4.2" "${PANEL_LINK1[$p]}" "$snap" "Step 1 link URL correct"
-
-  # Check step 2 link
   assert_contains "$p" "T4.3" "${PANEL_LINK2[$p]}" "$snap" "Step 2 link URL correct"
 }
 
@@ -272,11 +329,10 @@ test_editor_tab() {
   local p="$1"
   echo "  --- T6: Editor Tab ---"
 
-  # Switch to editor tab
   local snap
   snap=$(snapshot)
   local editor_ref
-  editor_ref=$(echo "$snap" | grep -oP 'button "編輯器 & 系統" \[ref=\K[^\]]+' | head -1)
+  editor_ref=$(echo "$snap" | grep -oP "button \"$TAB_EDITOR\" \\[ref=\\K[^\\]]+" | head -1)
   cli click "$editor_ref" >/dev/null
   sleep 2
   snap=$(snapshot)
@@ -288,15 +344,10 @@ test_editor_tab() {
   option_count=$((option_count - 1))
   assert_count "$p" "T6.1" "${PANEL_FILES[$p]}" "$option_count" "File count matches expected"
 
-  # Textarea exists
   assert_regex "$p" "T6.2" "textbox" "$snap" "Editor textarea present"
-
-  # Status shows connected
-  assert_contains "$p" "T6.3" "已連線" "$snap" "Status shows connected"
-
-  # Buttons exist
-  assert_regex "$p" "T6.4" 'button.*新增' "$snap" "New file button exists"
-  assert_regex "$p" "T6.5" 'button.*儲存' "$snap" "Save button exists"
+  assert_contains "$p" "T6.3" "$STR_CONNECTED" "$snap" "Status shows connected"
+  assert_regex "$p" "T6.4" "button.*$STR_NEW_BTN" "$snap" "New file button exists"
+  assert_regex "$p" "T6.5" "button.*$STR_SAVE_BTN" "$snap" "Save button exists"
 
   echo "$snap"
 }
@@ -305,19 +356,17 @@ test_file_operations() {
   local p="$1" snap="$2"
   echo "  --- T7: File Operations ---"
 
-  # Select the first real file option
   local select_ref
   select_ref=$(echo "$snap" | grep -oP 'combobox \[ref=\K[^\]]+' | head -1)
   local first_file
-  first_file=$(echo "$snap" | grep -oP 'option "\K[^"]+' | grep -v '選擇檔案' | head -1)
+  first_file=$(echo "$snap" | grep -oP 'option "\K[^"]+' | grep -v "$STR_SELECT_PLACEHOLDER" | grep -v "^--" | head -1)
 
   if [[ -n "$select_ref" && -n "$first_file" ]]; then
     cli select "$select_ref" "$first_file" >/dev/null
     sleep 3
     local new_snap
     new_snap=$(snapshot)
-    # Check textarea now has content (the textbox should have value or placeholder changed)
-    assert_contains "$p" "T7.1" "已載入" "$new_snap" "File loaded status shown"
+    assert_contains "$p" "T7.1" "$STR_LOADED" "$new_snap" "File loaded status shown"
   else
     fail "$p" "T7.1" "Could not find file selector or file option"
   fi
@@ -331,19 +380,16 @@ test_editor_controls() {
   local snap
   snap=$(snapshot)
   local editor_ref
-  editor_ref=$(echo "$snap" | grep -oP 'button "編輯器 & 系統" \[ref=\K[^\]]+' | head -1)
+  editor_ref=$(echo "$snap" | grep -oP "button \"$TAB_EDITOR\" \\[ref=\\K[^\\]]+" | head -1)
   if [[ -n "$editor_ref" ]]; then
     cli click "$editor_ref" >/dev/null
     sleep 1
   fi
   snap=$(snapshot)
 
-  # Font size buttons
   assert_regex "$p" "T8.1" 'button "A-"' "$snap" "Font decrease button exists"
   assert_regex "$p" "T8.2" 'button "A\+"' "$snap" "Font increase button exists"
-
-  # Refresh button
-  assert_regex "$p" "T8.3" 'button "重新整理檔案清單"' "$snap" "Refresh file list button exists"
+  assert_regex "$p" "T8.3" "button \"$STR_REFRESH_TITLE\"" "$snap" "Refresh file list button exists"
 }
 
 test_restart_section() {
@@ -353,30 +399,28 @@ test_restart_section() {
   local snap
   snap=$(snapshot)
 
-  # Restart title
-  assert_contains "$p" "T9.1" "重新啟動" "$snap" "Restart section title present"
+  assert_contains "$p" "T9.1" "$STR_RESTART_TITLE" "$snap" "Restart section title present"
 
   # Checkbox exists and is unchecked
-  if echo "$snap" | grep -qP 'checkbox.*確認.*\[checked\]'; then
+  if echo "$snap" | grep -qP "checkbox.*$STR_CONFIRM_LABEL.*\\[checked\\]"; then
     fail "$p" "T9.2" "Restart checkbox should be unchecked by default"
   else
-    assert_regex "$p" "T9.2" 'checkbox.*確認' "$snap" "Restart checkbox exists and unchecked"
+    assert_regex "$p" "T9.2" "checkbox.*$STR_CONFIRM_LABEL" "$snap" "Restart checkbox exists and unchecked"
   fi
 
   # Restart button disabled
-  assert_regex "$p" "T9.3" 'button "重新啟動" \[disabled\]' "$snap" "Restart button disabled by default"
+  assert_regex "$p" "T9.3" "button \"$STR_RESTART_BTN\" \\[disabled\\]" "$snap" "Restart button disabled by default"
 
   # Check the checkbox
   local cb_ref
-  cb_ref=$(echo "$snap" | grep -oP 'checkbox.*確認.*\[ref=\K[^\]]+' | head -1)
+  cb_ref=$(echo "$snap" | grep -oP "checkbox.*$STR_CONFIRM_LABEL.*\\[ref=\\K[^\\]]+" | head -1)
   if [[ -n "$cb_ref" ]]; then
     cli click "$cb_ref" >/dev/null
     sleep 1
     local new_snap
     new_snap=$(snapshot)
-    # Button should now be enabled (no [disabled])
-    if echo "$new_snap" | grep -qP 'button "重新啟動" \[ref='; then
-      if echo "$new_snap" | grep -qP 'button "重新啟動" \[disabled\]'; then
+    if echo "$new_snap" | grep -qP "button \"$STR_RESTART_BTN\" \\[ref="; then
+      if echo "$new_snap" | grep -qP "button \"$STR_RESTART_BTN\" \\[disabled\\]"; then
         fail "$p" "T9.4" "Button still disabled after checking confirm"
       else
         pass "$p" "T9.4" "Restart button enabled after confirm checked"
@@ -399,10 +443,7 @@ test_no_legacy() {
   local snap
   snap=$(snapshot)
 
-  # No iframes
   assert_not_contains "$p" "T10.1" "iframe" "$snap" "No iframe elements in DOM"
-
-  # No emoji in UI text (check for common emoji used in old UI)
   assert_not_contains "$p" "T10.2" "📖" "$snap" "No book emoji in text"
   assert_not_contains "$p" "T10.3" "🤖" "$snap" "No robot emoji in text"
 }
@@ -419,6 +460,12 @@ run_panel_tests() {
 
   local load_snap
   load_snap=$(test_panel_load "$p")
+
+  # Auto-detect language on first panel
+  if [[ -z "$LANG_MODE" ]]; then
+    detect_language "$load_snap"
+  fi
+
   test_top_bar "$p" "$load_snap"
   test_tab_switching "$p" "$load_snap"
   test_guide_tab "$p"
@@ -449,6 +496,7 @@ print_summary() {
   [[ $TOTAL_FAIL -gt 0 ]] && total_status="FAILURES: $TOTAL_FAIL"
   printf "║ %-8s ║ %-6s ║ %-6s ║ %-19s ║\n" "TOTAL" "$TOTAL_PASS" "$TOTAL_FAIL" "$total_status"
   echo "╚══════════╩════════╩════════╩═════════════════════╝"
+  echo "  Language detected: $LANG_MODE"
 
   if [[ ${#FAILURES[@]} -gt 0 ]]; then
     echo ""
@@ -465,7 +513,6 @@ main() {
   echo "Target: $HA_URL"
   echo ""
 
-  # Check HA is up
   if ! curl -sf -o /dev/null "$HA_URL"; then
     echo "ERROR: HA not reachable at $HA_URL"
     exit 2
@@ -477,7 +524,6 @@ main() {
     run_panel_tests "$p"
   done
 
-  # Close browser
   cli close >/dev/null 2>&1
 
   print_summary

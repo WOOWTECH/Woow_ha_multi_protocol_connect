@@ -335,6 +335,9 @@ export class WoowPanelBase extends LitElement {
      RENDER
      ============================================================ */
   render() {
+    if (!this.hass) {
+      return html`<div class="loading-screen"><div class="loading-spinner"></div></div>`;
+    }
     const cfg = this._cfg;
 
     return html`

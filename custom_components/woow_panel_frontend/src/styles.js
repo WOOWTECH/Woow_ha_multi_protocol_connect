@@ -23,6 +23,28 @@ export const panelStyles = css`
   }
 
   /* ============================================
+     Loading Screen (before hass injected)
+     ============================================ */
+  .loading-screen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    min-height: 100vh;
+  }
+  .loading-spinner {
+    width: 36px;
+    height: 36px;
+    border: 3px solid var(--divider-color, #e0e0e0);
+    border-top-color: var(--primary-color, #03a9f4);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  /* ============================================
      Top Bar (56px, sticky)
      ============================================ */
   .top-bar {
