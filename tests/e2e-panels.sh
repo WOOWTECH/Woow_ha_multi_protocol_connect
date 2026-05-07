@@ -109,6 +109,20 @@ cli() {
   npx playwright-cli "$@" 2>&1
 }
 
+# Wait for panel to be fully loaded (not in HA's "Loading data" state)
+wait_panel_ready() {
+  local marker="$1"  # text that should appear when panel is loaded
+  local retries=0
+  while [[ $retries -lt 10 ]]; do
+    if cli snapshot 2>/dev/null | cut -c1-500 | grep -qF "$marker"; then
+      return 0
+    fi
+    retries=$((retries + 1))
+    sleep 1
+  done
+  return 1
+}
+
 snapshot() {
   local out
   out=$(cli snapshot 2>&1)
@@ -127,7 +141,7 @@ snapshot() {
     fi
   else
     echo "$out"
-  fi
+  fi | cut -c1-500
 }
 
 pass() {
@@ -147,7 +161,7 @@ fail() {
 
 assert_contains() {
   local panel="$1" id="$2" text="$3" haystack="$4" msg="$5"
-  if echo "$haystack" | grep -qF "$text"; then
+  if printf '%s\n' "$haystack" | grep -qF "$text"; then
     pass "$panel" "$id" "$msg"
   else
     fail "$panel" "$id" "$msg (expected: '$text')"
@@ -156,7 +170,7 @@ assert_contains() {
 
 assert_not_contains() {
   local panel="$1" id="$2" text="$3" haystack="$4" msg="$5"
-  if echo "$haystack" | grep -qF "$text"; then
+  if printf '%s\n' "$haystack" | grep -qF "$text"; then
     fail "$panel" "$id" "$msg (found: '$text')"
   else
     pass "$panel" "$id" "$msg"
@@ -165,7 +179,7 @@ assert_not_contains() {
 
 assert_regex() {
   local panel="$1" id="$2" pattern="$3" haystack="$4" msg="$5"
-  if echo "$haystack" | grep -qE "$pattern"; then
+  if printf '%s\n' "$haystack" | grep -qE "$pattern"; then
     pass "$panel" "$id" "$msg"
   else
     fail "$panel" "$id" "$msg (pattern: '$pattern')"
@@ -376,6 +390,9 @@ test_editor_controls() {
   local p="$1"
   echo "  --- T8: Editor Controls ---"
 
+  # Wait for panel to be ready (may be in "Loading data" state after T7)
+  wait_panel_ready "$TAB_EDITOR"
+
   # Ensure we're on the editor tab
   local snap
   snap=$(snapshot)
@@ -383,18 +400,21 @@ test_editor_controls() {
   editor_ref=$(echo "$snap" | grep -oP "button \"$TAB_EDITOR\" \\[ref=\\K[^\\]]+" | head -1)
   if [[ -n "$editor_ref" ]]; then
     cli click "$editor_ref" >/dev/null
-    sleep 1
+    sleep 2
   fi
   snap=$(snapshot)
 
-  assert_regex "$p" "T8.1" 'button "A-"' "$snap" "Font decrease button exists"
-  assert_regex "$p" "T8.2" 'button "A\+"' "$snap" "Font increase button exists"
-  assert_regex "$p" "T8.3" "button \"$STR_REFRESH_TITLE\"" "$snap" "Refresh file list button exists"
+  assert_contains "$p" "T8.1" 'button "A-"' "$snap" "Font decrease button exists"
+  assert_contains "$p" "T8.2" 'button "A+"' "$snap" "Font increase button exists"
+  assert_contains "$p" "T8.3" "button \"$STR_REFRESH_TITLE\"" "$snap" "Refresh file list button exists"
 }
 
 test_restart_section() {
   local p="$1"
   echo "  --- T9: Restart Section ---"
+
+  # Wait for panel to be ready (may be in "Loading data" state)
+  wait_panel_ready "$STR_RESTART_TITLE"
 
   local snap
   snap=$(snapshot)
@@ -416,11 +436,11 @@ test_restart_section() {
   cb_ref=$(echo "$snap" | grep -oP "checkbox.*$STR_CONFIRM_LABEL.*\\[ref=\\K[^\\]]+" | head -1)
   if [[ -n "$cb_ref" ]]; then
     cli click "$cb_ref" >/dev/null
-    sleep 1
+    sleep 2
     local new_snap
     new_snap=$(snapshot)
-    if echo "$new_snap" | grep -qP "button \"$STR_RESTART_BTN\" \\[ref="; then
-      if echo "$new_snap" | grep -qP "button \"$STR_RESTART_BTN\" \\[disabled\\]"; then
+    if echo "$new_snap" | grep -qF "button \"$STR_RESTART_BTN\""; then
+      if echo "$new_snap" | grep -qF "button \"$STR_RESTART_BTN\" [disabled]"; then
         fail "$p" "T9.4" "Button still disabled after checking confirm"
       else
         pass "$p" "T9.4" "Restart button enabled after confirm checked"
