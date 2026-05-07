@@ -52,7 +52,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         config={
             "_panel_custom": {
                 "name": f"woow-{CONFIG_SUBDIR}-panel",
-                "js_url": f"/{DOMAIN}/frontend/woow-{CONFIG_SUBDIR}-panel.js",
+                "module_url": f"/{DOMAIN}/frontend/woow-{CONFIG_SUBDIR}-panel.js",
                 "embed_iframe": False,
             }
         },

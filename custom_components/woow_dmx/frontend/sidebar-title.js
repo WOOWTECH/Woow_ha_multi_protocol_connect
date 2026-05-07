@@ -7,6 +7,68 @@
  *   Phase 2: Subscribe to core_config_updated for system-level language changes
  *   Phase 3: Polling fallback for user-profile-level language changes
  */
+
+/* Inject :not(:defined) CSS for all Woow panels.
+ * When HA creates <woow-*-panel> before the JS bundle has loaded,
+ * the element is "undefined" — no shadow DOM, no styles, no content.
+ * This CSS gives undefined panels a loading spinner so the user
+ * doesn't see a blank/dark screen while the JS is fetching.
+ *
+ * The panel lives inside home-assistant > (shadow) > home-assistant-main > (shadow),
+ * so document-level CSS cannot reach it. We must inject into the correct shadow root.
+ */
+(function() {
+  var CSS_ID = "woow-panel-loading-css";
+  var CSS_TEXT = [
+    "woow-knx-panel:not(:defined),",
+    "woow-dmx-panel:not(:defined),",
+    "woow-modbus-panel:not(:defined) {",
+    "  display: block;",
+    "  min-height: 100vh;",
+    "  background: var(--primary-background-color, #fafafa);",
+    "}",
+    "woow-knx-panel:not(:defined)::after,",
+    "woow-dmx-panel:not(:defined)::after,",
+    "woow-modbus-panel:not(:defined)::after {",
+    "  content: '';",
+    "  display: block;",
+    "  width: 36px;",
+    "  height: 36px;",
+    "  margin: 40vh auto 0;",
+    "  border: 3px solid var(--divider-color, #e0e0e0);",
+    "  border-top-color: var(--primary-color, #03a9f4);",
+    "  border-radius: 50%;",
+    "  animation: woow-spin 0.8s linear infinite;",
+    "}",
+    "@keyframes woow-spin { to { transform: rotate(360deg); } }"
+  ].join("\n");
+
+  function inject() {
+    try {
+      var ha = document.querySelector("home-assistant");
+      if (!ha || !ha.shadowRoot) return false;
+      var main = ha.shadowRoot.querySelector("home-assistant-main");
+      if (!main || !main.shadowRoot) return false;
+      var sr = main.shadowRoot;
+      if (sr.getElementById(CSS_ID)) return true;
+      var s = document.createElement("style");
+      s.id = CSS_ID;
+      s.textContent = CSS_TEXT;
+      sr.appendChild(s);
+      return true;
+    } catch (e) { return false; }
+  }
+
+  // Retry until HA shadow DOM is ready
+  if (!inject()) {
+    var attempts = 0;
+    var iv = setInterval(function() {
+      attempts++;
+      if (inject() || attempts > 30) clearInterval(iv);
+    }, 200);
+  }
+})();
+
 (function() {
   var PANEL_KEY = "woow_dmx";
   var TITLES = {
