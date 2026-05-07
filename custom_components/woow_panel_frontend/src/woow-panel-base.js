@@ -1,5 +1,4 @@
-import { LitElement, html } from "lit";
-import { unsafeHTML } from "lit/directives/unsafe-html.js";
+import { LitElement, html, svg } from "lit";
 import { panelStyles } from "./styles.js";
 import { getBaseTranslations } from "./i18n/translations-base.js";
 
@@ -7,15 +6,12 @@ import { getBaseTranslations } from "./i18n/translations-base.js";
  * WoowPanelBase — shared LitElement base for KNX / DMX / Modbus panels.
  *
  * Subclasses MUST provide:
- *   static get protocolConfig()        → config object (domain, wsType, etc.)
+ *   static get protocolConfig()        → config object
  *   static get protocolTranslations()  → { en: {...}, "zh-Hant": {...} }
  *
  * HA injects: this.hass, this.panel, this.narrow, this.route
  */
 export class WoowPanelBase extends LitElement {
-  /* ----------------------------------------------------------
-     Reactive properties
-     ---------------------------------------------------------- */
   static get properties() {
     return {
       hass: { type: Object },
@@ -23,6 +19,7 @@ export class WoowPanelBase extends LitElement {
       narrow: { type: Boolean },
       route: { type: Object },
 
+      _activeTab: { type: String, state: true },
       _files: { type: Array, state: true },
       _currentFile: { type: String, state: true },
       _editorContent: { type: String, state: true },
@@ -33,7 +30,6 @@ export class WoowPanelBase extends LitElement {
       _restartStatus: { type: String, state: true },
       _restartStatusColor: { type: String, state: true },
       _editorStatus: { type: String, state: true },
-      _editorStatusColor: { type: String, state: true },
     };
   }
 
@@ -41,11 +37,9 @@ export class WoowPanelBase extends LitElement {
     return panelStyles;
   }
 
-  /* ----------------------------------------------------------
-     Constructor
-     ---------------------------------------------------------- */
   constructor() {
     super();
+    this._activeTab = "guide";
     this._files = [];
     this._currentFile = "";
     this._editorContent = "";
@@ -56,11 +50,9 @@ export class WoowPanelBase extends LitElement {
     this._restartStatus = "";
     this._restartStatusColor = "";
     this._editorStatus = "";
-    this._editorStatusColor = "";
     this._originalContent = "";
     this._hassReady = false;
 
-    // Merge base + protocol translations once
     const base = getBaseTranslations();
     const proto = this.constructor.protocolTranslations;
     this._translations = {
@@ -68,30 +60,19 @@ export class WoowPanelBase extends LitElement {
       "zh-Hant": { ...base["zh-Hant"], ...proto["zh-Hant"] },
     };
 
-    // Bound handlers (for cleanup)
     this._handleKeydown = this._onGlobalKeydown.bind(this);
     this._handleBeforeUnload = this._onBeforeUnload.bind(this);
   }
 
-  /* ----------------------------------------------------------
-     Config shortcut
-     ---------------------------------------------------------- */
   get _cfg() {
     return this.constructor.protocolConfig;
   }
 
-  /* ----------------------------------------------------------
-     i18n
-     ---------------------------------------------------------- */
+  /* i18n */
   get _language() {
     const lang = this.hass?.language || "en";
     const lower = lang.toLowerCase();
-    if (
-      lower === "zh-hant" ||
-      lower === "zh-tw" ||
-      lower === "zh-hk" ||
-      lower.startsWith("zh")
-    ) {
+    if (lower === "zh-hant" || lower === "zh-tw" || lower === "zh-hk" || lower.startsWith("zh")) {
       return "zh-Hant";
     }
     return "en";
@@ -106,9 +87,7 @@ export class WoowPanelBase extends LitElement {
     return str;
   }
 
-  /* ----------------------------------------------------------
-     Lifecycle
-     ---------------------------------------------------------- */
+  /* Lifecycle */
   connectedCallback() {
     super.connectedCallback();
     this._restoreFontSize();
@@ -125,34 +104,26 @@ export class WoowPanelBase extends LitElement {
 
   updated(changedProps) {
     super.updated(changedProps);
-    // First time hass becomes available → refresh files
     if (changedProps.has("hass") && this.hass && !this._hassReady) {
       this._hassReady = true;
       this._wsConnected = true;
-      this._editorStatus = this._t("editor_ready");
+      this._editorStatus = this._t("found_files", "...");
       this._refreshFileList();
     }
-    // Track WS connection status from hass
     if (changedProps.has("hass") && this.hass) {
       this._wsConnected = this.hass.connected !== false;
     }
   }
 
-  /* ----------------------------------------------------------
-     WebSocket helpers (via hass.callWS)
-     ---------------------------------------------------------- */
+  /* WebSocket */
   async _callWS(payload) {
-    if (!this.hass) throw new Error(this._t("ws_not_connected"));
+    if (!this.hass) throw new Error("Not connected");
     return this.hass.callWS(payload);
   }
 
-  /* ----------------------------------------------------------
-     File operations
-     ---------------------------------------------------------- */
+  /* File operations */
   async _refreshFileList() {
     try {
-      this._editorStatus = this._t("loading_files");
-      this._editorStatusColor = "";
       const result = await this._callWS({
         type: this._cfg.wsType,
         action: "list",
@@ -172,8 +143,7 @@ export class WoowPanelBase extends LitElement {
       this._editorContent = "";
       this._originalContent = "";
       this._editorDirty = false;
-      this._editorStatus = this._t("editor_ready");
-      this._editorStatusColor = "";
+      this._editorStatus = this._t("found_files", this._files.length);
       return;
     }
 
@@ -183,7 +153,6 @@ export class WoowPanelBase extends LitElement {
 
     try {
       this._editorStatus = this._t("loading_file", path);
-      this._editorStatusColor = "";
       const result = await this._callWS({
         type: this._cfg.wsType,
         action: "load",
@@ -197,20 +166,14 @@ export class WoowPanelBase extends LitElement {
       this._cacheState();
     } catch (err) {
       this._editorStatus = this._t("file_load_failed", err.message || err);
-      this._editorStatusColor = "var(--status-danger)";
     }
   }
 
   async _saveFile() {
-    if (!this._currentFile) {
-      this._editorStatus = this._t("select_or_new");
-      return;
-    }
+    if (!this._currentFile) return;
     if (!confirm(this._t("confirm_save", this._currentFile))) return;
 
     this._editorStatus = this._t("saving_file", this._currentFile);
-    this._editorStatusColor = "";
-
     try {
       await this._callWS({
         type: this._cfg.wsType,
@@ -220,73 +183,42 @@ export class WoowPanelBase extends LitElement {
       });
       this._originalContent = this._editorContent;
       this._editorDirty = false;
-      this._editorStatusColor = "var(--status-success)";
       this._editorStatus = this._t("saved_file", this._currentFile);
       this._cacheState();
-      setTimeout(() => {
-        this._editorStatusColor = "";
-      }, 4000);
     } catch (err) {
-      this._editorStatusColor = "var(--status-danger)";
       this._editorStatus = this._t("save_failed", err.message || err);
-      setTimeout(() => {
-        this._editorStatusColor = "";
-      }, 5000);
     }
   }
 
   _newFile() {
-    const filename = prompt(
-      this._t("new_file_prompt"),
-      this._cfg.defaultNewFile
-    );
+    const filename = prompt(this._t("new_file_prompt"), this._cfg.defaultNewFile);
     if (!filename) return;
-
     let name = filename.replace(/\.\./g, "").trim();
-    if (!name.endsWith(".yaml") && !name.endsWith(".yml")) {
-      name += ".yaml";
-    }
-
-    if (!this._files.includes(name)) {
-      this._files = [...this._files, name];
-    }
+    if (!name.endsWith(".yaml") && !name.endsWith(".yml")) name += ".yaml";
+    if (!this._files.includes(name)) this._files = [...this._files, name];
     this._currentFile = name;
     this._editorContent = "";
     this._originalContent = "";
     this._editorDirty = true;
     this._editorStatus = this._t("new_file_status", name);
-    this._editorStatusColor = "";
   }
 
-  /* ----------------------------------------------------------
-     Font size
-     ---------------------------------------------------------- */
+  /* Font size */
   _changeFontSize(delta) {
     this._fontSize = Math.max(10, Math.min(24, this._fontSize + delta));
     try {
-      localStorage.setItem(
-        `${this._cfg.localStoragePrefix}_fontsize`,
-        this._fontSize
-      );
-    } catch (_) {
-      /* ignored */
-    }
+      localStorage.setItem(`${this._cfg.localStoragePrefix}_fontsize`, this._fontSize);
+    } catch (_) {}
   }
 
   _restoreFontSize() {
     try {
-      const saved = localStorage.getItem(
-        `${this._cfg.localStoragePrefix}_fontsize`
-      );
+      const saved = localStorage.getItem(`${this._cfg.localStoragePrefix}_fontsize`);
       if (saved) this._fontSize = parseInt(saved, 10) || 14;
-    } catch (_) {
-      /* ignored */
-    }
+    } catch (_) {}
   }
 
-  /* ----------------------------------------------------------
-     Cache / crash recovery
-     ---------------------------------------------------------- */
+  /* Cache */
   _cacheState() {
     try {
       localStorage.setItem(
@@ -298,38 +230,28 @@ export class WoowPanelBase extends LitElement {
           ts: Date.now(),
         })
       );
-    } catch (_) {
-      /* ignored */
-    }
+    } catch (_) {}
   }
 
   _restoreCache() {
     try {
-      const raw = localStorage.getItem(
-        `${this._cfg.localStoragePrefix}_cache`
-      );
+      const raw = localStorage.getItem(`${this._cfg.localStoragePrefix}_cache`);
       if (!raw) return;
       const data = JSON.parse(raw);
       if (data.dirty && data.content && Date.now() - data.ts < 3600000) {
         this._editorContent = data.content;
         this._currentFile = data.file || "";
         this._editorDirty = true;
-        this._editorStatus = data.file
-          ? this._t("cache_restored_file", data.file)
-          : this._t("cache_restored");
+        this._editorStatus = this._t("cache_restored");
       }
-    } catch (_) {
-      /* ignored */
-    }
+    } catch (_) {}
   }
 
-  /* ----------------------------------------------------------
-     Keyboard & unload handlers
-     ---------------------------------------------------------- */
+  /* Keyboard */
   _onGlobalKeydown(e) {
     if ((e.ctrlKey || e.metaKey) && e.key === "s") {
       e.preventDefault();
-      if (this._currentFile) this._saveFile();
+      if (this._currentFile && this._activeTab === "editor") this._saveFile();
     }
   }
 
@@ -340,9 +262,7 @@ export class WoowPanelBase extends LitElement {
     }
   }
 
-  /* ----------------------------------------------------------
-     Editor event handlers
-     ---------------------------------------------------------- */
+  /* Editor events */
   _onEditorInput(e) {
     this._editorContent = e.target.value;
     this._editorDirty = this._editorContent !== this._originalContent;
@@ -355,8 +275,7 @@ export class WoowPanelBase extends LitElement {
       const ta = e.target;
       const start = ta.selectionStart;
       const end = ta.selectionEnd;
-      const val = ta.value;
-      ta.value = val.substring(0, start) + "  " + val.substring(end);
+      ta.value = ta.value.substring(0, start) + "  " + ta.value.substring(end);
       ta.selectionStart = ta.selectionEnd = start + 2;
       this._editorContent = ta.value;
       this._editorDirty = true;
@@ -368,218 +287,142 @@ export class WoowPanelBase extends LitElement {
     this._loadFile(e.target.value);
   }
 
-  /* ----------------------------------------------------------
-     Restart HA
-     ---------------------------------------------------------- */
+  /* Restart */
   _toggleRestart(e) {
     this._restartConfirmed = e.target.checked;
   }
 
   async _restartHA() {
     this._restartConfirmed = false;
-    this._restartStatusColor = "var(--status-warning)";
     this._restartStatus = this._t("sending_restart");
-
+    this._restartStatusColor = "var(--warning-color, #ff9800)";
     try {
       await this.hass.callService("homeassistant", "restart");
-      this._restartStatusColor = "var(--status-success)";
       this._restartStatus = this._t("restart_sent");
+      this._restartStatusColor = "var(--success-color, #4caf50)";
     } catch (err) {
-      this._restartStatusColor = "var(--status-danger)";
       this._restartStatus = this._t("restart_failed", err.message || err);
+      this._restartStatusColor = "var(--error-color, #f44336)";
     }
   }
 
-  /* ----------------------------------------------------------
-     Render
-     ---------------------------------------------------------- */
+  /* Tab switching */
+  _switchTab(tab) {
+    this._activeTab = tab;
+  }
+
+  /* Menu toggle */
+  _toggleMenu() {
+    this.dispatchEvent(
+      new Event("hass-toggle-menu", { bubbles: true, composed: true })
+    );
+  }
+
+  /* SVG icons */
+  get _iconMenu() {
+    return svg`<path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" fill="currentColor"/>`;
+  }
+
+  get _iconRefresh() {
+    return svg`<path d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" fill="currentColor"/>`;
+  }
+
+  get _iconInfo() {
+    return svg`<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" fill="currentColor"/>`;
+  }
+
+  /* ============================================================
+     RENDER
+     ============================================================ */
   render() {
     const cfg = this._cfg;
-    const t = (k, ...a) => this._t(k, ...a);
-    const ut = (k) => unsafeHTML(this._t(k));
 
     return html`
       <!-- Top Bar -->
       <div class="top-bar">
-        <div class="protocol-pill">
-          <span class="dot"></span>
-          ${cfg.protocolLabel} SETUP
-        </div>
-        <div class="top-bar-brand">
-          <span>Woow Tech</span> &middot; v${cfg.version}
-        </div>
+        <button class="menu-btn" @click=${this._toggleMenu}>
+          <svg viewBox="0 0 24 24">${this._iconMenu}</svg>
+        </button>
+        <span class="top-bar-title">${this._t("panel_title")}</span>
+        <span class="top-bar-version">v${cfg.version}</span>
       </div>
 
-      <!-- Hero -->
-      <div class="hero">
-        <div class="hero-content">
-          <span class="hero-icon">${cfg.heroIcon}</span>
-          <h1>${t("hero_title")}</h1>
-          <p>${t("hero_subtitle")}</p>
-        </div>
+      <!-- Tabs -->
+      <div class="tabs">
+        <button
+          class="tab ${this._activeTab === "guide" ? "active" : ""}"
+          @click=${() => this._switchTab("guide")}
+        >${this._t("tab_guide")}</button>
+        <button
+          class="tab ${this._activeTab === "editor" ? "active" : ""}"
+          @click=${() => this._switchTab("editor")}
+        >${this._t("tab_editor")}</button>
       </div>
 
-      <div class="panel-container">
-        <!-- Step Cards -->
-        <div class="steps-container">
-          ${this._renderStep1(t, ut, cfg)}
-          ${this._renderStep2(t, ut, cfg)}
-          ${this._renderStep3(t, ut, cfg)}
-        </div>
-
-        <hr class="section-divider" />
-
-        <!-- YAML Editor -->
-        ${this._renderEditor(t, ut)}
-
-        <hr class="section-divider" />
-
-        <!-- Restart HA -->
-        ${this._renderRestart(t, ut)}
-
-        <!-- Footer -->
-        <div class="panel-footer">
-          <p>${ut("footer")}</p>
-        </div>
+      <!-- Content -->
+      <div class="content">
+        ${this._activeTab === "guide" ? this._renderGuide() : this._renderEditorTab()}
       </div>
     `;
   }
 
-  /* ----------------------------------------------------------
-     Step 1 — Read Official Docs
-     ---------------------------------------------------------- */
-  _renderStep1(t, ut, cfg) {
-    return html`
-      <div class="step-card">
-        <div class="step-number">1</div>
-        <h2>${ut("step1_title")}</h2>
-        <p>${t("step1_desc")}</p>
-        <ul>
-          ${cfg.step1ListItems.map(
-            (key) => html`<li>${ut(key)}</li>`
-          )}
-        </ul>
-        <div class="btn-group">
-          <a
-            class="btn btn-filled btn-arrow"
-            href=${cfg.officialDocsUrl}
-            target="_blank"
-            rel="noopener"
-          >
-            ${t("step1_btn")}
-          </a>
-        </div>
-      </div>
-    `;
-  }
+  /* ============================================================
+     Tab: Guide
+     ============================================================ */
+  _renderGuide() {
+    const cfg = this._cfg;
+    const steps = cfg.guideSteps || [];
 
-  /* ----------------------------------------------------------
-     Step 2 — AI Assistant
-     ---------------------------------------------------------- */
-  _renderStep2(t, ut, cfg) {
     return html`
-      <div class="step-card">
-        <div class="step-number">2</div>
-        <h2>${ut("step2_title")}</h2>
-        <p>${t("step2_desc1")}</p>
-        <p>${ut("step2_desc2")}</p>
-        <div class="btn-group">
-          <a
-            class="btn btn-ghost btn-arrow"
-            href=${cfg.woowAiUrl}
-            target="_blank"
-            rel="noopener"
-          >
-            ${t("step2_btn")}
-          </a>
-        </div>
-      </div>
-    `;
-  }
-
-  /* ----------------------------------------------------------
-     Step 3 — Full Tutorial + Sub-steps + Code Example
-     ---------------------------------------------------------- */
-  _renderStep3(t, ut, cfg) {
-    return html`
-      <div class="step-card">
-        <div class="step-number">3</div>
-        <h2>${ut("step3_title")}</h2>
-        <p>${t("step3_desc")}</p>
-
-        <div class="sub-steps">
-          ${cfg.subSteps.map(
-            (sub, i) => html`
-              <div class="sub-step">
-                <span class="sub-step-number">${i + 1}</span>
-                <div class="sub-step-content">
-                  <strong>${t(sub.titleKey)}</strong>
-                  ${sub.descIsHtml
-                    ? html`<span>${ut(sub.descKey)}</span>`
-                    : html`<span>${t(sub.descKey)}</span>`}
-                  ${sub.extraKey
-                    ? sub.extraIsHtml
-                      ? html`<p style="padding-left:8px;margin-top:4px;">
-                          ${ut(sub.extraKey)}
-                        </p>`
-                      : html`<p>${t(sub.extraKey)}</p>`
-                    : ""}
-                </div>
+      <div class="guide-card">
+        ${steps.map(
+          (step, i) => html`
+            <div class="step-item">
+              <span class="step-number">${i + 1}</span>
+              <div class="step-content">
+                <div class="step-title">${this._t(step.titleKey)}</div>
+                <div class="step-desc">${this._t(step.descKey)}</div>
               </div>
-            `
-          )}
-        </div>
-
-        <p style="margin-top:16px;">${ut("yaml_example_label")}</p>
-
-        <div class="callout callout-${cfg.calloutType}">
-          <div class="callout-title">${ut("callout_ui_title")}</div>
-          <p>${ut("callout_ui_desc")}</p>
-        </div>
-
-        <div class="code-block">${cfg.yamlExample}</div>
-
-        <div class="callout callout-success">
-          <p>${ut("callout_done")}</p>
-        </div>
+              ${step.linkKey
+                ? html`<a class="step-link" href=${step.url} target="_blank" rel="noopener">${this._t(step.linkKey)}</a>`
+                : ""}
+            </div>
+          `
+        )}
       </div>
+
+      ${cfg.infoTip
+        ? html`
+            <div class="info-card">
+              <span class="info-icon">
+                <svg viewBox="0 0 24 24">${this._iconInfo}</svg>
+              </span>
+              <span>${this._t(cfg.infoTip)}</span>
+            </div>
+          `
+        : ""}
     `;
   }
 
-  /* ----------------------------------------------------------
-     YAML Editor
-     ---------------------------------------------------------- */
-  _renderEditor(t, ut) {
+  /* ============================================================
+     Tab: Editor & System
+     ============================================================ */
+  _renderEditorTab() {
     return html`
-      <div class="editor-section">
-        <div class="editor-header">
-          <div class="editor-header-title">${ut("editor_title")}</div>
-          <span
-            class="ws-badge ${this._wsConnected ? "connected" : "disconnected"}"
-          >
-            ${this._wsConnected ? t("ws_connected") : t("ws_disconnected")}
-          </span>
-        </div>
-
+      <!-- Editor Card -->
+      <div class="editor-card">
         <div class="editor-toolbar">
-          <select @change=${this._onFileSelect}>
-            <option value="">${t("editor_select_placeholder")}</option>
+          <select class="file-select" @change=${this._onFileSelect}>
+            <option value="">${this._t("editor_select_placeholder")}</option>
             ${this._files.map(
-              (f) =>
-                html`<option value=${f} ?selected=${f === this._currentFile}>
-                  ${f}
-                </option>`
+              (f) => html`<option value=${f} ?selected=${f === this._currentFile}>${f}</option>`
             )}
           </select>
-          <button @click=${this._refreshFileList} title=${t("editor_refresh_title")}>
-            ${t("editor_refresh")}
+          <button class="icon-btn" @click=${this._refreshFileList} title=${this._t("editor_refresh_title")}>
+            <svg viewBox="0 0 24 24">${this._iconRefresh}</svg>
           </button>
-          <button @click=${() => this._changeFontSize(-1)} title=${t("editor_font_smaller")}>
-            A-
-          </button>
-          <button @click=${() => this._changeFontSize(1)} title=${t("editor_font_larger")}>
-            A+
-          </button>
+          <button class="icon-btn" @click=${() => this._changeFontSize(-1)} title="A-">A-</button>
+          <button class="icon-btn" @click=${() => this._changeFontSize(1)} title="A+">A+</button>
         </div>
 
         <textarea
@@ -588,85 +431,34 @@ export class WoowPanelBase extends LitElement {
           @input=${this._onEditorInput}
           @keydown=${this._onEditorKeydown}
           style="font-size:${this._fontSize}px"
-          placeholder=${t("editor_placeholder")}
+          placeholder=${this._t("editor_placeholder")}
           spellcheck="false"
         ></textarea>
 
-        <div class="editor-footer">
-          <span
-            class="editor-status"
-            style="color:${this._editorStatusColor || "inherit"}"
-          >
-            ${this._editorStatus || t("editor_ready")}
-          </span>
-          <div class="editor-footer-buttons">
-            <button class="btn-editor" @click=${this._newFile}>
-              ${t("editor_new_file")}
-            </button>
-            <button
-              class="btn-save"
-              ?disabled=${!this._currentFile}
-              @click=${this._saveFile}
-            >
-              ${t("editor_save")}
-            </button>
+        <div class="editor-statusbar">
+          <span class="status-dot ${this._wsConnected ? "" : "disconnected"}"></span>
+          <span>${this._wsConnected ? this._t("ws_connected") : this._t("ws_disconnected")}</span>
+          <span>\u00b7</span>
+          <span>${this._editorStatus}</span>
+          <div class="editor-actions">
+            <button class="btn btn-secondary" @click=${this._newFile}>${this._t("editor_new_file")}</button>
+            <button class="btn btn-primary" ?disabled=${!this._currentFile} @click=${this._saveFile}>${this._t("editor_save")}</button>
           </div>
         </div>
       </div>
-    `;
-  }
 
-  /* ----------------------------------------------------------
-     Restart HA
-     ---------------------------------------------------------- */
-  _renderRestart(t, ut) {
-    return html`
-      <div class="card">
-        <h2>${ut("restart_title")}</h2>
-        <p>${ut("restart_desc")}</p>
-
-        <div class="callout callout-danger">
-          <div class="callout-title">${ut("restart_warning_title")}</div>
-          <p>${ut("restart_warning_desc")}</p>
-          <ul>
-            <li>${t("restart_li1")}</li>
-            <li>${t("restart_li2")}</li>
-            <li>${t("restart_li3")}</li>
-            <li>${t("restart_li4")}</li>
-          </ul>
-        </div>
-
-        <div class="callout callout-info">
-          <div class="callout-title">${ut("restart_tip_title")}</div>
-          <p>${ut("restart_tip_desc")}</p>
-        </div>
-
-        <div class="restart-section">
-          <label class="checkbox-confirm">
-            <input
-              type="checkbox"
-              .checked=${this._restartConfirmed}
-              @change=${this._toggleRestart}
-            />
-            <span>${t("restart_confirm_label")}</span>
-          </label>
-        </div>
-        <div class="restart-section">
-          <button
-            class="btn btn-danger"
-            ?disabled=${!this._restartConfirmed}
-            @click=${this._restartHA}
-          >
-            ${t("restart_btn")}
-          </button>
-        </div>
+      <!-- Restart Card -->
+      <div class="restart-card">
+        <span class="restart-title">${this._t("restart_title")}</span>
+        <label class="restart-confirm">
+          <input type="checkbox" .checked=${this._restartConfirmed} @change=${this._toggleRestart} />
+          ${this._t("restart_confirm_label")}
+        </label>
+        <button class="btn-danger" ?disabled=${!this._restartConfirmed} @click=${this._restartHA}>
+          ${this._t("restart_btn")}
+        </button>
         ${this._restartStatus
-          ? html`<div
-              class="restart-status"
-              style="color:${this._restartStatusColor || "inherit"}"
-            >
-              ${this._restartStatus}
-            </div>`
+          ? html`<span class="restart-status" style="color:${this._restartStatusColor}">${this._restartStatus}</span>`
           : ""}
       </div>
     `;
