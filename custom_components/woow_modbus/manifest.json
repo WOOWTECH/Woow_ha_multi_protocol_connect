@@ -3,7 +3,7 @@
   "name": "Woow Modbus Setup Guide",
   "codeowners": ["@woowtech"],
   "config_flow": true,
-  "dependencies": ["frontend"],
+  "dependencies": ["frontend", "http"],
   "documentation": "https://aiot.woowtech.io/blog",
   "iot_class": "calculated",
   "issue_tracker": "https://github.com/woowtech/Woow_ha_modbus_component/issues",
