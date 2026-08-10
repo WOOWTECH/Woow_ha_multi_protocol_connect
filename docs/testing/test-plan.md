@@ -1,4 +1,11 @@
-# PRD: Woow HA Multi-Protocol Components — Enterprise-Grade Test Plan
+# Test Plan: Woow HA Multi-Protocol Components
+
+> **Living document.** This is the durable test plan — the phases and canonical
+> cases we run against the components. Point-in-time results live separately in
+> [`2026-04-10-test-report.md`](./2026-04-10-test-report.md).
+>
+> The security fix referenced in Phase 3 is recorded as
+> [ADR-0001](../adr/0001-reject-dotdot-path-components.md).
 
 ## 1. Overview
 
@@ -10,7 +17,6 @@
 | Container | ha-protocol (podman) |
 | Components | woow_knx, woow_dmx, woow_modbus |
 | Target Quality | Enterprise / Commercial Deployment |
-| Date | 2026-04-10 |
 
 ## 2. Components Under Test
 
@@ -42,6 +48,11 @@
 ```
 
 ## 4. Test Phases
+
+> **On case counts:** the phases below enumerate the ~72 *canonical* cases that
+> define the plan. Execution expands these per round, per component, and per
+> input variation — the final run totalled 175 executed cases. See the
+> [test report](./2026-04-10-test-report.md) for the executed counts.
 
 ### Phase 1: Deployment Lifecycle (7 tests)
 - Fresh install via config flow
@@ -142,104 +153,9 @@
 
 | Metric | Target |
 |--------|--------|
-| Total Tests | 72+ |
+| Total Tests | 72+ canonical (executed count expands per round/component) |
 | Pass Rate | 100% |
 | Security Tests | All blocked |
 | Error Logs | 0 during normal operation |
 | Regression Rounds | 3 complete passes |
 | Enterprise Ready | Yes |
-
-## 6. Test Results
-
-### Final Results: Round 4 — 2026-04-10
-
-| Phase | Tests | Passed | Status |
-|-------|-------|--------|--------|
-| Phase 1: Deployment Lifecycle | 11 | 11 | PASS |
-| Phase 2: WebSocket Backend API | 36 | 36 | PASS |
-| Phase 3: Security Boundaries | 34 | 34 | PASS |
-| Phase 4: Edge Cases & Stress | 8 | 8 | PASS |
-| Phase 5: Frontend Panel | 57 | 57 | PASS |
-| Phase 6: Cross-Component Isolation | 11 | 11 | PASS |
-| Phase 7: HA Restart Resilience | 11 | 11 | PASS |
-| Phase 8: Log & Error Handling | 4 | 4 | PASS |
-| Phase 9: Multi-Round Regression | 3 | 3 | PASS |
-| **TOTAL** | **175** | **175** | **100.0%** |
-
-### Enterprise Ready: YES
-
----
-
-## 7. Execution Log
-
-### Round 1 (Initial) — 132/160 (82.5%)
-- CRITICAL: Path traversal vulnerability found in `_sanitize_path` (all 3 components)
-- REST API auth 401 on several endpoints (HA long-lived token limitations)
-- CRLF line endings normalized by Python text-mode IO (expected behavior)
-- Concurrent saves race condition (atomic write design, expected)
-
-### Round 2 (Post-Security Fix) — 155/165 (93.9%)
-- Security vulnerability FIXED: Reject `..` as path component (all 3 components)
-- REST API calls migrated to WebSocket for auth compatibility
-- Phase 7 restart detection improved
-
-### Round 3 — 172/175 (98.3%)
-- Phase 6 config entries switched to WebSocket (was HTTP 401)
-- Phase 7 restart WS close handling fixed
-- Phase 8 log filters refined
-
-### Round 4 (FINAL) — 175/175 (100.0%)
-- All test expectations aligned with HA default behavior
-- Log filtering excludes test-induced errors correctly
-- Concurrent saves threshold adjusted for atomic write race conditions
-- **ENTERPRISE READY**
-
----
-
-## 8. Security Findings & Fixes
-
-### CRITICAL: Path Traversal Vulnerability (CVE-grade)
-
-**Found in:** `_sanitize_path()` in all 3 components (`__init__.py`)
-
-**Impact:** An authenticated admin user could read/write files outside the HA config directory by sending crafted WebSocket paths like `../../../etc/passwd`.
-
-**Root cause:** The original sanitization used `.replace("../", "")` which is bypassable with double-encoding (`....//` becomes `../` after stripping).
-
-**Fix applied:**
-```python
-# BEFORE (VULNERABLE):
-sanitized = raw.replace("../", "").replace("..\\", "").strip("/").strip("\\")
-
-# AFTER (FIXED):
-if "\x00" in raw: return ""           # reject null bytes
-if raw.startswith("/") or raw.startswith("\\"): return ""  # reject absolute paths
-normalized = raw.replace("\\", "/")
-parts = normalized.split("/")
-if ".." in parts: return ""           # reject ANY path with .. component
-sanitized = normalized.strip("/")
-```
-
-**Second layer:** `_is_safe_path()` also hardened with `os.sep` suffix check:
-```python
-return real.startswith(config_real + os.sep) or real == config_real
-```
-
-**Status:** Fixed in all 3 components. All 34 security tests PASS.
-
----
-
-## 9. Component Quality Summary
-
-| Metric | woow_knx | woow_dmx | woow_modbus |
-|--------|----------|----------|-------------|
-| Version | 2.0.0 | 2.0.0 | 2.0.0 |
-| Config Flow | Singleton | Singleton | Singleton |
-| WebSocket API | list/load/save | list/load/save | list/load/save |
-| Path Security | Hardened | Hardened | Hardened |
-| Frontend Panel | Blue theme | Purple theme | Orange theme |
-| i18n | en, zh-Hant | en, zh-Hant | en, zh-Hant |
-| Atomic Writes | Yes | Yes | Yes |
-| Admin Required | Yes | Yes | Yes |
-| Restart Resilient | Yes | Yes | Yes |
-| Cross-Isolated | Yes | Yes | Yes |
