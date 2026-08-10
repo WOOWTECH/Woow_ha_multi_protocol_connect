@@ -1,0 +1,25 @@
+# Ruff configuration for the Woow HA Multi-Protocol Connect Setup Guide panels.
+# Scope: the three panels' Python (custom_components/) and the hermetic test
+# suite (tests/services). Live-integration scripts and simulators are excluded —
+# they are standalone and not part of the shipped panels.
+
+target-version = "py313"
+line-length = 100
+
+extend-exclude = [
+    ".venv",
+    "simulators",
+    "custom_components/woow_panel_frontend",
+    "test_enterprise.py",
+    "test_integration_deploy.py",
+    "test_directory_isolation.py",
+]
+
+[lint]
+# A pragmatic, Home-Assistant-flavoured baseline. BLE is enabled because the
+# service layer deliberately uses `except Exception` with `# noqa: BLE001` at
+# its outermost seams; keeping the rule on makes those directives meaningful.
+select = ["E", "F", "I", "UP", "B", "BLE"]
+
+[lint.isort]
+force-sort-within-sections = true

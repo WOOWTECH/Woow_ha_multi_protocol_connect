@@ -1,0 +1,9 @@
+# Test + lint toolchain for CI, pinned to the versions used in development.
+# Install with: pip install -r requirements-test.txt
+#
+# pytest-homeassistant-custom-component pulls in a matching Home Assistant and
+# the full pytest plugin stack (pytest, pytest-asyncio, pytest-cov, ...), so the
+# hermetic tests/services suite runs the same way locally and in CI.
+homeassistant==2026.2.3
+pytest-homeassistant-custom-component==0.13.316
+ruff==0.16.2

@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Cancel superseded runs on the same ref (e.g. rapid pushes to a PR).
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint (ruff)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/ruff-action@v3
+        with:
+          version: "0.16.2"
+      # Config lives in ruff.toml. Formatting is not yet enforced — adopt it
+      # later by running `ruff format .` once, then adding `ruff format --check .`.
+      - run: ruff check .
+
+  hassfest:
+    name: Manifest validation (hassfest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Home Assistant core's own manifest validator. Independent of HACS.
+      - uses: home-assistant/actions/hassfest@master
+
+  test:
+    name: Python tests (Service layer)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - run: pip install -r requirements-test.txt
+      # Only the hermetic tests/services suite runs here (scoped by pytest.ini).
+      # The live-integration scripts (test_enterprise.py etc.) need real
+      # DMX/KNX/Modbus and are intentionally excluded.
+      - run: pytest --cov=custom_components --cov-report=term-missing
+
+  frontend:
+    name: Frontend build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: custom_components/woow_panel_frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: custom_components/woow_panel_frontend/package-lock.json
+      - run: npm ci
+      # Build-only: confirms the Rollup bundle compiles. The Playwright
+      # theme-sync suite is NOT run here — it needs a live Home Assistant
+      # session (localhost:15126) and belongs in a separate, opt-in workflow.
+      - run: npm run build
