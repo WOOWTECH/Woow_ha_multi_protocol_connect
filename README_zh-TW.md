@@ -463,7 +463,8 @@ Woow_ha_multi_protocol_connect/
 ├── test_enterprise.py              # 企業整合測試（175 個案例）
 ├── test_integration_deploy.py      # 部署驗證測試
 ├── test_directory_isolation.py     # 安全邊界測試
-├── PRD.md                          # 產品需求文件
+├── docs/testing/                   # 測試計畫＋日期化測試報告
+├── docs/adr/                       # 架構決策紀錄（ADR）
 ├── README.md                       # 英文文件
 └── README_zh-TW.md                 # 繁體中文文件（本檔案）
 ```

@@ -436,7 +436,7 @@ if any(p == ".." for p in parts):
 # + 6 additional validation layers
 ```
 
-Full details in the [test suite](tests/) and [PRD](PRD.md).
+Full details in the [test suite](tests/), the [test plan](docs/testing/test-plan.md), and [ADR-0001](docs/adr/0001-reject-dotdot-path-components.md).
 
 ---
 
@@ -544,7 +544,8 @@ Woow_ha_multi_protocol_connect/
 ├── test_enterprise.py              # Enterprise integration tests (175 cases)
 ├── test_integration_deploy.py      # Deployment verification tests
 ├── test_directory_isolation.py     # Security boundary tests
-├── PRD.md                          # Product Requirements Document
+├── docs/testing/                   # Test plan + dated test reports
+├── docs/adr/                       # Architecture decision records
 ├── README.md                       # English documentation (this file)
 ├── README_zh-TW.md                 # Traditional Chinese documentation
 └── docs/
