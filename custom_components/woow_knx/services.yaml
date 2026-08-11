@@ -1,0 +1,74 @@
+# Woow KNX Setup Guide — service layer
+# Sandboxed to the knx/ config subdirectory. See services.py and ADR-0002.
+
+list_files:
+  name: List KNX config files
+  description: >-
+    List config files under the knx/ subdirectory. Returns {files: [...]}.
+  fields:
+    ext:
+      name: Extension
+      description: File extension to list, or "all" for every allowed type.
+      default: yaml
+      example: yaml
+      selector:
+        text:
+    depth:
+      name: Depth
+      description: Maximum directory depth to descend.
+      default: 10
+      selector:
+        number:
+          min: 1
+          max: 25
+          mode: box
+
+load_file:
+  name: Load KNX config file
+  description: >-
+    Read a UTF-8 file under the knx/ subdirectory. Returns {content, path}.
+  fields:
+    path:
+      name: Path
+      description: Path relative to the knx/ subdirectory.
+      required: true
+      example: knx_main.yaml
+      selector:
+        text:
+
+save_file:
+  name: Save KNX config file
+  description: >-
+    Atomically write a file under the knx/ subdirectory. Writes only — call
+    "apply" afterwards to make the change live. Returns {success, path}.
+  fields:
+    path:
+      name: Path
+      description: Path relative to the knx/ subdirectory.
+      required: true
+      example: knx_main.yaml
+      selector:
+        text:
+    content:
+      name: Content
+      description: Full file content to write.
+      required: true
+      selector:
+        text:
+          multiline: true
+
+apply:
+  name: Apply KNX config
+  description: >-
+    Reload the underlying knx integration so saved config takes effect. If no
+    reload is available it reports restart_required without restarting, unless
+    force_restart is set. Returns {reloaded, restart_required, ...}.
+  fields:
+    force_restart:
+      name: Force restart
+      description: >-
+        Restart Home Assistant when the underlying integration cannot hot-reload.
+        Default false — never restarts unattended.
+      default: false
+      selector:
+        boolean:

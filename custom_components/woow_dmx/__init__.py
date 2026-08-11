@@ -5,12 +5,11 @@ import os
 import stat
 import time
 
-import voluptuous as vol
-
 from homeassistant.components import frontend, websocket_api
 from homeassistant.components.http import StaticPathConfig
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+import voluptuous as vol
 
 from .const import CONFIG_SUBDIR, DOMAIN, PANEL_ICON, PANEL_TITLE
 
@@ -69,6 +68,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Register WebSocket API for YAML file editing
     websocket_api.async_register_command(hass, handle_woow_dmx_ws)
 
+    # Register the MCP-facing service layer (list/load/save/apply). Imported
+    # lazily to avoid a circular import (services.py imports helpers from here).
+    from .services import register_services
+
+    register_services(hass)
+
     _LOGGER.info("Woow DMX Setup Guide panel registered (config dir: %s/)", CONFIG_SUBDIR)
     return True
 
@@ -76,6 +81,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
     frontend.async_remove_panel(hass, DOMAIN)
+
+    from .services import unregister_services
+
+    unregister_services(hass)
+
     _LOGGER.info("Woow DMX Setup Guide panel removed")
     return True
 

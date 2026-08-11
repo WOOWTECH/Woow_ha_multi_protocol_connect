@@ -1146,6 +1146,93 @@ def phase9_regression():
         record(phase, "Soak test (100 ops)", False, str(e))
 
 
+def phase10_service_layer():
+    """Service layer (services.py) — the interface ha_mcp_tools drives.
+
+    Mirrors the hermetic suite in tests/services/, but over the real REST API.
+    force_restart is deliberately never exercised: it would restart the HA under
+    test. See docs/adr/0002-apply-reload-semantics.md.
+    """
+    phase = "Phase10-ServiceLayer"
+    print(f"\n{'='*60}")
+    print(f"  {phase}: MCP-Facing Service Layer Tests")
+    print(f"{'='*60}")
+
+    expected_services = {"list_files", "load_file", "save_file", "apply"}
+    test_file = "_test_service_layer.yaml"
+    test_content = "woow_service_layer_test: true\n"
+
+    def call_service(domain, service, data):
+        """POST a service call that returns a response."""
+        code, body = http_post(
+            f"/api/services/{domain}/{service}?return_response", data)
+        try:
+            parsed = json.loads(body) if body else {}
+        except json.JSONDecodeError:
+            parsed = {}
+        if isinstance(parsed, dict):
+            return code, parsed.get("service_response", parsed)
+        return code, {}
+
+    # 10.1 All four services registered per domain
+    code, body = http_get("/api/services")
+    registry = {}
+    try:
+        registry = {e["domain"]: set(e.get("services", {})) for e in json.loads(body)}
+    except Exception as e:
+        record(phase, "Fetch service registry", False, str(e))
+    for domain in DOMAINS:
+        found = registry.get(domain, set())
+        record(phase, f"Four services registered: {domain}",
+               expected_services.issubset(found),
+               f"missing: {sorted(expected_services - found)}" if found else "domain absent")
+
+    # 10.2 list_files returns a files array
+    for domain in DOMAINS:
+        code, resp = call_service(domain, "list_files", {})
+        record(phase, f"list_files returns array: {domain}",
+               code == 200 and isinstance(resp.get("files"), list), f"HTTP {code}")
+
+    # 10.3 save -> load round trip
+    for domain in DOMAINS:
+        code, save_resp = call_service(
+            domain, "save_file", {"path": test_file, "content": test_content})
+        record(phase, f"save_file succeeds: {domain}",
+               code == 200 and save_resp.get("success") is True, f"HTTP {code}")
+
+        code, load_resp = call_service(domain, "load_file", {"path": test_file})
+        record(phase, f"load_file round trip: {domain}",
+               code == 200 and load_resp.get("content") == test_content, f"HTTP {code}")
+
+    # 10.4 Saved file is visible to list_files
+    for domain in DOMAINS:
+        code, resp = call_service(domain, "list_files", {})
+        record(phase, f"Saved file appears in listing: {domain}",
+               test_file in resp.get("files", []))
+
+    # 10.5 Path traversal refused (ADR-0001 boundary, over the service seam)
+    for domain in DOMAINS:
+        for bad in ["../escaped.yaml", "....//escaped.yaml", "/etc/passwd"]:
+            code, _ = call_service(
+                domain, "save_file", {"path": bad, "content": "pwned: true\n"})
+            record(phase, f"Traversal refused ({bad}): {domain}",
+                   code != 200, f"HTTP {code}")
+
+    # 10.6 apply honours the ADR-0002 contract and does not restart HA
+    contract = {"reloaded", "restart_required", "restarting", "underlying_domain"}
+    for domain in DOMAINS:
+        code, resp = call_service(domain, "apply", {})
+        record(phase, f"apply returns stable contract: {domain}",
+               code == 200 and contract.issubset(set(resp)),
+               f"HTTP {code}, keys={sorted(resp)}")
+        record(phase, f"apply did not restart (restarting False): {domain}",
+               resp.get("restarting") is False)
+
+    # HA must still be serving after every apply above
+    code, _ = http_get("/api/")
+    record(phase, "HA still running after apply calls", code == 200, f"HTTP {code}")
+
+
 # ═══════════════════════════════════════════════════════════════════════
 # CLEANUP & REPORT
 # ═══════════════════════════════════════════════════════════════════════
@@ -1157,6 +1244,8 @@ def cleanup():
         subprocess.run([
             "podman", "exec", "ha-protocol", "sh", "-c",
             "rm -f /config/_test_*.yaml /config/" + "a" * 240 + ".yaml"
+            " /config/dmx/_test_*.yaml /config/knx/_test_*.yaml"
+            " /config/modbus/_test_*.yaml /config/escaped.yaml"
         ], timeout=10, capture_output=True)
         print("  Test files cleaned up")
     except Exception as e:
@@ -1234,6 +1323,7 @@ if __name__ == "__main__":
         phase7_restart()
         phase8_logs()
         phase9_regression()
+        phase10_service_layer()
     except KeyboardInterrupt:
         print("\n  Interrupted!")
     except Exception as e:
