@@ -52,9 +52,15 @@ Register Map:
     100-109: Stress-test binary sensors (10 sensors)
 
 Startup:
+  pip install -r simulators/requirements.txt
   python3 simulators/modbus_simulator.py
 
 Default listen: 0.0.0.0:5020  (Slave ID: 1)
+
+Requires pymodbus==3.11.2 (see simulators/requirements.txt). pymodbus >= 3.13
+breaks this simulator: ModbusSequentialDataBlock(0, ...) became
+SimData(address - 1), so a block starting at address 0 raises
+"TypeError: 0 <= address < 65535" before the server binds.
 """
 
 import asyncio

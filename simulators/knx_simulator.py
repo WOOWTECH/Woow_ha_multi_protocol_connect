@@ -3,8 +3,9 @@
 KNXnet/IP Tunnelling 模擬伺服器 — 供 Home Assistant KNX 整合測試
 ================================================================
 
-使用 XKNX 程式庫的框架類別實作 KNXnet/IP Tunnelling 伺服器。
-HA 的 KNX 整合（透過 XKNX）可以用 tunnelling 模式連入此伺服器。
+以 Python 標準函式庫直接實作 KNXnet/IP Tunnelling 伺服器，無第三方相依。
+HA 的 KNX 整合（其客戶端使用 XKNX）可以用 tunnelling 模式連入此伺服器；
+本模擬器本身「不」使用 XKNX。
 
 模擬設備 (12 entity types):
   1.  燈光開關     (GA 1/0/1 開關, 1/0/2 狀態)                    DPT 1.001
