@@ -63,11 +63,31 @@ reported so an automated caller can see *which* integration was targeted.
 - **Positive:** An automated MCP can call `apply` safely — the worst default
   outcome is "config saved, restart still needed," surfaced explicitly in the
   response rather than as a surprise outage.
-- **Trade-off:** For Modbus and DMX, `apply` will usually report
-  `restart_required` rather than making config live; a human (or a deliberate
-  `force_restart: true`) must complete the loop.
+- **Trade-off:** Where the Underlying integration offers no reload, `apply`
+  reports `restart_required` rather than making config live; a human (or a
+  deliberate `force_restart: true`) must complete the loop.
 - **Precondition, not enforced:** `apply` only matters if the operator has wired
   the Config subdirectory YAML into `configuration.yaml` (via `!include` /
   packages). The service layer assumes that wiring; it does not create it.
 - **Applies uniformly:** All three components use the same mapping-plus-introspection
   logic; a future protocol panel must follow the same pattern.
+
+## Validated in production (2026-08-11)
+
+Verified against a live HA 2026.7.2, with the protocol simulators from
+`simulators/` standing in for hardware. The **same unchanged code** returned
+different results purely because the Underlying integrations became available:
+
+| `apply()` | Before (integration absent) | After (integration configured) |
+| --------- | --------------------------- | ------------------------------ |
+| `woow_knx`    | `reloaded: false, restart_required: true` | `reloaded: true` |
+| `woow_modbus` | `reloaded: false, restart_required: true` | `reloaded: true` |
+| `woow_dmx`    | `reloaded: false, restart_required: true` | unchanged — `ha-artnet-led` not installed |
+
+This is the behaviour the runtime `has_service()` check exists to produce, and it
+**corrects an assumption made when this ADR was written**: the original context
+claimed HA Modbus "has historically required a full restart." In HA 2026.7 a
+`modbus.reload` service does exist. Had the reload targets been hard-coded from
+that assumption, `apply` would have wrongly reported `restart_required` for
+Modbus forever. Capability must keep being discovered at call time, never
+hard-coded per protocol.
