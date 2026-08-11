@@ -32,9 +32,17 @@ except ImportError:
     import websockets
 
 # ============================================================
-HA_HOST = "localhost"
-HA_PORT = 15126
-HA_TOKEN = open(os.path.join(os.path.dirname(__file__), "tmp", "ha_token.txt")).read().strip()
+HA_HOST = os.environ.get("HA_HOST", "localhost")
+HA_PORT = int(os.environ.get("HA_PORT", "15126"))
+HA_TOKEN = os.environ.get("HA_TOKEN", "")
+if not HA_TOKEN:
+    token_file = os.path.join(os.path.dirname(__file__), "tmp", "ha_token.txt")
+    if os.path.exists(token_file):
+        with open(token_file) as f:
+            HA_TOKEN = f.read().strip()
+    else:
+        print("ERROR: Set HA_TOKEN env var or create tmp/ha_token.txt", file=sys.stderr)
+        sys.exit(1)
 WS_URL = f"ws://{HA_HOST}:{HA_PORT}/api/websocket"
 HA_VOL = "/home/woowtech-ai-coder/.local/share/containers/storage/volumes/ha-protocol-config/_data"
 

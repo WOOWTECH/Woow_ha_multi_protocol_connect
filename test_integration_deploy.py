@@ -32,9 +32,17 @@ except ImportError:
 # ============================================================
 # Configuration
 # ============================================================
-HA_HOST = "localhost"
-HA_PORT = 15126
-HA_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI1YjM5OWUzNDUyYjQ0MzViOTA4ZWU0ZTc4N2M3ODI0YiIsImlhdCI6MTc3NTgyNjc1NiwiZXhwIjoxODA3MzYyNzU2fQ.WttGcA9IvOgGoJePEpee7FPm8Uy5pd_kJ8UnRhM-Rb8"
+HA_HOST = os.environ.get("HA_HOST", "localhost")
+HA_PORT = int(os.environ.get("HA_PORT", "15126"))
+HA_TOKEN = os.environ.get("HA_TOKEN", "")
+if not HA_TOKEN:
+    token_file = os.path.join(os.path.dirname(__file__), "tmp", "ha_token.txt")
+    if os.path.exists(token_file):
+        with open(token_file) as f:
+            HA_TOKEN = f.read().strip()
+    else:
+        print("ERROR: Set HA_TOKEN env var or create tmp/ha_token.txt", file=sys.stderr)
+        sys.exit(1)
 WS_URL = f"ws://{HA_HOST}:{HA_PORT}/api/websocket"
 
 CONFIG_SAMPLES_DIR = os.path.join(os.path.dirname(__file__), "config_samples")
