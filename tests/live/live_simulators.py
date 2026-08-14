@@ -7,7 +7,7 @@ speak any protocol; they only edit configuration).
 
 Run on the machine hosting the simulators (Modbus needs pymodbus):
 
-    SIM_HOST=127.0.0.1 python3 test_simulators.py
+    SIM_HOST=127.0.0.1 python3 tests/live/live_simulators.py
 """
 
 import os

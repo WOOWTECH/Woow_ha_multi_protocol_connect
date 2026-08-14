@@ -36,7 +36,9 @@ HA_HOST = os.environ.get("HA_HOST", "localhost")
 HA_PORT = int(os.environ.get("HA_PORT", "15126"))
 HA_TOKEN = os.environ.get("HA_TOKEN", "")
 if not HA_TOKEN:
-    token_file = os.path.join(os.path.dirname(__file__), "tmp", "ha_token.txt")
+    # Repo root is two levels up from tests/live/.
+    REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+    token_file = os.path.join(REPO_ROOT, "tmp", "ha_token.txt")
     if os.path.exists(token_file):
         with open(token_file) as f:
             HA_TOKEN = f.read().strip()

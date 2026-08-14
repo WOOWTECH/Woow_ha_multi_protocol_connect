@@ -479,8 +479,8 @@ This project has undergone comprehensive enterprise-grade testing:
 ### Running Tests
 
 ```bash
-# Enterprise integration tests
-python test_enterprise.py
+# Enterprise integration tests (standalone; needs a live HA)
+python tests/live/live_enterprise.py
 
 # Playwright theme sync tests
 cd tests/theme-sync
@@ -536,14 +536,17 @@ Woow_ha_multi_protocol_connect/
 │   └── modbus_simulator.py        # Modbus TCP/RTU emulator
 │
 ├── tests/                          # Test suites
-│   └── theme-sync/                # Playwright browser automation tests
-│       ├── playwright.config.ts   # Test configuration
-│       ├── helpers.ts             # Shared test utilities
-│       └── theme-sync.spec.ts     # 16 test cases across 5 groups
+│   ├── services/                  # Hermetic Service-layer unit tests (run in CI)
+│   ├── theme-sync/                # Playwright browser automation tests
+│   │   ├── playwright.config.ts   # Test configuration
+│   │   ├── helpers.ts             # Shared test utilities
+│   │   └── theme-sync.spec.ts     # 16 test cases across 5 groups
+│   └── live/                      # Standalone live-integration scripts (opt-in)
+│       ├── live_enterprise.py            # Enterprise integration tests (175 cases)
+│       ├── live_integration_deploy.py    # Deployment verification tests
+│       ├── live_directory_isolation.py   # Security boundary tests
+│       └── live_simulators.py            # Live protocol tests vs simulators
 │
-├── test_enterprise.py              # Enterprise integration tests (175 cases)
-├── test_integration_deploy.py      # Deployment verification tests
-├── test_directory_isolation.py     # Security boundary tests
 ├── docs/testing/                   # Test plan + dated test reports
 ├── docs/adr/                       # Architecture decision records
 ├── README.md                       # English documentation (this file)

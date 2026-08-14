@@ -1298,7 +1298,9 @@ def print_report():
 if __name__ == "__main__":
     if not HA_TOKEN:
         # Try reading from file
-        token_file = os.path.join(os.path.dirname(__file__), "tmp", "ha_token.txt")
+        # Repo root is two levels up from tests/live/.
+        repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+        token_file = os.path.join(repo_root, "tmp", "ha_token.txt")
         if os.path.exists(token_file):
             with open(token_file) as f:
                 HA_TOKEN = f.read().strip()

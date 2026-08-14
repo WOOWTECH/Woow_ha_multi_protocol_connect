@@ -35,8 +35,10 @@ except ImportError:
 HA_HOST = os.environ.get("HA_HOST", "localhost")
 HA_PORT = int(os.environ.get("HA_PORT", "15126"))
 HA_TOKEN = os.environ.get("HA_TOKEN", "")
+# Repo root is two levels up from tests/live/.
+REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 if not HA_TOKEN:
-    token_file = os.path.join(os.path.dirname(__file__), "tmp", "ha_token.txt")
+    token_file = os.path.join(REPO_ROOT, "tmp", "ha_token.txt")
     if os.path.exists(token_file):
         with open(token_file) as f:
             HA_TOKEN = f.read().strip()
@@ -45,7 +47,7 @@ if not HA_TOKEN:
         sys.exit(1)
 WS_URL = f"ws://{HA_HOST}:{HA_PORT}/api/websocket"
 
-CONFIG_SAMPLES_DIR = os.path.join(os.path.dirname(__file__), "config_samples")
+CONFIG_SAMPLES_DIR = os.path.join(REPO_ROOT, "config_samples")
 
 # Component → WS type mapping
 COMPONENTS = {

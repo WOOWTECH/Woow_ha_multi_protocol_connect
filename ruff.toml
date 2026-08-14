@@ -10,9 +10,7 @@ extend-exclude = [
     ".venv",
     "simulators",
     "custom_components/woow_panel_frontend",
-    "test_enterprise.py",
-    "test_integration_deploy.py",
-    "test_directory_isolation.py",
+    "tests/live",
 ]
 
 [lint]

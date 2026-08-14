@@ -417,8 +417,8 @@ Art-Net 和 sACN 燈光控制的步驟式設定 — 燈具類型定義、通道�
 ### 執行測試
 
 ```bash
-# 企業整合測試
-python test_enterprise.py
+# 企業整合測試（獨立腳本；需要執行中的 HA）
+python tests/live/live_enterprise.py
 
 # Playwright 主題同步測試
 cd tests/theme-sync
@@ -458,11 +458,14 @@ Woow_ha_multi_protocol_connect/
 │   └── modbus_simulator.py        # Modbus TCP/RTU 模擬器
 │
 ├── tests/                          # 測試套件
-│   └── theme-sync/                # Playwright 瀏覽器自動化測試
+│   ├── services/                  # 服務層 hermetic 單元測試（CI 執行）
+│   ├── theme-sync/                # Playwright 瀏覽器自動化測試
+│   └── live/                      # 獨立即時整合腳本（選用）
+│       ├── live_enterprise.py            # 企業整合測試（175 個案例）
+│       ├── live_integration_deploy.py    # 部署驗證測試
+│       ├── live_directory_isolation.py   # 安全邊界測試
+│       └── live_simulators.py            # 模擬器即時協定測試
 │
-├── test_enterprise.py              # 企業整合測試（175 個案例）
-├── test_integration_deploy.py      # 部署驗證測試
-├── test_directory_isolation.py     # 安全邊界測試
 ├── docs/testing/                   # 測試計畫＋日期化測試報告
 ├── docs/adr/                       # 架構決策紀錄（ADR）
 ├── README.md                       # 英文文件
