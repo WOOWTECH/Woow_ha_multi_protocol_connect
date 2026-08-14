@@ -27,7 +27,7 @@
   <img src="https://img.shields.io/badge/License-MIT-green" alt="License"/>
   <img src="https://img.shields.io/badge/Protocols-KNX%20%7C%20DMX%20%7C%20Modbus-orange" alt="Protocols"/>
   <img src="https://img.shields.io/badge/Tests-191%2F191%20(100%25)-brightgreen" alt="Tests"/>
-  <img src="https://img.shields.io/badge/Version-2.1.0-blue" alt="Version"/>
+  <img src="https://img.shields.io/badge/Version-2.2.0-blue" alt="Version"/>
 </p>
 
 ---
@@ -60,7 +60,8 @@
 - **Three Protocol Panels** — KNX (building automation), DMX/Art-Net (lighting), Modbus (industrial) — each with protocol-specific guidance
 - **Interactive YAML Editor** — Browser-based editor with syntax highlighting, tab support, font size control, and keyboard shortcuts (Ctrl+S)
 - **WebSocket File Management** — Real-time list/load/save operations via HA's native WebSocket connection
-- **Dynamic Theme Sync** — Panels automatically follow Home Assistant's `--primary-color` with 2-second polling
+- **Service Layer** — Each integration exposes `list_files`, `load_file`, `save_file`, and `apply` as Home Assistant services (admin-gated, sandboxed per protocol) — callable from automations, scripts, and Developer Tools
+- **Native Theme Inheritance** — Panels are LitElement `panel_custom` Web Components that inherit HA's theme CSS variables (`--primary-color`, etc.) directly — colors and dark/light mode follow HA instantly, no iframe or polling
 - **Dark/Light Mode** — Full support for both HA themes with automatic detection
 - **Crash Recovery** — Unsaved edits cached in `localStorage` — recoverable after browser crash or accidental close
 - **Internationalization** — Full English and Traditional Chinese (zh-Hant) translation support
@@ -98,6 +99,17 @@ Each component exposes a secure WebSocket API through Home Assistant:
 | `load` | Load file content (UTF-8) | `path` |
 | `save` | Atomically write file | `path`, `content` |
 
+### Service API
+
+Since v2.2.0, the same file operations are also exposed as Home Assistant services (domain = the integration, e.g. `woow_knx.*`), sandboxed to that protocol's config subdirectory and admin-gated (see [ADR-0002](docs/adr/0002-apply-reload-semantics.md)):
+
+| Service | Description | Fields |
+|---------|-------------|--------|
+| `list_files` | List config files in the protocol subdirectory | `ext`, `depth` |
+| `load_file` | Read a UTF-8 file (returns `content`, `path`) | `path` |
+| `save_file` | Atomically write a file (write only) | `path`, `content` |
+| `apply` | Reload the underlying integration so saved config takes effect; reports `restart_required` without restarting unless `force_restart` is set | `force_restart` |
+
 ---
 
 ## Architecture
@@ -118,10 +130,10 @@ graph TB
         MOD["woow_modbus<br/>Modbus Setup Guide<br/>🏭 Industrial Equipment"]
     end
 
-    subgraph "Frontend (iframe panels)"
-        KNX_UI["KNX Panel UI<br/>panel.html"]
-        DMX_UI["DMX Panel UI<br/>panel.html"]
-        MOD_UI["Modbus Panel UI<br/>panel.html"]
+    subgraph "Frontend (panel_custom Web Components)"
+        KNX_UI["KNX Panel<br/>woow-knx-panel.js"]
+        DMX_UI["DMX Panel<br/>woow-dmx-panel.js"]
+        MOD_UI["Modbus Panel<br/>woow-modbus-panel.js"]
     end
 
     subgraph "Protocol Integrations"
@@ -151,9 +163,9 @@ graph TB
     DMX_UI <-->|WebSocket| WS
     MOD_UI <-->|WebSocket| WS
 
-    KNX_UI -.->|Theme Sync| HA
-    DMX_UI -.->|Theme Sync| HA
-    MOD_UI -.->|Theme Sync| HA
+    KNX_UI -.->|Inherits theme CSS vars| HA
+    DMX_UI -.->|Inherits theme CSS vars| HA
+    MOD_UI -.->|Inherits theme CSS vars| HA
 
     KNX --> KNX_INT --> KNX_DEV
     DMX --> DMX_INT --> DMX_DEV
@@ -169,37 +181,30 @@ graph LR
         INIT["__init__.py<br/>Component Setup<br/>WebSocket Handler<br/>Path Security"]
         FLOW["config_flow.py<br/>Singleton Config Entry<br/>Panel Registration"]
         CONST["const.py<br/>Domain & Constants"]
-        PANEL["frontend/panel.html<br/>Interactive UI<br/>YAML Editor<br/>Theme Sync"]
+        SERVICES["services.py + services.yaml<br/>list/load/save/apply<br/>Admin-gated & Sandboxed"]
+        PANEL["frontend/woow-*-panel.js<br/>LitElement Web Component<br/>YAML Editor + sidebar-title.js"]
         I18N["translations/<br/>en.json + zh-Hant.json"]
-        MANIFEST["manifest.json<br/>Version 2.1.0"]
+        MANIFEST["manifest.json<br/>Version 2.2.0"]
     end
 
     FLOW --> INIT
     INIT --> PANEL
     INIT --> CONST
+    INIT --> SERVICES
     FLOW --> I18N
     FLOW --> MANIFEST
 ```
 
-### Theme Synchronization Flow
+> Panel Web Components are built from the shared `custom_components/woow_panel_frontend/` workspace (Lit + Rollup) and deployed into each component's `frontend/` directory.
+
+### Theme Inheritance
+
+Because the panels are `panel_custom` Web Components rendered inside the HA frontend (not sandboxed iframes), they inherit Home Assistant's theme CSS custom properties directly through the DOM. Panel styles reference HA variables such as `--primary-color`, `--primary-background-color`, and `--primary-text-color` with sensible fallbacks — so color changes and dark/light mode switches apply instantly, with no polling or manual color parsing.
 
 ```mermaid
-sequenceDiagram
-    participant HA as Home Assistant
-    participant Panel as Panel iframe
-    participant CSS as Panel CSS Variables
-
-    loop Every 2 seconds
-        Panel->>HA: getComputedStyle(parent)<br/>--primary-color
-        Panel->>HA: getComputedStyle(parent)<br/>--dark-primary-color
-        alt Color changed
-            Panel->>CSS: --protocol-primary = primary
-            Panel->>CSS: --protocol-primary-dark = dark
-            Panel->>CSS: --protocol-glow = rgba(r,g,b,0.15)
-            Panel->>CSS: --protocol-glow-strong = rgba(r,g,b,0.25)
-            Panel->>CSS: --protocol-gradient = linear-gradient(...)
-        end
-    end
+flowchart LR
+    HA["Home Assistant<br/>theme CSS variables"] -->|CSS custom property<br/>inheritance| WC["Panel Web Component"]
+    WC --> S["Styles use var(--primary-color, …)<br/>var(--primary-background-color, …)<br/>var(--primary-text-color, …)"]
 ```
 
 ### WebSocket Security Pipeline
@@ -228,7 +233,7 @@ flowchart LR
 
 ### Prerequisites
 
-- Home Assistant **2026.1.3** or later
+- Home Assistant **2026.1.0** or later
 - Admin access to your HA instance
 - For KNX: KNX/IP Gateway on the network
 - For DMX: [ha-artnet-led](https://github.com/corneyl/ha-artnet-led) installed via HACS
@@ -410,7 +415,7 @@ All three components implement a hardened 7-layer path sanitization pipeline:
 | Feature | Description |
 |---------|-------------|
 | **Path Sanitization** | 7-layer pipeline preventing directory traversal attacks |
-| **Admin-Only Access** | Panels require HA administrator authentication |
+| **Admin-Gated Backend** | The file-editing WebSocket commands and services require an HA administrator; all filesystem access is admin-only |
 | **Atomic Writes** | File saves are atomic — no partial writes on crash |
 | **WebSocket Auth** | All API calls authenticated through HA's native WebSocket token |
 | **Directory Isolation** | Each component reads/writes only within its own config directory |
@@ -444,13 +449,16 @@ Full details in the [test suite](tests/), the [test plan](docs/testing/test-plan
 
 ### Test Coverage Summary
 
-This project has undergone comprehensive enterprise-grade testing:
+This project has undergone comprehensive enterprise-grade testing. Tests fall into two categories: a **hermetic** suite that runs automatically in CI (no external dependencies), and **live/opt-in** suites that require a running Home Assistant instance or a browser.
 
-| Suite | Tests | Pass Rate | Coverage |
-|-------|-------|-----------|----------|
-| **Enterprise Integration** | 175 | 100% | Deployment, WebSocket API, Security, Edge Cases, Frontend, Isolation, Restart, Logging, Regression |
-| **Theme Sync (Playwright)** | 16 | 100% | Color sync, dark mode, cross-panel consistency, navigation stability |
-| **Total** | **191** | **100%** | Full stack coverage |
+| Suite | Tests | Environment | Pass Rate | Coverage |
+|-------|-------|-------------|-----------|----------|
+| **Service Layer (hermetic)** | 14 | CI (`pytest`) | 100% | Admin gating, sandbox boundaries, file operations, apply/reload semantics |
+| **Enterprise Integration** | 175 | Live HA (opt-in) | 100% | Deployment, WebSocket API, Security, Edge Cases, Frontend, Isolation, Restart, Logging, Regression |
+| **Theme Sync (Playwright)** | 16 | Browser (opt-in) | 100% | Color sync, dark mode, cross-panel consistency, navigation stability |
+| **Live/opt-in total** | **191** | — | **100%** | Full stack coverage |
+
+> CI (`.github/workflows/ci.yml`) runs ruff lint, hassfest manifest validation, the 14 hermetic service tests, and the frontend build on every push and PR. The `191` figure refers to the live/opt-in enterprise + Playwright suites, which are not run in CI.
 
 ### Enterprise Integration Test (175 tests)
 
@@ -479,6 +487,10 @@ This project has undergone comprehensive enterprise-grade testing:
 ### Running Tests
 
 ```bash
+# Hermetic service-layer tests (no external dependencies; this is what CI runs)
+pip install -r requirements-test.txt
+pytest                       # testpaths = tests/services (see pytest.ini)
+
 # Enterprise integration tests (standalone; needs a live HA)
 python tests/live/live_enterprise.py
 
@@ -496,7 +508,7 @@ Three standalone Python simulators enable testing without physical hardware:
 # Create virtual environment
 python -m venv sim_venv
 source sim_venv/bin/activate
-pip install pyknx pymodbus
+pip install -r simulators/requirements.txt
 
 # Run simulators
 python simulators/knx_simulator.py
@@ -512,18 +524,27 @@ python simulators/modbus_simulator.py
 Woow_ha_multi_protocol_connect/
 ├── custom_components/              # HA custom component packages
 │   ├── woow_knx/                  # KNX Setup Guide
-│   │   ├── __init__.py            # Component + WebSocket handler
+│   │   ├── __init__.py            # Component + WebSocket handler + path security
 │   │   ├── config_flow.py         # Singleton config flow
 │   │   ├── const.py               # Constants
-│   │   ├── manifest.json          # v2.1.0
+│   │   ├── services.py            # Service layer (list/load/save/apply)
+│   │   ├── services.yaml          # Service definitions (Developer Tools UI)
+│   │   ├── manifest.json          # v2.2.0
 │   │   ├── strings.json           # Default strings
+│   │   ├── brand/                 # WOOWTECH icon/logo assets
 │   │   ├── frontend/
-│   │   │   └── panel.html         # Interactive UI (1600+ lines)
+│   │   │   ├── woow-knx-panel.js  # LitElement panel Web Component
+│   │   │   └── sidebar-title.js   # Sidebar title rendering
 │   │   └── translations/
 │   │       ├── en.json            # English
 │   │       └── zh-Hant.json       # Traditional Chinese
 │   ├── woow_dmx/                  # DMX Setup Guide (same structure)
-│   └── woow_modbus/               # Modbus Setup Guide (same structure)
+│   ├── woow_modbus/              # Modbus Setup Guide (same structure)
+│   └── woow_panel_frontend/       # Shared panel build workspace (Lit + Rollup)
+│       ├── package.json           # Build tooling & lit dependency
+│       ├── rollup.config.js       # Bundler config
+│       ├── scripts/deploy.js      # Copies built bundles into each component
+│       └── src/                   # Panel base, per-protocol config, styles, i18n
 │
 ├── config_samples/                 # Production-ready YAML examples
 │   ├── knx/                       # KNX configs (3-story office)
@@ -533,31 +554,63 @@ Woow_ha_multi_protocol_connect/
 ├── simulators/                     # Protocol simulators for testing
 │   ├── knx_simulator.py           # KNX/IP tunneling emulator
 │   ├── dmx_artnet_simulator.py    # Art-Net DMX emulator
-│   └── modbus_simulator.py        # Modbus TCP/RTU emulator
+│   ├── modbus_simulator.py        # Modbus TCP/RTU emulator
+│   └── requirements.txt           # Simulator dependencies
 │
 ├── tests/                          # Test suites
 │   ├── services/                  # Hermetic Service-layer unit tests (run in CI)
+│   │   ├── conftest.py
+│   │   ├── test_admin_gating.py         # Admin-only enforcement
+│   │   ├── test_apply_semantics.py      # apply / reload / restart behaviour
+│   │   ├── test_file_operations.py      # list/load/save operations
+│   │   └── test_sandbox_boundary.py     # Per-protocol sandbox isolation
 │   ├── theme-sync/                # Playwright browser automation tests
 │   │   ├── playwright.config.ts   # Test configuration
 │   │   ├── helpers.ts             # Shared test utilities
 │   │   └── theme-sync.spec.ts     # 16 test cases across 5 groups
-│   └── live/                      # Standalone live-integration scripts (opt-in)
-│       ├── live_enterprise.py            # Enterprise integration tests (175 cases)
-│       ├── live_integration_deploy.py    # Deployment verification tests
-│       ├── live_directory_isolation.py   # Security boundary tests
-│       └── live_simulators.py            # Live protocol tests vs simulators
+│   ├── live/                      # Standalone live-integration scripts (opt-in)
+│   │   ├── live_enterprise.py            # Enterprise integration tests (175 cases)
+│   │   ├── live_integration_deploy.py    # Deployment verification tests
+│   │   ├── live_directory_isolation.py   # Security boundary tests
+│   │   └── live_simulators.py            # Live protocol tests vs simulators
+│   └── e2e-panels.sh              # End-to-end panel test runner
 │
-├── docs/testing/                   # Test plan + dated test reports
-├── docs/adr/                       # Architecture decision records
+├── .github/workflows/             # CI (ci.yml) + release (release.yml)
+├── docs/
+│   ├── adr/                       # Architecture decision records
+│   ├── agents/                    # Agent guides (issue tracker, triage, domain)
+│   ├── plans/                     # Design/implementation plans
+│   ├── testing/                   # Test plan + dated test reports
+│   └── screenshots/              # Documentation screenshots
+├── hacs.json                       # HACS metadata
+├── pytest.ini                      # Test config (testpaths = tests/services)
+├── ruff.toml                       # Lint config
+├── requirements-test.txt           # Test dependencies
+├── CLAUDE.md / CONTEXT.md          # Project + domain instructions for agents
 ├── README.md                       # English documentation (this file)
-├── README_zh-TW.md                 # Traditional Chinese documentation
-└── docs/
-    └── screenshots/               # Documentation screenshots
+└── README_zh-TW.md                 # Traditional Chinese documentation
 ```
 
 ---
 
 ## Changelog
+
+### v2.2.0 (2026-08)
+
+- **Feature:** Service layer — each integration now exposes `list_files`, `load_file`, `save_file`, and `apply` as Home Assistant services, callable from automations, scripts, and Developer Tools
+- **Security:** Services are admin-gated and sandboxed to their protocol's config subdirectory (see ADR-0002)
+- **Testing:** Hermetic service test suite — admin gating, sandbox boundaries, file operations, and apply/reload semantics
+- **Testing:** Live protocol tests against KNX, DMX, and Modbus simulators
+- **Internal:** GitHub Actions CI — ruff lint, hassfest validation, Python tests, frontend build
+- **Docs:** Agent guides, project instructions, and architecture decision records (ADR-0001 path handling, ADR-0002 apply/reload semantics)
+
+### v2.1.1 (2026-06)
+
+- **Feature:** Panels rebuilt as LitElement `panel_custom` Web Components, replacing the previous iframe embedding
+- **Fix:** Black screen on panel load
+- **Fix:** `module_url` isolation preventing JavaScript scope collisions when multiple panels are loaded
+- **UI:** Sidebar title rendering reworked with a 3-phase approach
+- **Branding:** WOOWTECH icon and logo assets for all three integrations
 
 ### v2.1.0 (2026-04)
 
