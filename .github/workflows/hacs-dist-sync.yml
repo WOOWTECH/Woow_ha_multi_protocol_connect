@@ -1,0 +1,111 @@
+name: HACS dist sync
+
+# 把 monorepo 內各整合同步到獨立的 HACS 發佈 repo（一整合一 repo，HACS 硬性要求）。
+# 對應表在 repo 根目錄 hacs-dist.json。發佈 repo 只是鏡像，請勿直接編輯。
+# 版本：以各整合 manifest.json 的 version 為準；version 變更時自動在發佈 repo 打 tag + Release，
+#       HACS 端才會看到新版本。只改 code 不 bump version → 只更新 main，HACS 使用者不會收到更新。
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: hacs-dist-sync
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      targets: ${{ steps.load.outputs.targets }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: load
+        run: echo "targets=$(jq -c '.targets' hacs-dist.json)" >> "$GITHUB_OUTPUT"
+
+  sync:
+    needs: matrix
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target: ${{ fromJson(needs.matrix.outputs.targets) }}
+    env:
+      GH_TOKEN: ${{ secrets.HACS_DIST_TOKEN }}
+      SRC_PATH: ${{ matrix.target.src }}
+      DOMAIN: ${{ matrix.target.domain }}
+      DIST_REPO: ${{ matrix.target.repo }}
+      DIST_NAME: ${{ matrix.target.name }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: src
+
+      - name: Stage dist tree
+        run: |
+          set -euo pipefail
+          test -n "$GH_TOKEN" || { echo "::error::secret HACS_DIST_TOKEN 未設定"; exit 1; }
+          test -f "src/$SRC_PATH/manifest.json" || { echo "::error::$SRC_PATH/manifest.json 不存在"; exit 1; }
+          mkdir -p "stage/custom_components/$DOMAIN"
+          rsync -a --delete \
+            --exclude '__pycache__' --exclude '*.pyc' --exclude 'node_modules' --exclude '.DS_Store' \
+            "src/$SRC_PATH/" "stage/custom_components/$DOMAIN/"
+          VERSION=$(jq -r '.version' "src/$SRC_PATH/manifest.json")
+          MANIFEST_DOMAIN=$(jq -r '.domain' "src/$SRC_PATH/manifest.json")
+          [ "$MANIFEST_DOMAIN" = "$DOMAIN" ] || { echo "::error::manifest domain=$MANIFEST_DOMAIN 與對應表 domain=$DOMAIN 不符"; exit 1; }
+          MINHA=$(jq -r '.homeassistant // empty' src/hacs.json 2>/dev/null || true)
+          jq -n --arg name "$DIST_NAME" --arg minha "$MINHA" \
+            '{name:$name, render_readme:true} + (if $minha != "" then {homeassistant:$minha} else {} end)' \
+            > stage/hacs.json
+          [ -f src/LICENSE ] && cp src/LICENSE stage/LICENSE || true
+          DEPS=$(jq -r '(.dependencies // []) | map(select(startswith("ha_") or startswith("woow_"))) | join(", ")' "src/$SRC_PATH/manifest.json")
+          {
+            echo "# $DIST_NAME"
+            echo
+            echo "> **This is an auto-generated HACS distribution repo.** Source of truth: [${GITHUB_REPOSITORY}](https://github.com/${GITHUB_REPOSITORY}) → \`$SRC_PATH\`."
+            echo "> Do not open PRs or edit files here — changes are overwritten on every sync."
+            echo
+            echo "- Domain: \`$DOMAIN\`"
+            echo "- Version: \`$VERSION\`"
+            echo "- Synced from commit: [\`${GITHUB_SHA::7}\`](https://github.com/${GITHUB_REPOSITORY}/commit/${GITHUB_SHA})"
+            if [ -n "$DEPS" ]; then echo "- Requires (install first via HACS): \`$DEPS\`"; fi
+            echo
+            echo "## Install via HACS"
+            echo
+            echo "HACS → ⋮ → Custom repositories → add \`https://github.com/$DIST_REPO\` (type: Integration) → Download → restart Home Assistant."
+            echo
+            echo "## Issues / docs"
+            echo
+            echo "See the source repo: https://github.com/${GITHUB_REPOSITORY}"
+          } > stage/README.md
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      - name: Push to dist repo
+        run: |
+          set -euo pipefail
+          git clone --quiet "https://x-access-token:${GH_TOKEN}@github.com/${DIST_REPO}.git" dist 2>&1 | sed 's#x-access-token:[^@]*@#***@#'
+          cd dist
+          git checkout -q -B main
+          find . -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+          cp -a ../stage/. .
+          git config user.name  "hacs-dist-sync[bot]"
+          git config user.email "hacs-dist-sync@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "no content changes"
+          else
+            git commit -q -m "sync ${GITHUB_REPOSITORY}@${GITHUB_SHA::7}: ${DOMAIN} v${VERSION}"
+            git push -q origin main
+          fi
+          if git ls-remote --tags origin "refs/tags/v${VERSION}" | grep -q .; then
+            echo "tag v${VERSION} already exists — skip release"
+          else
+            git tag "v${VERSION}"
+            git push -q origin "v${VERSION}"
+            gh release create "v${VERSION}" --repo "$DIST_REPO" --title "v${VERSION}" \
+              --notes "Synced from https://github.com/${GITHUB_REPOSITORY}/commit/${GITHUB_SHA} — changelog lives in the source repo."
+          fi

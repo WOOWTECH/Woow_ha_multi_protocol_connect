@@ -1,0 +1,23 @@
+{
+  "_comment": "HACS 一 repo 只能一個整合；此表驅動 .github/workflows/hacs-dist-sync.yml 把各整合同步到獨立發佈 repo。新增整合請在此加一列並先建立對應的空 repo。",
+  "targets": [
+    {
+      "src": "custom_components/woow_dmx",
+      "domain": "woow_dmx",
+      "repo": "WOOWTECH/hacs-woow_dmx",
+      "name": "Woow DMX / Art-Net"
+    },
+    {
+      "src": "custom_components/woow_knx",
+      "domain": "woow_knx",
+      "repo": "WOOWTECH/hacs-woow_knx",
+      "name": "Woow KNX"
+    },
+    {
+      "src": "custom_components/woow_modbus",
+      "domain": "woow_modbus",
+      "repo": "WOOWTECH/hacs-woow_modbus",
+      "name": "Woow Modbus"
+    }
+  ]
+}
