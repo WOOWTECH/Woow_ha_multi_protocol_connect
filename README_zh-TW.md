@@ -26,15 +26,15 @@
   <img src="https://img.shields.io/badge/Python-3.12+-blue?logo=python" alt="Python 3.12+"/>
   <img src="https://img.shields.io/badge/License-MIT-green" alt="License"/>
   <img src="https://img.shields.io/badge/協定-KNX%20%7C%20DMX%20%7C%20Modbus-orange" alt="Protocols"/>
-  <img src="https://img.shields.io/badge/測試-191%2F191%20(100%25)-brightgreen" alt="Tests"/>
-  <img src="https://img.shields.io/badge/版本-2.2.0-blue" alt="Version"/>
+  <img src="https://img.shields.io/badge/HACS-Custom-41BDF5?logo=homeassistantcommunitystore" alt="HACS Custom"/>
+  <img src="https://img.shields.io/badge/版本-3.0.0-blue" alt="Version"/>
 </p>
 
 ---
 
 ## 概述
 
-**Woow HA 多協定連接器** 是一套包含三個 Home Assistant 自定義元件的工具包，為最廣泛使用的建築自動化協定提供互動式、基於瀏覽器的 YAML 設定面板：**KNX**、**DMX (Art-Net/sACN)** 和 **Modbus**。每個面板都提供引導式設定體驗，內建 YAML 編輯器、即時 WebSocket 檔案管理，以及與 Home Assistant 的動態主題同步。
+**Woow 多協定連接器** 是單一個 Home Assistant 自定義整合（domain 為 `woow_multi_protocol`），為最廣泛使用的建築自動化協定提供互動式、基於瀏覽器的 YAML 設定面板：**KNX**、**DMX (Art-Net/sACN)** 和 **Modbus**。單一側邊欄面板以分頁形式呈現已啟用的協定，每個分頁都提供引導式設定體驗，內建 YAML 編輯器、即時 WebSocket 檔案管理，以及與 Home Assistant 的動態主題同步。顯示哪些協定由整合的 **選項（Options）** 流程控制。
 
 <p align="center">
   <img src="docs/screenshots/ha_sidebar_panels.png" alt="HA 側邊欄協定面板" width="720"/>
@@ -60,7 +60,7 @@
 - **三大協定面板** — KNX（建築自動化）、DMX/Art-Net（燈光控制）、Modbus（工業設備）— 每個都有協定專屬指引
 - **互動式 YAML 編輯器** — 瀏覽器內建編輯器，支援語法高亮、Tab 縮排、字體大小調整、鍵盤快捷鍵（Ctrl+S）
 - **WebSocket 檔案管理** — 透過 HA 原生 WebSocket 連線進行即時列表/讀取/儲存操作
-- **Service 服務層** — 每個整合提供 `list_files`、`load_file`、`save_file`、`apply` 四項 Home Assistant 服務（僅限管理員、各協定沙箱化）— 可從自動化、腳本與開發者工具呼叫
+- **Service 服務層** — 單一服務組（`list_files`、`load_file`、`save_file`、`apply`），每項都需帶入 `protocol` 欄位，以 Home Assistant 服務形式提供（僅限管理員、各協定沙箱化）— 可從自動化、腳本與開發者工具呼叫
 - **原生主題繼承** — 面板為 LitElement `panel_custom` Web Components，直接繼承 HA 的主題 CSS 變數（`--primary-color` 等）— 色彩與深/淺色模式即時跟隨 HA，無需 iframe 或輪詢
 - **深色/淺色模式** — 完整支援 HA 兩種主題模式，自動偵測切換
 - **當機恢復** — 未儲存的編輯內容快取於 `localStorage`，瀏覽器當機或意外關閉後可恢復
@@ -91,7 +91,7 @@
 
 ### WebSocket API
 
-每個元件透過 Home Assistant 暴露安全的 WebSocket API：
+本整合透過 Home Assistant 暴露安全的 WebSocket API：
 
 | 動作 | 說明 | 參數 |
 |------|------|------|
@@ -101,14 +101,16 @@
 
 ### Service API（服務）
 
-自 v2.2.0 起，相同的檔案操作也以 Home Assistant 服務形式提供（domain 為各整合，如 `woow_knx.*`），沙箱化於該協定的設定子目錄且僅限管理員（詳見 [ADR-0002](docs/adr/0002-apply-reload-semantics.md)）：
+相同的檔案操作也以 Home Assistant 服務形式提供，統一置於單一的 `woow_multi_protocol`
+domain 下。每次呼叫都需帶入 `protocol: knx | dmx | modbus` 欄位，並沙箱化於
+`<config>/woow_multi_protocol/<protocol>/` 且僅限管理員（詳見 [ADR-0002](docs/adr/0002-apply-reload-semantics.md)）：
 
 | 服務 | 說明 | 欄位 |
 |------|------|------|
-| `list_files` | 列出協定子目錄中的設定檔 | `ext`、`depth` |
-| `load_file` | 讀取 UTF-8 檔案（回傳 `content`、`path`） | `path` |
-| `save_file` | 原子寫入檔案（僅寫入） | `path`、`content` |
-| `apply` | 重載底層整合使已儲存設定生效；除非設定 `force_restart`，否則僅回報 `restart_required` 而不重啟 | `force_restart` |
+| `woow_multi_protocol.list_files` | 列出協定子目錄中的設定檔 | `protocol`、`ext`、`depth` |
+| `woow_multi_protocol.load_file` | 讀取 UTF-8 檔案（回傳 `content`、`path`） | `protocol`、`path` |
+| `woow_multi_protocol.save_file` | 原子寫入檔案（僅寫入） | `protocol`、`path`、`content` |
+| `woow_multi_protocol.apply` | 重載底層整合使已儲存設定生效；除非設定 `force_restart`，否則僅回報 `restart_required` 而不重啟 | `protocol`、`force_restart` |
 
 ---
 
@@ -121,22 +123,15 @@ graph TB
     subgraph "Home Assistant 核心"
         HA[Home Assistant<br/>2026.1+]
         WS[WebSocket API]
-        CF[Config Flow]
+        CF[Config Flow + 選項]
     end
 
-    subgraph "Woow 協定面板"
-        KNX["woow_knx<br/>KNX 設定指南<br/>🔌 建築自動化"]
-        DMX["woow_dmx<br/>DMX 設定指南<br/>💡 燈光控制"]
-        MOD["woow_modbus<br/>Modbus 設定指南<br/>🏭 工業設備"]
+    subgraph "woow_multi_protocol（單一整合）"
+        ENTRY["單例設定項目<br/>enable_knx / enable_dmx / enable_modbus"]
+        PANEL["單一 panel_custom 側邊欄面板<br/>woow-multi-protocol-panel.js<br/>🔌 KNX · 💡 DMX · 🏭 Modbus 分頁"]
     end
 
-    subgraph "前端（panel_custom Web Components）"
-        KNX_UI["KNX 面板<br/>woow-knx-panel.js"]
-        DMX_UI["DMX 面板<br/>woow-dmx-panel.js"]
-        MOD_UI["Modbus 面板<br/>woow-modbus-panel.js"]
-    end
-
-    subgraph "協定整合"
+    subgraph "底層整合"
         KNX_INT[HA KNX 整合]
         DMX_INT[ha-artnet-led<br/>HACS 整合]
         MOD_INT[HA Modbus 整合<br/>內建]
@@ -151,25 +146,15 @@ graph TB
     HA --> WS
     HA --> CF
 
-    CF --> KNX
-    CF --> DMX
-    CF --> MOD
+    CF --> ENTRY
+    ENTRY -->|已啟用協定 → 分頁| PANEL
 
-    KNX --> KNX_UI
-    DMX --> DMX_UI
-    MOD --> MOD_UI
+    PANEL <-->|WebSocket / 服務| WS
+    PANEL -.->|繼承主題 CSS 變數| HA
 
-    KNX_UI <-->|WebSocket| WS
-    DMX_UI <-->|WebSocket| WS
-    MOD_UI <-->|WebSocket| WS
-
-    KNX_UI -.->|繼承主題 CSS 變數| HA
-    DMX_UI -.->|繼承主題 CSS 變數| HA
-    MOD_UI -.->|繼承主題 CSS 變數| HA
-
-    KNX --> KNX_INT --> KNX_DEV
-    DMX --> DMX_INT --> DMX_DEV
-    MOD --> MOD_INT --> MOD_DEV
+    PANEL -->|產生 YAML 供其使用| KNX_INT --> KNX_DEV
+    PANEL -->|產生 YAML 供其使用| DMX_INT --> DMX_DEV
+    PANEL -->|產生 YAML 供其使用| MOD_INT --> MOD_DEV
 ```
 
 ### 主題繼承
@@ -182,7 +167,7 @@ flowchart LR
     WC --> S["樣式使用 var(--primary-color, …)<br/>var(--primary-background-color, …)<br/>var(--primary-text-color, …)"]
 ```
 
-> 面板 Web Components 由共用的 `custom_components/woow_panel_frontend/` 工作區（Lit + Rollup）建置，並部署至各元件的 `frontend/` 目錄。
+> 面板 Web Component 由倉庫根目錄的 `panel_frontend/` 工作區（Lit + Rollup）建置，並部署至整合的 `frontend/` 目錄。此工作區位於 `custom_components/` 之外，因此 HACS 只會封裝 `woow_multi_protocol` 資料夾。
 
 ### WebSocket 安全管線
 
@@ -208,47 +193,88 @@ flowchart LR
 
 ## 安裝說明
 
+Woow 多協定連接器是**單一**個 Home Assistant 整合（`woow_multi_protocol`），
+以 **HACS 自訂倉庫（custom repository）** 方式安裝。
+
 ### 前置需求
 
 - Home Assistant **2026.1.0** 或更新版本
+- 已安裝並設定好 [HACS](https://hacs.xyz)
 - HA 管理員存取權限
 - KNX：網路上有 KNX/IP Gateway
 - DMX：已透過 HACS 安裝 [ha-artnet-led](https://github.com/corneyl/ha-artnet-led)
 - Modbus：可存取的 Modbus TCP 或 RTU 裝置
 
-### 步驟 1：複製元件
+### 步驟 1：將自訂倉庫加入 HACS
 
-```bash
-# 複製倉庫
-git clone https://github.com/WOOWTECH/Woow_ha_multi_protocol_connect.git
+1. 在 Home Assistant 中開啟 **HACS**。
+2. 點擊右上角 **⋮** 選單 → **自訂倉庫（Custom repositories）**。
+3. 填入倉庫 URL 並選擇 **Integration（整合）** 類別：
+   - **倉庫：** `https://github.com/WOOWTECH/Woow_ha_multi_protocol_connect`
+   - **類別：** `Integration`
+4. 點擊 **新增（Add）**，「Woow Multi-Protocol Connect」即會出現在 HACS 中。
 
-# 將所需元件複製到 HA custom_components 目錄
-cp -r Woow_ha_multi_protocol_connect/custom_components/woow_knx /config/custom_components/
-cp -r Woow_ha_multi_protocol_connect/custom_components/woow_dmx /config/custom_components/
-cp -r Woow_ha_multi_protocol_connect/custom_components/woow_modbus /config/custom_components/
-```
+### 步驟 2：下載並重啟
 
-### 步驟 2：重啟 Home Assistant
-
-```bash
-ha core restart
-```
+1. 在 HACS 中開啟 **Woow Multi-Protocol Connect**，點擊 **下載（Download）**。
+2. 依提示 **重啟 Home Assistant**，使整合被載入。
 
 ### 步驟 3：新增整合
 
-1. 前往 **設定 > 裝置與服務 > 新增整合**
-2. 搜尋「Woow KNX Setup Guide」（或 DMX / Modbus）
-3. 點擊安裝 — 每個元件使用單例設定流程（每個協定一個實例）
-4. 面板將自動出現在 HA 側邊欄
+1. 前往 **設定 → 裝置與服務 → 新增整合**。
+2. 搜尋 **Woow Multi-Protocol Connect** 並選擇它。
+3. 點擊 **提交（Submit）** — 會建立單一、單例的設定項目（只會新增一個實例）。
+4. **Woow Multi-Protocol Connect** 面板會出現在 HA 側邊欄，並依已啟用的協定顯示分頁。
+
+### 步驟 4：選擇要顯示的協定（選項）
+
+面板**預設顯示全部三個協定**。若要隱藏用不到的協定：
+
+1. 前往 **設定 → 裝置與服務 → Woow Multi-Protocol Connect → 設定（Configure）**。
+2. 依需要切換 **Enable KNX**、**Enable DMX**、**Enable Modbus**。
+3. 儲存 — 設定項目會重載，面板分頁隨之重建。建議至少保留一個協定啟用，面板才有作用。
+
+這些切換同時也影響服務層：被停用的 `protocol` 無法從面板選取，但
+`<config>/woow_multi_protocol/<protocol>/` 下的沙箱目錄不會被更動。
+
+### 手動安裝（不使用 HACS）
+
+不想用 HACS？將單一整合資料夾複製到你的設定目錄：
+
+```bash
+git clone https://github.com/WOOWTECH/Woow_ha_multi_protocol_connect.git
+cp -r Woow_ha_multi_protocol_connect/custom_components/woow_multi_protocol /config/custom_components/
+# 接著重啟 Home Assistant，並依步驟 3 新增整合
+```
+
+### 從舊的 `woow_knx` / `woow_dmx` / `woow_modbus` 整合升級
+
+> **乾淨分手 — 無自動遷移。** 3.0.0 版將先前三個整合（`woow_knx`、`woow_dmx`、
+> `woow_modbus`）合併為這個單一的 `woow_multi_protocol` 整合。Home Assistant 無法
+> 跨 domain 遷移設定項目，因此舊的設定項目、服務（`woow_knx.*` 等）與沙箱路徑
+> **不會**沿用。這是刻意的行為，並以主版號升級為界。
+
+升級步驟：
+
+1. **備份**你曾透過舊面板編輯的 YAML — 它們位於 `<config>/woow_knx/`、
+   `<config>/woow_dmx/` 與 `<config>/woow_modbus/`。
+2. **移除**舊整合：在 **設定 → 裝置與服務** 中刪除其設定項目，然後移除
+   `custom_components/woow_knx`、`custom_components/woow_dmx` 與
+   `custom_components/woow_modbus` 資料夾（若你另外透過 HACS 安裝，則從 HACS 解除安裝）。
+3. **重啟** Home Assistant。
+4. 依上述步驟 1–3 **安裝** Woow 多協定連接器。
+5. 將你的 YAML **搬移**至新的各協定沙箱 `<config>/woow_multi_protocol/knx/`、
+   `.../dmx/` 與 `.../modbus/`，再以面板或 `woow_multi_protocol.*` 服務載入並套用。
 
 ### Docker / Podman 部署
 
+若採手動（非 HACS）安裝，將單一整合資料夾掛載進容器的 `custom_components`：
+
 ```bash
-# 將 custom_components 掛載到容器中
 podman run -d \
   --name homeassistant \
   -v /path/to/config:/config \
-  -v /path/to/Woow_ha_multi_protocol_connect/custom_components:/config/custom_components \
+  -v /path/to/Woow_ha_multi_protocol_connect/custom_components/woow_multi_protocol:/config/custom_components/woow_multi_protocol \
   -p 8123:8123 \
   ghcr.io/home-assistant/home-assistant:2026.4
 ```
@@ -355,7 +381,7 @@ Art-Net 和 sACN 燈光控制的步驟式設定 — 燈具類型定義、通道�
 
 ### 路徑穿越保護
 
-三個元件都實作了加固的 7 層路徑消毒管線：
+所有檔案操作都會經過加固的 7 層路徑消毒管線：
 
 ```
 1. 拒絕空位元組 (\x00)
@@ -375,7 +401,7 @@ Art-Net 和 sACN 燈光控制的步驟式設定 — 燈具類型定義、通道�
 | **後端僅限管理員** | 檔案編輯的 WebSocket 命令與服務皆需 HA 管理員；所有檔案系統存取僅限管理員 |
 | **原子寫入** | 檔案儲存為原子操作 — 當機時不會產生部分寫入 |
 | **WebSocket 認證** | 所有 API 呼叫透過 HA 原生 WebSocket 令牌認證 |
-| **目錄隔離** | 每個元件只在自己的設定目錄內讀寫 |
+| **目錄隔離** | 每個協定只在自己的 `<config>/woow_multi_protocol/<protocol>/` 沙箱內讀寫 |
 | **符號連結保護** | 解析真實路徑防止符號連結逃逸攻擊 |
 | **輸入驗證** | 所有使用者提供的路徑在檔案系統存取前驗證 |
 
@@ -423,9 +449,9 @@ Art-Net 和 sACN 燈光控制的步驟式設定 — 燈具類型定義、通道�
 ### 執行測試
 
 ```bash
-# Hermetic 服務層測試（無外部相依；此為 CI 執行的內容）
+# Hermetic 測試（無外部相依；此為 CI 執行的內容）
 pip install -r requirements-test.txt
-pytest                       # testpaths = tests/services（見 pytest.ini）
+pytest                       # testpaths = tests/services tests/config（見 pytest.ini）
 
 # 企業整合測試（獨立腳本；需要執行中的 HA）
 python tests/live/live_enterprise.py
@@ -442,29 +468,28 @@ node_modules/.bin/playwright test --config=playwright.config.ts
 
 ```
 Woow_ha_multi_protocol_connect/
-├── custom_components/              # HA 自定義元件包
-│   ├── woow_knx/                  # KNX 設定指南
-│   │   ├── __init__.py            # 元件 + WebSocket 處理器 + 路徑安全
-│   │   ├── config_flow.py         # 單例設定流程
-│   │   ├── const.py               # 常數
-│   │   ├── services.py            # 服務層（list/load/save/apply）
-│   │   ├── services.yaml          # 服務定義（開發者工具 UI）
-│   │   ├── manifest.json          # v2.2.0
-│   │   ├── strings.json           # 預設字串
-│   │   ├── brand/                 # WOOWTECH 圖示/Logo 資產
-│   │   ├── frontend/
-│   │   │   ├── woow-knx-panel.js  # LitElement 面板 Web Component
-│   │   │   └── sidebar-title.js   # 側邊欄標題渲染
-│   │   └── translations/
-│   │       ├── en.json            # 英文
-│   │       └── zh-Hant.json       # 繁體中文
-│   ├── woow_dmx/                  # DMX 設定指南（相同結構）
-│   ├── woow_modbus/              # Modbus 設定指南（相同結構）
-│   └── woow_panel_frontend/       # 共用面板建置工作區（Lit + Rollup）
-│       ├── package.json           # 建置工具與 lit 相依
-│       ├── rollup.config.js       # 打包器設定
-│       ├── scripts/deploy.js      # 將建置產物複製至各元件
-│       └── src/                   # 面板基底、各協定設定、樣式、i18n
+├── custom_components/              # HA 自定義元件包（僅一個）
+│   └── woow_multi_protocol/        # 合併後的單一整合
+│       ├── __init__.py            # 設定 + WebSocket 處理器 + 路徑安全
+│       ├── config_flow.py         # 單例設定流程 + 各協定選項
+│       ├── const.py               # domain、協定清單、啟用切換輔助
+│       ├── services.py            # 服務層（list/load/save/apply，以 protocol 參數化）
+│       ├── services.yaml          # 服務定義（開發者工具 UI）
+│       ├── manifest.json          # v3.0.0
+│       ├── strings.json           # 設定 + 選項字串
+│       ├── brand/                 # WOOWTECH 圖示/Logo 資產（單一組）
+│       ├── frontend/
+│       │   ├── woow-multi-protocol-panel.js  # LitElement 分頁面板打包
+│       │   └── sidebar-title.js   # 側邊欄標題渲染
+│       └── translations/
+│           ├── en.json            # 英文
+│           └── zh-Hant.json       # 繁體中文
+│
+├── panel_frontend/                 # 面板建置工作區（Lit + Rollup），位於倉庫根目錄
+│   ├── package.json               # 建置工具與 lit 相依
+│   ├── rollup.config.js           # 打包器設定
+│   ├── scripts/deploy.js          # 將建置產物複製進整合
+│   └── src/                        # 分頁外殼、各協定設定、樣式、i18n
 │
 ├── config_samples/                 # 生產就緒 YAML 範例
 │   ├── knx/                       # KNX 設定（3 層辦公大樓）
@@ -484,12 +509,17 @@ Woow_ha_multi_protocol_connect/
 │   │   ├── test_apply_semantics.py      # apply / reload / restart 行為
 │   │   ├── test_file_operations.py      # list/load/save 操作
 │   │   └── test_sandbox_boundary.py     # 各協定沙箱隔離
+│   ├── config/                    # 設定/初始化接縫 hermetic 測試（CI 執行）
+│   │   ├── conftest.py
+│   │   ├── test_config_flow.py          # 單例設定流程
+│   │   ├── test_options_flow.py         # 各協定啟用切換
+│   │   └── test_panel_registration.py   # 面板註冊
 │   ├── theme-sync/                # Playwright 瀏覽器自動化測試
 │   │   ├── playwright.config.ts   # 測試設定
 │   │   ├── helpers.ts             # 共用測試工具
 │   │   └── theme-sync.spec.ts     # 5 組 16 個測試案例
 │   ├── live/                      # 獨立即時整合腳本（選用）
-│   │   ├── live_enterprise.py            # 企業整合測試（175 個案例）
+│   │   ├── live_enterprise.py            # 企業整合測試
 │   │   ├── live_integration_deploy.py    # 部署驗證測試
 │   │   ├── live_directory_isolation.py   # 安全邊界測試
 │   │   └── live_simulators.py            # 模擬器即時協定測試
@@ -503,7 +533,7 @@ Woow_ha_multi_protocol_connect/
 │   ├── testing/                   # 測試計畫＋日期化測試報告
 │   └── screenshots/              # 文件截圖
 ├── hacs.json                       # HACS 中繼資料
-├── pytest.ini                      # 測試設定（testpaths = tests/services）
+├── pytest.ini                      # 測試設定（testpaths = tests/services tests/config）
 ├── ruff.toml                       # Lint 設定
 ├── requirements-test.txt           # 測試相依套件
 ├── CLAUDE.md / CONTEXT.md          # 給 agent 的專案與領域說明
@@ -514,6 +544,27 @@ Woow_ha_multi_protocol_connect/
 ---
 
 ## 版本紀錄
+
+### v3.0.0 (2026-08) — 單一 HACS 整合
+
+> **重大變更。** 三個獨立整合（`woow_knx`、`woow_dmx`、`woow_modbus`）合併為單一
+> 整合 `woow_multi_protocol`。無自動遷移 — 請見[升級說明](#從舊的-woow_knx--woow_dmx--woow_modbus-整合升級)。
+
+- **合併：** 單一整合、單一 domain（`woow_multi_protocol`）、單一單例設定項目，以及
+  一個以協定分頁的側邊欄面板（詳見 [ADR-0003](docs/adr/0003-merge-into-single-hacs-integration.md)）
+- **HACS：** 倉庫現為合規的 HACS **自訂倉庫** — `custom_components/` 下僅一個資料夾；
+  Lit/Rollup 建置工作區已移至倉庫根目錄的 `panel_frontend/`
+- **選項流程：** 各協定的啟用切換（`enable_knx` / `enable_dmx` / `enable_modbus`，
+  皆預設開啟）；儲存後會重載設定項目並重建面板分頁
+- **服務：** 單一服務組 — `woow_multi_protocol.{list_files, load_file, save_file,
+  apply}` — 每項都需帶入 `protocol` 欄位，僅限管理員並沙箱化於
+  `<config>/woow_multi_protocol/<protocol>/`
+- **中繼資料：** `manifest.json` → 名稱「Woow Multi-Protocol Connect」、`version 3.0.0`、
+  `iot_class: calculated`、`documentation`/`issue_tracker` 指向本倉庫，單一組 `brand/`
+  圖示 + Logo；`hacs.json` 定案（無 `zip_release`）
+- **保留安全與 apply 語意：** 7 層路徑防護（[ADR-0001](docs/adr/0001-reject-dotdot-path-components.md)）
+  與避免重啟的 `apply` 契約（[ADR-0002](docs/adr/0002-apply-reload-semantics.md)）
+  現改以 `protocol` 為鍵，而非 domain
 
 ### v2.2.0 (2026-08)
 

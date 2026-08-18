@@ -26,15 +26,15 @@
   <img src="https://img.shields.io/badge/Python-3.12+-blue?logo=python" alt="Python 3.12+"/>
   <img src="https://img.shields.io/badge/License-MIT-green" alt="License"/>
   <img src="https://img.shields.io/badge/Protocols-KNX%20%7C%20DMX%20%7C%20Modbus-orange" alt="Protocols"/>
-  <img src="https://img.shields.io/badge/Tests-191%2F191%20(100%25)-brightgreen" alt="Tests"/>
-  <img src="https://img.shields.io/badge/Version-2.2.0-blue" alt="Version"/>
+  <img src="https://img.shields.io/badge/HACS-Custom-41BDF5?logo=homeassistantcommunitystore" alt="HACS Custom"/>
+  <img src="https://img.shields.io/badge/Version-3.0.0-blue" alt="Version"/>
 </p>
 
 ---
 
 ## Overview
 
-**Woow HA Multi-Protocol Connect** is a suite of three Home Assistant custom components that provide interactive, browser-based YAML configuration panels for the most widely used building automation protocols: **KNX**, **DMX (Art-Net/sACN)**, and **Modbus**. Each panel delivers a guided setup experience with a built-in YAML editor, real-time WebSocket file management, and dynamic theme synchronization with Home Assistant.
+**Woow Multi-Protocol Connect** is a single Home Assistant custom integration (domain `woow_multi_protocol`) that provides interactive, browser-based YAML configuration panels for the most widely used building automation protocols: **KNX**, **DMX (Art-Net/sACN)**, and **Modbus**. One sidebar panel presents the enabled protocols as tabs, each delivering a guided setup experience with a built-in YAML editor, real-time WebSocket file management, and dynamic theme synchronization with Home Assistant. Which protocols appear is controlled from the integration's **Options** flow.
 
 <p align="center">
   <img src="docs/screenshots/ha_sidebar_panels.png" alt="HA Sidebar with Protocol Panels" width="720"/>
@@ -60,7 +60,7 @@
 - **Three Protocol Panels** — KNX (building automation), DMX/Art-Net (lighting), Modbus (industrial) — each with protocol-specific guidance
 - **Interactive YAML Editor** — Browser-based editor with syntax highlighting, tab support, font size control, and keyboard shortcuts (Ctrl+S)
 - **WebSocket File Management** — Real-time list/load/save operations via HA's native WebSocket connection
-- **Service Layer** — Each integration exposes `list_files`, `load_file`, `save_file`, and `apply` as Home Assistant services (admin-gated, sandboxed per protocol) — callable from automations, scripts, and Developer Tools
+- **Service Layer** — A single service set (`list_files`, `load_file`, `save_file`, `apply`), each taking a required `protocol` field, exposed as Home Assistant services (admin-gated, sandboxed per protocol) — callable from automations, scripts, and Developer Tools
 - **Native Theme Inheritance** — Panels are LitElement `panel_custom` Web Components that inherit HA's theme CSS variables (`--primary-color`, etc.) directly — colors and dark/light mode follow HA instantly, no iframe or polling
 - **Dark/Light Mode** — Full support for both HA themes with automatic detection
 - **Crash Recovery** — Unsaved edits cached in `localStorage` — recoverable after browser crash or accidental close
@@ -91,7 +91,7 @@
 
 ### WebSocket API
 
-Each component exposes a secure WebSocket API through Home Assistant:
+The integration exposes a secure WebSocket API through Home Assistant:
 
 | Action | Description | Parameters |
 |--------|-------------|------------|
@@ -101,14 +101,17 @@ Each component exposes a secure WebSocket API through Home Assistant:
 
 ### Service API
 
-Since v2.2.0, the same file operations are also exposed as Home Assistant services (domain = the integration, e.g. `woow_knx.*`), sandboxed to that protocol's config subdirectory and admin-gated (see [ADR-0002](docs/adr/0002-apply-reload-semantics.md)):
+The same file operations are exposed as Home Assistant services under the single
+`woow_multi_protocol` domain. Every call takes a required `protocol: knx | dmx | modbus`
+field and is sandboxed to `<config>/woow_multi_protocol/<protocol>/`, admin-gated
+(see [ADR-0002](docs/adr/0002-apply-reload-semantics.md)):
 
 | Service | Description | Fields |
 |---------|-------------|--------|
-| `list_files` | List config files in the protocol subdirectory | `ext`, `depth` |
-| `load_file` | Read a UTF-8 file (returns `content`, `path`) | `path` |
-| `save_file` | Atomically write a file (write only) | `path`, `content` |
-| `apply` | Reload the underlying integration so saved config takes effect; reports `restart_required` without restarting unless `force_restart` is set | `force_restart` |
+| `woow_multi_protocol.list_files` | List config files in the protocol subdirectory | `protocol`, `ext`, `depth` |
+| `woow_multi_protocol.load_file` | Read a UTF-8 file (returns `content`, `path`) | `protocol`, `path` |
+| `woow_multi_protocol.save_file` | Atomically write a file (write only) | `protocol`, `path`, `content` |
+| `woow_multi_protocol.apply` | Reload the underlying integration so saved config takes effect; reports `restart_required` without restarting unless `force_restart` is set | `protocol`, `force_restart` |
 
 ---
 
@@ -121,22 +124,15 @@ graph TB
     subgraph "Home Assistant Core"
         HA[Home Assistant<br/>2026.1+]
         WS[WebSocket API]
-        CF[Config Flow]
+        CF[Config Flow + Options]
     end
 
-    subgraph "Woow Protocol Panels"
-        KNX["woow_knx<br/>KNX Setup Guide<br/>🔌 Building Automation"]
-        DMX["woow_dmx<br/>DMX Setup Guide<br/>💡 Lighting Control"]
-        MOD["woow_modbus<br/>Modbus Setup Guide<br/>🏭 Industrial Equipment"]
+    subgraph "woow_multi_protocol (single integration)"
+        ENTRY["Singleton config entry<br/>enable_knx / enable_dmx / enable_modbus"]
+        PANEL["One panel_custom sidebar panel<br/>woow-multi-protocol-panel.js<br/>🔌 KNX · 💡 DMX · 🏭 Modbus tabs"]
     end
 
-    subgraph "Frontend (panel_custom Web Components)"
-        KNX_UI["KNX Panel<br/>woow-knx-panel.js"]
-        DMX_UI["DMX Panel<br/>woow-dmx-panel.js"]
-        MOD_UI["Modbus Panel<br/>woow-modbus-panel.js"]
-    end
-
-    subgraph "Protocol Integrations"
+    subgraph "Underlying Integrations"
         KNX_INT[HA KNX Integration]
         DMX_INT[ha-artnet-led<br/>HACS Integration]
         MOD_INT[HA Modbus Integration<br/>Built-in]
@@ -151,40 +147,30 @@ graph TB
     HA --> WS
     HA --> CF
 
-    CF --> KNX
-    CF --> DMX
-    CF --> MOD
+    CF --> ENTRY
+    ENTRY -->|enabled protocols → tabs| PANEL
 
-    KNX --> KNX_UI
-    DMX --> DMX_UI
-    MOD --> MOD_UI
+    PANEL <-->|WebSocket / services| WS
+    PANEL -.->|Inherits theme CSS vars| HA
 
-    KNX_UI <-->|WebSocket| WS
-    DMX_UI <-->|WebSocket| WS
-    MOD_UI <-->|WebSocket| WS
-
-    KNX_UI -.->|Inherits theme CSS vars| HA
-    DMX_UI -.->|Inherits theme CSS vars| HA
-    MOD_UI -.->|Inherits theme CSS vars| HA
-
-    KNX --> KNX_INT --> KNX_DEV
-    DMX --> DMX_INT --> DMX_DEV
-    MOD --> MOD_INT --> MOD_DEV
+    PANEL -->|authors YAML for| KNX_INT --> KNX_DEV
+    PANEL -->|authors YAML for| DMX_INT --> DMX_DEV
+    PANEL -->|authors YAML for| MOD_INT --> MOD_DEV
 ```
 
 ### Component Architecture
 
 ```mermaid
 graph LR
-    subgraph "Each Custom Component"
+    subgraph "woow_multi_protocol/ (single integration)"
         direction TB
-        INIT["__init__.py<br/>Component Setup<br/>WebSocket Handler<br/>Path Security"]
-        FLOW["config_flow.py<br/>Singleton Config Entry<br/>Panel Registration"]
-        CONST["const.py<br/>Domain & Constants"]
-        SERVICES["services.py + services.yaml<br/>list/load/save/apply<br/>Admin-gated & Sandboxed"]
-        PANEL["frontend/woow-*-panel.js<br/>LitElement Web Component<br/>YAML Editor + sidebar-title.js"]
+        INIT["__init__.py<br/>Setup<br/>WebSocket Handler<br/>Path Security"]
+        FLOW["config_flow.py<br/>Singleton Config Entry<br/>Per-protocol Options + Panel Registration"]
+        CONST["const.py<br/>Domain, Protocols, Enable toggles"]
+        SERVICES["services.py + services.yaml<br/>list/load/save/apply (protocol-keyed)<br/>Admin-gated & Sandboxed"]
+        PANEL["frontend/woow-multi-protocol-panel.js<br/>LitElement tabbed Web Component<br/>YAML Editor + sidebar-title.js"]
         I18N["translations/<br/>en.json + zh-Hant.json"]
-        MANIFEST["manifest.json<br/>Version 2.2.0"]
+        MANIFEST["manifest.json<br/>Version 3.0.0"]
     end
 
     FLOW --> INIT
@@ -195,7 +181,7 @@ graph LR
     FLOW --> MANIFEST
 ```
 
-> Panel Web Components are built from the shared `custom_components/woow_panel_frontend/` workspace (Lit + Rollup) and deployed into each component's `frontend/` directory.
+> The panel Web Component is built from the repo-root `panel_frontend/` workspace (Lit + Rollup) and deployed into the integration's `frontend/` directory. The workspace lives outside `custom_components/`, so HACS ships only the `woow_multi_protocol` folder.
 
 ### Theme Inheritance
 
@@ -231,48 +217,98 @@ flowchart LR
 
 ## Installation
 
+Woow Multi-Protocol Connect ships as **one** Home Assistant integration
+(`woow_multi_protocol`) and installs as a **HACS custom repository**.
+
 ### Prerequisites
 
 - Home Assistant **2026.1.0** or later
+- [HACS](https://hacs.xyz) installed and set up
 - Admin access to your HA instance
 - For KNX: KNX/IP Gateway on the network
 - For DMX: [ha-artnet-led](https://github.com/corneyl/ha-artnet-led) installed via HACS
 - For Modbus: Modbus TCP or RTU devices accessible
 
-### Step 1: Copy Components
+### Step 1: Add the custom repository to HACS
+
+1. In Home Assistant, open **HACS**.
+2. Click the **⋮** menu (top-right) → **Custom repositories**.
+3. Add the repository URL and choose the **Integration** category:
+   - **Repository:** `https://github.com/WOOWTECH/Woow_ha_multi_protocol_connect`
+   - **Category:** `Integration`
+4. Click **Add**. "Woow Multi-Protocol Connect" now appears in HACS.
+
+### Step 2: Download and restart
+
+1. Open **Woow Multi-Protocol Connect** in HACS and click **Download**.
+2. **Restart Home Assistant** when prompted so the integration is loaded.
+
+### Step 3: Add the integration
+
+1. Navigate to **Settings → Devices & Services → Add Integration**.
+2. Search for **Woow Multi-Protocol Connect** and select it.
+3. Click **Submit** — a single, singleton config entry is created (only one
+   instance is ever added).
+4. The **Woow Multi-Protocol Connect** panel appears in your HA sidebar with a tab
+   per enabled protocol.
+
+### Step 4: Choose which protocols to show (Options)
+
+The panel shows **all three protocols by default**. To hide the ones you don't
+use:
+
+1. Go to **Settings → Devices & Services → Woow Multi-Protocol Connect → Configure**.
+2. Toggle **Enable KNX**, **Enable DMX**, and **Enable Modbus** as needed.
+3. Save — the entry reloads and the panel's tabs are rebuilt to match. At least
+   one protocol should stay enabled for the panel to be useful.
+
+The same toggles gate the service layer: a `protocol` you disable is no longer
+selectable from the panel, though the sandbox directory under
+`<config>/woow_multi_protocol/<protocol>/` is left untouched.
+
+### Manual install (without HACS)
+
+Prefer not to use HACS? Copy the single integration folder into your config:
 
 ```bash
-# Clone the repository
 git clone https://github.com/WOOWTECH/Woow_ha_multi_protocol_connect.git
-
-# Copy desired components to your HA custom_components directory
-cp -r Woow_ha_multi_protocol_connect/custom_components/woow_knx /config/custom_components/
-cp -r Woow_ha_multi_protocol_connect/custom_components/woow_dmx /config/custom_components/
-cp -r Woow_ha_multi_protocol_connect/custom_components/woow_modbus /config/custom_components/
+cp -r Woow_ha_multi_protocol_connect/custom_components/woow_multi_protocol /config/custom_components/
+# then restart Home Assistant and add the integration as in Step 3
 ```
 
-### Step 2: Restart Home Assistant
+### Upgrading from the old `woow_knx` / `woow_dmx` / `woow_modbus` integrations
+
+> **Clean break — no automatic migration.** Version 3.0.0 merges the three former
+> integrations (`woow_knx`, `woow_dmx`, `woow_modbus`) into this single
+> `woow_multi_protocol` integration. Home Assistant cannot migrate config entries
+> across domains, so the old entries, services (`woow_knx.*`, …), and sandbox
+> paths do **not** carry over. This is intentional and gated behind the major
+> version bump.
+
+To upgrade:
+
+1. **Back up** any YAML you edited through the old panels — it lives under
+   `<config>/woow_knx/`, `<config>/woow_dmx/`, and `<config>/woow_modbus/`.
+2. **Remove** the old integrations: delete their entries in **Settings → Devices &
+   Services**, then remove the `custom_components/woow_knx`,
+   `custom_components/woow_dmx`, and `custom_components/woow_modbus` folders (or
+   uninstall them from HACS if you added them separately).
+3. **Restart** Home Assistant.
+4. **Install** Woow Multi-Protocol Connect (Steps 1–3 above).
+5. **Move your YAML** into the new per-protocol sandboxes at
+   `<config>/woow_multi_protocol/knx/`, `.../dmx/`, and `.../modbus/`, then use the
+   panel or the `woow_multi_protocol.*` services to load and apply it.
+
+### Docker / Podman deployment
+
+For a manual (non-HACS) install, mount the single integration folder into the
+container's `custom_components`:
 
 ```bash
-# Restart to pick up new components
-ha core restart
-```
-
-### Step 3: Add Integrations
-
-1. Navigate to **Settings > Devices & Services > Add Integration**
-2. Search for "Woow KNX Setup Guide" (or DMX / Modbus)
-3. Click to install — each component uses a singleton config flow (one instance per protocol)
-4. The panel will appear in your HA sidebar automatically
-
-### Docker / Podman Deployment
-
-```bash
-# Mount custom_components into your container
 podman run -d \
   --name homeassistant \
   -v /path/to/config:/config \
-  -v /path/to/Woow_ha_multi_protocol_connect/custom_components:/config/custom_components \
+  -v /path/to/Woow_ha_multi_protocol_connect/custom_components/woow_multi_protocol:/config/custom_components/woow_multi_protocol \
   -p 8123:8123 \
   ghcr.io/home-assistant/home-assistant:2026.4
 ```
@@ -398,7 +434,7 @@ Each panel's YAML editor supports:
 
 ### Path Traversal Protection
 
-All three components implement a hardened 7-layer path sanitization pipeline:
+Every file operation runs through a hardened 7-layer path sanitization pipeline:
 
 ```
 1. Reject null bytes (\x00)
@@ -418,7 +454,7 @@ All three components implement a hardened 7-layer path sanitization pipeline:
 | **Admin-Gated Backend** | The file-editing WebSocket commands and services require an HA administrator; all filesystem access is admin-only |
 | **Atomic Writes** | File saves are atomic — no partial writes on crash |
 | **WebSocket Auth** | All API calls authenticated through HA's native WebSocket token |
-| **Directory Isolation** | Each component reads/writes only within its own config directory |
+| **Directory Isolation** | Each protocol reads/writes only within its own `<config>/woow_multi_protocol/<protocol>/` sandbox |
 | **Symlink Protection** | Resolved real paths prevent symlink escape attacks |
 | **Input Validation** | All user-supplied paths validated before filesystem access |
 
@@ -487,9 +523,9 @@ This project has undergone comprehensive enterprise-grade testing. Tests fall in
 ### Running Tests
 
 ```bash
-# Hermetic service-layer tests (no external dependencies; this is what CI runs)
+# Hermetic tests (no external dependencies; this is what CI runs)
 pip install -r requirements-test.txt
-pytest                       # testpaths = tests/services (see pytest.ini)
+pytest                       # testpaths = tests/services tests/config (see pytest.ini)
 
 # Enterprise integration tests (standalone; needs a live HA)
 python tests/live/live_enterprise.py
@@ -522,29 +558,28 @@ python simulators/modbus_simulator.py
 
 ```
 Woow_ha_multi_protocol_connect/
-├── custom_components/              # HA custom component packages
-│   ├── woow_knx/                  # KNX Setup Guide
-│   │   ├── __init__.py            # Component + WebSocket handler + path security
-│   │   ├── config_flow.py         # Singleton config flow
-│   │   ├── const.py               # Constants
-│   │   ├── services.py            # Service layer (list/load/save/apply)
-│   │   ├── services.yaml          # Service definitions (Developer Tools UI)
-│   │   ├── manifest.json          # v2.2.0
-│   │   ├── strings.json           # Default strings
-│   │   ├── brand/                 # WOOWTECH icon/logo assets
-│   │   ├── frontend/
-│   │   │   ├── woow-knx-panel.js  # LitElement panel Web Component
-│   │   │   └── sidebar-title.js   # Sidebar title rendering
-│   │   └── translations/
-│   │       ├── en.json            # English
-│   │       └── zh-Hant.json       # Traditional Chinese
-│   ├── woow_dmx/                  # DMX Setup Guide (same structure)
-│   ├── woow_modbus/              # Modbus Setup Guide (same structure)
-│   └── woow_panel_frontend/       # Shared panel build workspace (Lit + Rollup)
-│       ├── package.json           # Build tooling & lit dependency
-│       ├── rollup.config.js       # Bundler config
-│       ├── scripts/deploy.js      # Copies built bundles into each component
-│       └── src/                   # Panel base, per-protocol config, styles, i18n
+├── custom_components/              # HA custom component packages (exactly one)
+│   └── woow_multi_protocol/        # The single merged integration
+│       ├── __init__.py            # Setup + WebSocket handler + path security
+│       ├── config_flow.py         # Singleton config flow + per-protocol Options
+│       ├── const.py               # Domain, protocols, enable-toggle helpers
+│       ├── services.py            # Service layer (list/load/save/apply, protocol-keyed)
+│       ├── services.yaml          # Service definitions (Developer Tools UI)
+│       ├── manifest.json          # v3.0.0
+│       ├── strings.json           # Config + Options strings
+│       ├── brand/                 # WOOWTECH icon/logo assets (one set)
+│       ├── frontend/
+│       │   ├── woow-multi-protocol-panel.js  # LitElement tabbed panel bundle
+│       │   └── sidebar-title.js   # Sidebar title rendering
+│       └── translations/
+│           ├── en.json            # English
+│           └── zh-Hant.json       # Traditional Chinese
+│
+├── panel_frontend/                 # Panel build workspace (Lit + Rollup), repo-root
+│   ├── package.json               # Build tooling & lit dependency
+│   ├── rollup.config.js           # Bundler config
+│   ├── scripts/deploy.js          # Copies the built bundle into the integration
+│   └── src/                        # Tabbed shell, per-protocol config, styles, i18n
 │
 ├── config_samples/                 # Production-ready YAML examples
 │   ├── knx/                       # KNX configs (3-story office)
@@ -564,12 +599,17 @@ Woow_ha_multi_protocol_connect/
 │   │   ├── test_apply_semantics.py      # apply / reload / restart behaviour
 │   │   ├── test_file_operations.py      # list/load/save operations
 │   │   └── test_sandbox_boundary.py     # Per-protocol sandbox isolation
+│   ├── config/                    # Hermetic config/setup-seam tests (run in CI)
+│   │   ├── conftest.py
+│   │   ├── test_config_flow.py          # Singleton config flow
+│   │   ├── test_options_flow.py         # Per-protocol enable toggles
+│   │   └── test_panel_registration.py   # Panel registration
 │   ├── theme-sync/                # Playwright browser automation tests
 │   │   ├── playwright.config.ts   # Test configuration
 │   │   ├── helpers.ts             # Shared test utilities
 │   │   └── theme-sync.spec.ts     # 16 test cases across 5 groups
 │   ├── live/                      # Standalone live-integration scripts (opt-in)
-│   │   ├── live_enterprise.py            # Enterprise integration tests (175 cases)
+│   │   ├── live_enterprise.py            # Enterprise integration tests
 │   │   ├── live_integration_deploy.py    # Deployment verification tests
 │   │   ├── live_directory_isolation.py   # Security boundary tests
 │   │   └── live_simulators.py            # Live protocol tests vs simulators
@@ -583,7 +623,7 @@ Woow_ha_multi_protocol_connect/
 │   ├── testing/                   # Test plan + dated test reports
 │   └── screenshots/              # Documentation screenshots
 ├── hacs.json                       # HACS metadata
-├── pytest.ini                      # Test config (testpaths = tests/services)
+├── pytest.ini                      # Test config (testpaths = tests/services tests/config)
 ├── ruff.toml                       # Lint config
 ├── requirements-test.txt           # Test dependencies
 ├── CLAUDE.md / CONTEXT.md          # Project + domain instructions for agents
@@ -594,6 +634,29 @@ Woow_ha_multi_protocol_connect/
 ---
 
 ## Changelog
+
+### v3.0.0 (2026-08) — Single HACS integration
+
+> **Breaking change.** The three separate integrations (`woow_knx`, `woow_dmx`,
+> `woow_modbus`) are merged into one integration, `woow_multi_protocol`. There is
+> no automatic migration — see the [upgrade note](#upgrading-from-the-old-woow_knx--woow_dmx--woow_modbus-integrations).
+
+- **Merge:** One integration, one domain (`woow_multi_protocol`), one singleton
+  config entry, and one sidebar panel with a tab per protocol (see [ADR-0003](docs/adr/0003-merge-into-single-hacs-integration.md))
+- **HACS:** The repository is now a valid HACS **custom repository** — exactly one
+  folder under `custom_components/`; the Lit/Rollup build workspace moved to the
+  repo-root `panel_frontend/`
+- **Options flow:** Per-protocol enable toggles (`enable_knx` / `enable_dmx` /
+  `enable_modbus`, all default on); saving reloads the entry and rebuilds the panel tabs
+- **Services:** A single service set — `woow_multi_protocol.{list_files, load_file,
+  save_file, apply}` — each taking a required `protocol` field, admin-gated and
+  sandboxed to `<config>/woow_multi_protocol/<protocol>/`
+- **Metadata:** `manifest.json` → name "Woow Multi-Protocol Connect", `version 3.0.0`,
+  `iot_class: calculated`, `documentation`/`issue_tracker` pointed at this repo, a
+  single `brand/` icon + logo; `hacs.json` finalized (no `zip_release`)
+- **Security & apply semantics preserved:** the 7-layer path guard ([ADR-0001](docs/adr/0001-reject-dotdot-path-components.md))
+  and restart-averse `apply` contract ([ADR-0002](docs/adr/0002-apply-reload-semantics.md))
+  now key off `protocol` instead of domain
 
 ### v2.2.0 (2026-08)
 

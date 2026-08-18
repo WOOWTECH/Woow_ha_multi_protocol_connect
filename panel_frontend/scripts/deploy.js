@@ -13,15 +13,6 @@ const bundles = [
   },
 ];
 
-// Legacy per-protocol bundles → the standalone integrations (still shipped
-// until those are retired).
-for (const proto of ["knx", "dmx", "modbus"]) {
-  bundles.push({
-    src: `dist/woow-${proto}-panel.js`,
-    dest: `../custom_components/woow_${proto}/frontend/woow-${proto}-panel.js`,
-  });
-}
-
 for (const { src, dest } of bundles) {
   const srcPath = resolve(root, src);
   const destPath = resolve(root, dest);
