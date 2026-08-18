@@ -8,6 +8,13 @@ dist/
 build/
 *.egg
 
+# Test / coverage artifacts
+.coverage
+.coverage.*
+.pytest_cache/
+.ruff_cache/
+htmlcov/
+
 # Virtual environments
 sim_venv/
 venv/

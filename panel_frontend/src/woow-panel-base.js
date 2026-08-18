@@ -18,6 +18,9 @@ export class WoowPanelBase extends LitElement {
       panel: { type: Object },
       narrow: { type: Boolean },
       route: { type: Object },
+      // When hosted inside the multi-protocol shell, the shell draws the top bar
+      // and protocol tabs, so this panel omits its own top bar.
+      embedded: { type: Boolean },
 
       _activeTab: { type: String, state: true },
       _files: { type: Array, state: true },
@@ -39,6 +42,7 @@ export class WoowPanelBase extends LitElement {
 
   constructor() {
     super();
+    this.embedded = false;
     this._activeTab = "guide";
     this._files = [];
     this._currentFile = "";
@@ -121,11 +125,19 @@ export class WoowPanelBase extends LitElement {
     return this.hass.callWS(payload);
   }
 
+  // The merged integration's WS command carries a `protocol` field; the legacy
+  // per-protocol commands do not. Spread this into every payload so one base
+  // serves both.
+  get _protocolField() {
+    return this._cfg.protocol ? { protocol: this._cfg.protocol } : {};
+  }
+
   /* File operations */
   async _refreshFileList() {
     try {
       const result = await this._callWS({
         type: this._cfg.wsType,
+        ...this._protocolField,
         action: "list",
         ext: "yaml",
         depth: 10,
@@ -155,6 +167,7 @@ export class WoowPanelBase extends LitElement {
       this._editorStatus = this._t("loading_file", path);
       const result = await this._callWS({
         type: this._cfg.wsType,
+        ...this._protocolField,
         action: "load",
         path,
       });
@@ -177,6 +190,7 @@ export class WoowPanelBase extends LitElement {
     try {
       await this._callWS({
         type: this._cfg.wsType,
+        ...this._protocolField,
         action: "save",
         path: this._currentFile,
         content: this._editorContent,
@@ -341,14 +355,18 @@ export class WoowPanelBase extends LitElement {
     const cfg = this._cfg;
 
     return html`
-      <!-- Top Bar -->
-      <div class="top-bar">
-        <button class="menu-btn" @click=${this._toggleMenu}>
-          <svg viewBox="0 0 24 24">${this._iconMenu}</svg>
-        </button>
-        <span class="top-bar-title">${this._t("panel_title")}</span>
-        <span class="top-bar-version">v${cfg.version}</span>
-      </div>
+      <!-- Top Bar (hidden when embedded in the multi-protocol shell) -->
+      ${this.embedded
+        ? ""
+        : html`
+            <div class="top-bar">
+              <button class="menu-btn" @click=${this._toggleMenu}>
+                <svg viewBox="0 0 24 24">${this._iconMenu}</svg>
+              </button>
+              <span class="top-bar-title">${this._t("panel_title")}</span>
+              <span class="top-bar-version">v${cfg.version}</span>
+            </div>
+          `}
 
       <!-- Tabs -->
       <div class="tabs">
