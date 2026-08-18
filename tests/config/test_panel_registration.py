@@ -69,6 +69,24 @@ async def test_disabled_protocol_is_dropped_from_the_panel(panel_env):
     assert _panel(hass).config["enabled_protocols"] == ["dmx", "modbus"]
 
 
+async def test_disabling_dmx_drops_its_tab_from_the_panel(panel_env):
+    """Disabling DMX removes the DMX tab end-to-end (issue #7).
+
+    Closes the "shows a DMX tab" acceptance criterion at the real seam: the
+    panel's `enabled_protocols` config drives which tabs render, so DMX off must
+    leave DMX out of the set the panel is handed — the KNX case above proves the
+    same for KNX.
+    """
+    hass = panel_env
+    entry = _entry(options={"enable_dmx": False})
+    entry.add_to_hass(hass)
+
+    assert await async_setup_entry(hass, entry)
+    await hass.async_block_till_done()
+
+    assert _panel(hass).config["enabled_protocols"] == ["knx", "modbus"]
+
+
 async def test_unload_entry_removes_the_panel(panel_env):
     """Unloading the entry leaves no orphaned panel behind."""
     hass = panel_env
