@@ -1,0 +1,14 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Woow Multi-Protocol Connect",
+        "description": "This integration adds a single sidebar panel for your KNX, DMX, and Modbus setup guides.\n\nClick Submit to install.",
+        "data": {}
+      }
+    },
+    "abort": {
+      "already_configured": "Woow Multi-Protocol Connect is already configured."
+    }
+  }
+}

@@ -9,7 +9,7 @@ line-length = 100
 extend-exclude = [
     ".venv",
     "simulators",
-    "custom_components/woow_panel_frontend",
+    "panel_frontend",
     "tests/live",
 ]
 

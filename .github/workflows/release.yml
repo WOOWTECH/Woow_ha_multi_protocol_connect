@@ -20,27 +20,25 @@ jobs:
         with:
           node-version: "20"
           cache: npm
-          cache-dependency-path: custom_components/woow_panel_frontend/package-lock.json
+          cache-dependency-path: panel_frontend/package-lock.json
 
-      # Build the panel bundle so the artifact ships ready-to-run.
-      - name: Build frontend
-        working-directory: custom_components/woow_panel_frontend
+      # Build and deploy the panel bundles so the packaged integrations ship
+      # ready-to-run. The build workspace lives outside custom_components/, so
+      # deploy copies the built bundles into each integration's frontend/.
+      - name: Build and deploy frontend
+        working-directory: panel_frontend
         run: |
           npm ci
-          npm run build
+          npm run build:deploy
 
       # Package the custom_components tree for manual install: a user unzips
-      # this into their Home Assistant config directory. Dev-only files
-      # (node_modules, build inputs, caches) are excluded.
+      # this into their Home Assistant config directory. The build workspace
+      # (panel_frontend/) lives outside custom_components/ and is excluded by
+      # construction; only Python caches need pruning.
       - name: Package custom_components
         run: |
           zip -r "woow-ha-multi-protocol-connect-${{ github.ref_name }}.zip" custom_components \
-            -x '*/node_modules/*' \
-            -x '*/__pycache__/*' \
-            -x '*/woow_panel_frontend/src/*' \
-            -x '*/woow_panel_frontend/scripts/*' \
-            -x '*/woow_panel_frontend/package-lock.json' \
-            -x '*/woow_panel_frontend/rollup.config.js'
+            -x '*/__pycache__/*'
 
       - name: Create GitHub Release
         env:

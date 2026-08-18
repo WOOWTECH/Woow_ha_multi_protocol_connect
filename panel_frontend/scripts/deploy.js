@@ -9,7 +9,7 @@ const protocols = ["knx", "dmx", "modbus"];
 
 for (const proto of protocols) {
   const src = resolve(root, `dist/woow-${proto}-panel.js`);
-  const dest = resolve(root, `../woow_${proto}/frontend/woow-${proto}-panel.js`);
+  const dest = resolve(root, `../custom_components/woow_${proto}/frontend/woow-${proto}-panel.js`);
 
   if (!existsSync(src)) {
     console.error(`Missing: ${src}`);
