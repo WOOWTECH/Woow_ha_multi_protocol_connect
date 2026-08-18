@@ -46,12 +46,22 @@ if not HA_TOKEN:
         print("ERROR: Set HA_TOKEN env var or create tmp/ha_token.txt", file=sys.stderr)
         sys.exit(1)
 WS_URL = f"ws://{HA_HOST}:{HA_PORT}/api/websocket"
-HA_VOL = "/home/woowtech-ai-coder/.local/share/containers/storage/volumes/ha-protocol-config/_data"
+HA_VOL = os.environ.get(
+    "HA_VOL",
+    "/home/woowtech-ai-coder/.local/share/containers/storage/volumes/ha-protocol-config/_data",
+)
+
+# The merged integration (ADR-0003): one domain, one WebSocket command, and a
+# per-protocol sandbox at <config>/woow_multi_protocol/<protocol>/. Isolation is
+# now *between protocols within one domain* rather than between three domains.
+DOMAIN = "woow_multi_protocol"
+WS_TYPE = f"{DOMAIN}/ws"
+BASE_SUBDIR = DOMAIN
 
 COMPONENTS = {
-    "knx":    {"ws": "woow_knx/ws",    "subdir": "knx"},
-    "dmx":    {"ws": "woow_dmx/ws",    "subdir": "dmx"},
-    "modbus": {"ws": "woow_modbus/ws", "subdir": "modbus"},
+    "knx":    {"protocol": "knx",    "subdir": os.path.join(BASE_SUBDIR, "knx")},
+    "dmx":    {"protocol": "dmx",    "subdir": os.path.join(BASE_SUBDIR, "dmx")},
+    "modbus": {"protocol": "modbus", "subdir": os.path.join(BASE_SUBDIR, "modbus")},
 }
 
 results = {"passed": 0, "failed": 0, "errors": []}
@@ -80,8 +90,9 @@ async def ws_connect():
     return ws
 
 
-async def ws_cmd(ws, msg_id, ws_type, **kw):
-    await ws.send(json.dumps({"id": msg_id, "type": ws_type, **kw}))
+async def ws_cmd(ws, msg_id, protocol, **kw):
+    """Send one woow_multi_protocol/ws command scoped to ``protocol``."""
+    await ws.send(json.dumps({"id": msg_id, "type": WS_TYPE, "protocol": protocol, **kw}))
     return json.loads(await ws.recv())
 
 
@@ -99,7 +110,7 @@ async def phase1_basic_isolation():
 
     for comp, info in COMPONENTS.items():
         mid += 1
-        resp = await ws_cmd(ws, mid, info["ws"], action="list", ext="yaml", depth=5)
+        resp = await ws_cmd(ws, mid, info["protocol"], action="list", ext="yaml", depth=5)
         if not resp.get("success"):
             fail(f"{comp} list 失敗", str(resp))
             continue
@@ -165,7 +176,7 @@ async def phase2_cross_directory_block():
     for comp, path, desc in attacks:
         mid += 1
         info = COMPONENTS[comp]
-        resp = await ws_cmd(ws, mid, info["ws"], action="load", path=path)
+        resp = await ws_cmd(ws, mid, info["protocol"], action="load", path=path)
         if not resp.get("success"):
             err_code = resp.get("error", {}).get("code", "")
             ok(f"阻擋: {desc} → {err_code}")
@@ -208,7 +219,7 @@ async def phase3_path_traversal_in_scope():
         mid += 1
 
         # Test load
-        resp = await ws_cmd(ws, mid, comp_info["ws"], action="load", path=path)
+        resp = await ws_cmd(ws, mid, comp_info["protocol"], action="load", path=path)
         if not resp.get("success"):
             ok(f"Load 阻擋: {desc}")
         else:
@@ -216,7 +227,7 @@ async def phase3_path_traversal_in_scope():
 
         # Test save
         mid += 1
-        resp = await ws_cmd(ws, mid, comp_info["ws"], action="save", path=path, content="hacked")
+        resp = await ws_cmd(ws, mid, comp_info["protocol"], action="save", path=path, content="hacked")
         if not resp.get("success"):
             ok(f"Save 阻擋: {desc}")
         else:
@@ -239,14 +250,14 @@ async def phase4_edge_cases():
 
     # 4a: 空路徑
     mid += 1
-    resp = await ws_cmd(ws, mid, COMPONENTS["knx"]["ws"], action="load", path="")
+    resp = await ws_cmd(ws, mid, COMPONENTS["knx"]["protocol"], action="load", path="")
     if not resp.get("success"):
         ok("空路徑 load 拒絕")
     else:
         fail("空路徑 load 未拒絕")
 
     mid += 1
-    resp = await ws_cmd(ws, mid, COMPONENTS["knx"]["ws"], action="save", path="", content="test")
+    resp = await ws_cmd(ws, mid, COMPONENTS["knx"]["protocol"], action="save", path="", content="test")
     if not resp.get("success"):
         ok("空路徑 save 拒絕")
     else:
@@ -254,7 +265,7 @@ async def phase4_edge_cases():
 
     # 4b: 巢狀子目錄（在自己的 scope 內建立子目錄）
     mid += 1
-    resp = await ws_cmd(ws, mid, COMPONENTS["dmx"]["ws"],
+    resp = await ws_cmd(ws, mid, COMPONENTS["dmx"]["protocol"],
                         action="save", path="venues/theater/main_stage.yaml",
                         content="# Theater main stage DMX config\nchannels: 512\n")
     if resp.get("success"):
@@ -262,7 +273,7 @@ async def phase4_edge_cases():
 
         # 讀回驗證
         mid += 1
-        resp2 = await ws_cmd(ws, mid, COMPONENTS["dmx"]["ws"],
+        resp2 = await ws_cmd(ws, mid, COMPONENTS["dmx"]["protocol"],
                              action="load", path="venues/theater/main_stage.yaml")
         if resp2.get("success") and "Theater main stage" in resp2["result"]["content"]:
             ok("巢狀子目錄 load 內容正確")
@@ -271,7 +282,7 @@ async def phase4_edge_cases():
 
         # list 應該能看到
         mid += 1
-        resp3 = await ws_cmd(ws, mid, COMPONENTS["dmx"]["ws"],
+        resp3 = await ws_cmd(ws, mid, COMPONENTS["dmx"]["protocol"],
                              action="list", ext="yaml", depth=5)
         if resp3.get("success"):
             found = any("venues/theater/main_stage.yaml" in f for f in resp3["result"]["files"])
@@ -284,14 +295,14 @@ async def phase4_edge_cases():
 
     # 4c: 特殊字元檔名（中文）
     mid += 1
-    resp = await ws_cmd(ws, mid, COMPONENTS["modbus"]["ws"],
+    resp = await ws_cmd(ws, mid, COMPONENTS["modbus"]["protocol"],
                         action="save", path="太陽能監控.yaml",
                         content="# 太陽能逆變器監控配置\nsolar: true\n")
     if resp.get("success"):
         ok("中文檔名 save 成功")
 
         mid += 1
-        resp2 = await ws_cmd(ws, mid, COMPONENTS["modbus"]["ws"],
+        resp2 = await ws_cmd(ws, mid, COMPONENTS["modbus"]["protocol"],
                              action="load", path="太陽能監控.yaml")
         if resp2.get("success") and "太陽能逆變器" in resp2["result"]["content"]:
             ok("中文檔名 load 內容正確")
@@ -302,14 +313,14 @@ async def phase4_edge_cases():
 
     # 4d: 空格檔名
     mid += 1
-    resp = await ws_cmd(ws, mid, COMPONENTS["knx"]["ws"],
+    resp = await ws_cmd(ws, mid, COMPONENTS["knx"]["protocol"],
                         action="save", path="my knx config.yaml",
                         content="# Space test\ntest: true\n")
     if resp.get("success"):
         ok("空格檔名 save 成功")
 
         mid += 1
-        resp2 = await ws_cmd(ws, mid, COMPONENTS["knx"]["ws"],
+        resp2 = await ws_cmd(ws, mid, COMPONENTS["knx"]["protocol"],
                              action="load", path="my knx config.yaml")
         if resp2.get("success") and "Space test" in resp2["result"]["content"]:
             ok("空格檔名 load 內容正確")
@@ -320,7 +331,7 @@ async def phase4_edge_cases():
 
     # 4e: 讀取不存在的檔案
     mid += 1
-    resp = await ws_cmd(ws, mid, COMPONENTS["knx"]["ws"],
+    resp = await ws_cmd(ws, mid, COMPONENTS["knx"]["protocol"],
                         action="load", path="does_not_exist_12345.yaml")
     if not resp.get("success"):
         err_code = resp.get("error", {}).get("code", "")
@@ -334,7 +345,7 @@ async def phase4_edge_cases():
     # 4f: 超長檔名
     mid += 1
     long_name = "a" * 200 + ".yaml"
-    resp = await ws_cmd(ws, mid, COMPONENTS["knx"]["ws"],
+    resp = await ws_cmd(ws, mid, COMPONENTS["knx"]["protocol"],
                         action="save", path=long_name, content="test")
     # 無論成功或失敗都記錄（OS 可能有 255 byte 限制）
     if resp.get("success"):
@@ -345,7 +356,7 @@ async def phase4_edge_cases():
 
     # 4g: 純目錄路徑（無檔名）
     mid += 1
-    resp = await ws_cmd(ws, mid, COMPONENTS["knx"]["ws"],
+    resp = await ws_cmd(ws, mid, COMPONENTS["knx"]["protocol"],
                         action="load", path="subdir/")
     if not resp.get("success"):
         ok("純目錄路徑 load 被拒絕")
@@ -370,13 +381,13 @@ async def phase5_write_isolation():
     # 5a: 透過 KNX 寫入，確認檔案在 knx/ 子目錄
     test_marker = f"isolation_test_{int(time.time())}"
     mid += 1
-    resp = await ws_cmd(ws, mid, COMPONENTS["knx"]["ws"],
+    resp = await ws_cmd(ws, mid, COMPONENTS["knx"]["protocol"],
                         action="save", path="_isolation_verify.yaml",
                         content=f"# {test_marker}\nprotocol: knx\n")
     if resp.get("success"):
         # 直接檢查檔案系統
-        expected_path = os.path.join(HA_VOL, "knx", "_isolation_verify.yaml")
-        wrong_path = os.path.join(HA_VOL, "_isolation_verify.yaml")
+        expected_path = os.path.join(HA_VOL, DOMAIN, "knx", "_isolation_verify.yaml")
+        wrong_path = os.path.join(HA_VOL, DOMAIN, "_isolation_verify.yaml")
 
         if os.path.exists(expected_path):
             with open(expected_path, encoding="utf-8") as f:
@@ -397,11 +408,11 @@ async def phase5_write_isolation():
 
     # 5b: 透過 DMX 寫入，確認在 dmx/ 子目錄
     mid += 1
-    resp = await ws_cmd(ws, mid, COMPONENTS["dmx"]["ws"],
+    resp = await ws_cmd(ws, mid, COMPONENTS["dmx"]["protocol"],
                         action="save", path="_isolation_verify.yaml",
                         content=f"# {test_marker}\nprotocol: dmx\n")
     if resp.get("success"):
-        dmx_path = os.path.join(HA_VOL, "dmx", "_isolation_verify.yaml")
+        dmx_path = os.path.join(HA_VOL, DOMAIN, "dmx", "_isolation_verify.yaml")
         if os.path.exists(dmx_path):
             with open(dmx_path, encoding="utf-8") as f:
                 if "protocol: dmx" in f.read():
@@ -413,11 +424,11 @@ async def phase5_write_isolation():
 
     # 5c: 透過 Modbus 寫入
     mid += 1
-    resp = await ws_cmd(ws, mid, COMPONENTS["modbus"]["ws"],
+    resp = await ws_cmd(ws, mid, COMPONENTS["modbus"]["protocol"],
                         action="save", path="_isolation_verify.yaml",
                         content=f"# {test_marker}\nprotocol: modbus\n")
     if resp.get("success"):
-        modbus_path = os.path.join(HA_VOL, "modbus", "_isolation_verify.yaml")
+        modbus_path = os.path.join(HA_VOL, DOMAIN, "modbus", "_isolation_verify.yaml")
         if os.path.exists(modbus_path):
             with open(modbus_path, encoding="utf-8") as f:
                 if "protocol: modbus" in f.read():
@@ -428,8 +439,8 @@ async def phase5_write_isolation():
             fail("Modbus 寫入檔案不在 config/modbus/")
 
     # 5d: 同名檔案在不同子目錄互不干擾
-    knx_content = open(os.path.join(HA_VOL, "knx", "_isolation_verify.yaml"), encoding="utf-8").read()
-    dmx_content = open(os.path.join(HA_VOL, "dmx", "_isolation_verify.yaml"), encoding="utf-8").read()
+    knx_content = open(os.path.join(HA_VOL, DOMAIN, "knx", "_isolation_verify.yaml"), encoding="utf-8").read()
+    dmx_content = open(os.path.join(HA_VOL, DOMAIN, "dmx", "_isolation_verify.yaml"), encoding="utf-8").read()
     if "protocol: knx" in knx_content and "protocol: dmx" in dmx_content:
         ok("同名檔案在不同子目錄內容互不干擾")
     else:
@@ -459,7 +470,7 @@ async def phase6_concurrent_operations():
         for idx in range(count):
             mid = 600 + hash(comp) % 100 + idx
             content = f"# Concurrent test {comp} #{idx}\nvalue: {idx}\n"
-            resp = await ws_cmd(ws, mid, info["ws"],
+            resp = await ws_cmd(ws, mid, info["protocol"],
                                 action="save", path=f"_concurrent_{idx}.yaml", content=content)
             batch_results.append((comp, idx, resp.get("success", False)))
         await ws.close()
@@ -472,7 +483,7 @@ async def phase6_concurrent_operations():
         batch_results = []
         for idx in range(count):
             mid = 650 + hash(comp) % 100 + idx
-            resp = await ws_cmd(ws, mid, info["ws"],
+            resp = await ws_cmd(ws, mid, info["protocol"],
                                 action="load", path=f"_concurrent_{idx}.yaml")
             content = resp.get("result", {}).get("content", "") if resp.get("success") else ""
             batch_results.append((comp, idx, resp.get("success", False), content))
@@ -518,7 +529,7 @@ async def phase6_concurrent_operations():
 
     # 驗證隔離：KNX list 不應該包含 DMX/Modbus 的並發測試檔
     ws = await ws_connect()
-    resp = await ws_cmd(ws, 699, COMPONENTS["knx"]["ws"],
+    resp = await ws_cmd(ws, 699, COMPONENTS["knx"]["protocol"],
                         action="list", ext="yaml", depth=5)
     if resp.get("success"):
         files = resp["result"]["files"]
@@ -600,9 +611,9 @@ async def phase8_cleanup():
 # ============================================================
 async def main():
     print("╔══════════════════════════════════════════════════════════════════════╗")
-    print("║  目錄隔離功能專屬測試 — Directory Isolation Test Suite v2.1.0      ║")
-    print("║  測試對象: woow_knx, woow_dmx, woow_modbus                        ║")
-    print("║  功能: CONFIG_SUBDIR 限縮 + 路徑穿越防護 + 跨目錄阻擋             ║")
+    print("║  目錄隔離功能專屬測試 — Directory Isolation Test Suite (ADR-0003) ║")
+    print("║  測試對象: woow_multi_protocol (protocols: knx, dmx, modbus)      ║")
+    print("║  功能: 每協定子目錄限縮 + 路徑穿越防護 + 跨協定阻擋               ║")
     print("╚══════════════════════════════════════════════════════════════════════╝")
 
     start = time.time()

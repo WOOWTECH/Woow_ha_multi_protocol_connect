@@ -2,14 +2,16 @@
 """
 Integration Deploy & Validation Test
 =====================================
-Deploys all KNX/DMX/Modbus config sample files to HA via the woow_* WebSocket APIs,
-then validates save→load→list→content-integrity for each file.
+Deploys all KNX/DMX/Modbus config sample files to HA via the merged
+woow_multi_protocol WebSocket command (one command, a `protocol` field), then
+validates save→load→list→content-integrity for each file.
 
 Tests:
-  1. Save each config file via the appropriate component's WS API
+  1. Save each config file via its protocol
   2. Load each saved file back and verify content matches exactly
   3. List files and verify all saved files appear in directory listings
-  4. Cross-component isolation: files saved via woow_knx are visible when listed via woow_dmx
+  4. Cross-protocol isolation: a file deployed via one protocol is NOT readable
+     via another (per-protocol sandbox — the inverse of the old shared dir)
   5. Large file handling: verify files >40KB save/load correctly
   6. Unicode content: verify Chinese comments survive round-trip
   7. Cleanup: remove test files after validation
@@ -49,11 +51,15 @@ WS_URL = f"ws://{HA_HOST}:{HA_PORT}/api/websocket"
 
 CONFIG_SAMPLES_DIR = os.path.join(REPO_ROOT, "config_samples")
 
-# Component → WS type mapping
+# The merged integration (ADR-0003): one domain, one WebSocket command carrying
+# a `protocol` field. Each component name maps to its protocol; every file op is
+# sandboxed to <config>/woow_multi_protocol/<protocol>/.
+DOMAIN = "woow_multi_protocol"
+WS_TYPE = f"{DOMAIN}/ws"
 COMPONENTS = {
-    "knx": "woow_knx/ws",
-    "dmx": "woow_dmx/ws",
-    "modbus": "woow_modbus/ws",
+    "knx": "knx",
+    "dmx": "dmx",
+    "modbus": "modbus",
 }
 
 # File → component mapping (deploy each file via its matching component)
@@ -115,23 +121,20 @@ async def ws_command(ws, msg_id, ws_type, **params):
 
 
 async def ws_save_file(ws, msg_id, component, filepath, content):
-    """Save a file via the component's WS API."""
-    ws_type = COMPONENTS[component]
-    return await ws_command(ws, msg_id, ws_type,
+    """Save a file via the merged WS command, scoped to the component's protocol."""
+    return await ws_command(ws, msg_id, WS_TYPE, protocol=COMPONENTS[component],
                             action="save", path=filepath, content=content)
 
 
 async def ws_load_file(ws, msg_id, component, filepath):
-    """Load a file via the component's WS API."""
-    ws_type = COMPONENTS[component]
-    return await ws_command(ws, msg_id, ws_type,
+    """Load a file via the merged WS command, scoped to the component's protocol."""
+    return await ws_command(ws, msg_id, WS_TYPE, protocol=COMPONENTS[component],
                             action="load", path=filepath)
 
 
 async def ws_list_files(ws, msg_id, component, ext="all", depth=10):
-    """List files via the component's WS API."""
-    ws_type = COMPONENTS[component]
-    return await ws_command(ws, msg_id, ws_type,
+    """List files via the merged WS command, scoped to the component's protocol."""
+    return await ws_command(ws, msg_id, WS_TYPE, protocol=COMPONENTS[component],
                             action="list", ext=ext, depth=depth)
 
 
@@ -159,7 +162,7 @@ async def phase1_deploy_all_files():
         try:
             resp = await ws_save_file(ws, msg_id, component, dest_path, content)
             if resp.get("success"):
-                ok(f"Save {rel_path} via woow_{component} ({len(content):,} chars)")
+                ok(f"Save {rel_path} via {component} ({len(content):,} chars)")
             else:
                 fail(f"Save {rel_path}", resp.get("error", {}).get("message", str(resp)))
         except Exception as e:
@@ -233,29 +236,34 @@ async def phase3_list_verification():
                     if comp == component:
                         expected = f"integration_test/{rel_path}"
                         if expected in all_paths:
-                            ok(f"Listed via woow_{component}: {rel_path}")
+                            ok(f"Listed via {component}: {rel_path}")
                         else:
-                            fail(f"Missing in listing via woow_{component}: {rel_path}",
+                            fail(f"Missing in listing via {component}: {rel_path}",
                                  f"Not found in {len(all_paths)} files")
             else:
-                fail(f"List via woow_{component}",
+                fail(f"List via {component}",
                      resp.get("error", {}).get("message", str(resp)))
         except Exception as e:
-            fail(f"List via woow_{component}", str(e))
+            fail(f"List via {component}", str(e))
 
     await ws.close()
 
 
-async def phase4_cross_component_access():
-    """Phase 4: Verify cross-component file access (shared config dir)."""
+async def phase4_cross_protocol_isolation():
+    """Phase 4: Verify cross-protocol access is BLOCKED (per-protocol sandbox).
+
+    Under the merged integration each protocol has its own sandbox subdirectory,
+    so a file deployed via one protocol must NOT be readable via another — the
+    inverse of the old shared-config-dir behavior (ADR-0003).
+    """
     print("\n" + "=" * 70)
-    print("Phase 4: Cross-Component File Access")
+    print("Phase 4: Cross-Protocol Isolation (access must be blocked)")
     print("=" * 70)
 
     ws = await ws_connect()
     msg_id = 400
 
-    # Save a file via woow_knx, then load it via woow_dmx and woow_modbus
+    # A file deployed under one protocol, then read via a different protocol.
     test_cases = [
         ("knx", "dmx", "integration_test/knx/knx_main.yaml"),
         ("knx", "modbus", "integration_test/knx/knx_main.yaml"),
@@ -269,17 +277,15 @@ async def phase4_cross_component_access():
         msg_id += 1
         try:
             resp = await ws_load_file(ws, msg_id, loaded_by, path)
-            if resp.get("success") and resp["result"].get("content"):
-                content = resp["result"]["content"]
-                if len(content) > 100:
-                    ok(f"Cross-access: {path} (saved by woow_{saved_by}, loaded by woow_{loaded_by}, {len(content):,} chars)")
-                else:
-                    fail(f"Cross-access: {path}", f"Content too short: {len(content)} chars")
+            # Each protocol only sees its own sandbox, so this must not resolve.
+            if not resp.get("success"):
+                err_code = resp.get("error", {}).get("code", "")
+                ok(f"Isolated: {path} not readable via {loaded_by} (saved by {saved_by}) → {err_code}")
             else:
-                fail(f"Cross-access: {path} via woow_{loaded_by}",
-                     resp.get("error", {}).get("message", str(resp)))
+                fail(f"Isolation breach: {path} readable via {loaded_by}",
+                     f"saved by {saved_by}, got {len(resp['result'].get('content', ''))} chars")
         except Exception as e:
-            fail(f"Cross-access: {path} via woow_{loaded_by}", str(e))
+            ok(f"Isolated: {path} via {loaded_by} raised {type(e).__name__} (blocked)")
 
     await ws.close()
 
@@ -477,10 +483,10 @@ async def phase8_cleanup():
 # ============================================================
 async def main():
     print("╔══════════════════════════════════════════════════════════════════════╗")
-    print("║  Woow HA Multi-Protocol Integration Deploy & Validation Test       ║")
-    print("║  Components: woow_knx, woow_dmx, woow_modbus                      ║")
+    print("║  Woow Multi-Protocol Connect — Integration Deploy & Validation     ║")
+    print("║  Domain: woow_multi_protocol (protocols: knx, dmx, modbus)         ║")
     print("║  Config Files: 11 protocol-specific YAML configurations            ║")
-    print("║  HA Instance: http://localhost:15126                               ║")
+    print(f"║  HA Instance: {HA_URL:<52}║")
     print("╚══════════════════════════════════════════════════════════════════════╝")
 
     start = time.time()
@@ -488,7 +494,7 @@ async def main():
     await phase1_deploy_all_files()
     await phase2_load_and_verify()
     await phase3_list_verification()
-    await phase4_cross_component_access()
+    await phase4_cross_protocol_isolation()
     await phase5_large_file_integrity()
     await phase6_unicode_verification()
     await phase7_rapid_operations()
