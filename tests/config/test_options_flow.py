@@ -97,3 +97,21 @@ async def test_disabling_dmx_changes_the_enabled_protocol_set(hass):
     assert result["type"] == data_entry_flow.FlowResultType.CREATE_ENTRY
     assert result["data"]["enable_dmx"] is False
     assert enabled_protocols(result["data"]) == ["knx", "modbus"]
+
+
+async def test_disabling_modbus_changes_the_enabled_protocol_set(hass):
+    """Turning Modbus off is stored and drops Modbus from the enabled set (issue #8).
+
+    The Modbus tab is shown iff Modbus is in the enabled set the panel is handed,
+    so the toggle's observable effect is the set changing — asserted here, keeping
+    the KNX pattern-setter's guarantee true for Modbus too.
+    """
+    flow = _flow(hass, _entry(hass))
+
+    result = await flow.async_step_init(
+        {"enable_knx": True, "enable_dmx": True, "enable_modbus": False}
+    )
+
+    assert result["type"] == data_entry_flow.FlowResultType.CREATE_ENTRY
+    assert result["data"]["enable_modbus"] is False
+    assert enabled_protocols(result["data"]) == ["knx", "dmx"]
