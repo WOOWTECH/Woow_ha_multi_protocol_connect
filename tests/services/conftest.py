@@ -4,6 +4,9 @@ These tests exercise the Service layer at its public seam — a Home Assistant
 service call — which is the same interface ha_mcp_tools uses. Services are
 registered directly rather than via async_setup_entry, so the tests stay about
 the Service layer and do not drag in panel/static-path registration.
+
+The single service set is keyed by ``protocol``; every filesystem effect lands
+under ``<config>/woow_multi_protocol/<protocol>/``.
 """
 
 import os
@@ -11,9 +14,7 @@ import shutil
 
 import pytest
 
-# The test config dir is shared (it lives inside the installed test plugin), so
-# these tests must leave it exactly as they found it.
-CONFIG_SUBDIRS = ("dmx", "knx", "modbus")
+from custom_components.woow_multi_protocol.const import BASE_SUBDIR
 
 
 @pytest.fixture(autouse=True)
@@ -24,15 +25,14 @@ def auto_enable_custom_integrations(enable_custom_integrations):
 
 @pytest.fixture(autouse=True)
 def clean_config_subdirs(hass):
-    """Give every test an empty Config subdirectory and leave none behind.
+    """Give every test an empty sandbox tree and leave none behind.
 
     Without this, files written by one test leak into the next (and into the
     installed package), which makes the sandbox assertions depend on run order.
     """
 
     def _purge():
-        for subdir in CONFIG_SUBDIRS:
-            shutil.rmtree(hass.config.path(subdir), ignore_errors=True)
+        shutil.rmtree(hass.config.path(BASE_SUBDIR), ignore_errors=True)
 
     _purge()
     yield
@@ -41,14 +41,22 @@ def clean_config_subdirs(hass):
 
 @pytest.fixture
 def escape_target(hass):
-    """A path just outside the Config subdirectory, guaranteed absent.
+    """Paths a traversal attempt could land on, guaranteed absent.
 
-    Yields the absolute path a traversal attempt would land on, and removes it
-    afterwards so a regression cannot silently poison later runs.
+    Yields the two absolute paths outside a protocol's sandbox that a ``..``
+    escape would reach — the config root and the shared domain directory — and
+    removes them afterwards so a regression cannot silently poison later runs.
     """
-    target = hass.config.path("escaped.yaml")
-    if os.path.exists(target):
-        os.unlink(target)
-    yield target
-    if os.path.exists(target):
-        os.unlink(target)
+    targets = [
+        hass.config.path("escaped.yaml"),
+        hass.config.path(BASE_SUBDIR, "escaped.yaml"),
+    ]
+
+    def _purge():
+        for target in targets:
+            if os.path.exists(target):
+                os.unlink(target)
+
+    _purge()
+    yield targets
+    _purge()

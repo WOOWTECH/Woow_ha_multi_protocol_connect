@@ -2,6 +2,7 @@
 
 A call that carries a user context must come from an admin. Calls with no user
 context (internal automations, the MCP long-lived admin token) stay allowed.
+The gate is protocol-agnostic; ``knx`` stands in for the shared behaviour.
 """
 
 from homeassistant.core import Context
@@ -9,9 +10,9 @@ from homeassistant.exceptions import Unauthorized
 import pytest
 from pytest_homeassistant_custom_component.common import MockUser
 
-from custom_components.woow_dmx.services import register_services
+from custom_components.woow_multi_protocol.services import register_services
 
-DOMAIN = "woow_dmx"
+DOMAIN = "woow_multi_protocol"
 
 
 async def test_non_admin_user_is_refused(hass):
@@ -25,7 +26,7 @@ async def test_non_admin_user_is_refused(hass):
         await hass.services.async_call(
             DOMAIN,
             "list_files",
-            {},
+            {"protocol": "knx"},
             blocking=True,
             return_response=True,
             context=Context(user_id=user.id),
@@ -39,7 +40,7 @@ async def test_admin_user_is_allowed(hass, hass_admin_user):
     result = await hass.services.async_call(
         DOMAIN,
         "list_files",
-        {},
+        {"protocol": "knx"},
         blocking=True,
         return_response=True,
         context=Context(user_id=hass_admin_user.id),
@@ -53,7 +54,7 @@ async def test_call_without_user_context_is_allowed(hass):
     register_services(hass)
 
     result = await hass.services.async_call(
-        DOMAIN, "list_files", {}, blocking=True, return_response=True
+        DOMAIN, "list_files", {"protocol": "knx"}, blocking=True, return_response=True
     )
 
     assert "files" in result

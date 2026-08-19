@@ -1,7 +1,8 @@
-"""The Service layer confines every file operation to the Config subdirectory.
+"""The Service layer confines every file operation to the protocol sandbox.
 
 This is the security boundary described in ADR-0001: a caller must not be able
-to read or write a file outside its Setup Guide panel's Config subdirectory.
+to read or write a file outside the requested protocol's sandbox subdirectory.
+The guard is protocol-agnostic, so it is exercised across every protocol.
 """
 
 import os
@@ -9,9 +10,10 @@ import os
 from homeassistant.exceptions import HomeAssistantError
 import pytest
 
-from custom_components.woow_dmx.services import register_services
+from custom_components.woow_multi_protocol.const import PROTOCOLS
+from custom_components.woow_multi_protocol.services import register_services
 
-DOMAIN = "woow_dmx"
+DOMAIN = "woow_multi_protocol"
 
 # Each of these must be refused before it reaches the filesystem. They cover the
 # layers ADR-0001 lists: traversal, absolute paths, URL-encoded escapes, and the
@@ -27,9 +29,10 @@ TRAVERSAL_PATHS = [
 ]
 
 
+@pytest.mark.parametrize("protocol", PROTOCOLS)
 @pytest.mark.parametrize("path", TRAVERSAL_PATHS)
-async def test_save_file_refuses_to_escape_the_config_subdirectory(
-    hass, escape_target, path
+async def test_save_file_refuses_to_escape_the_sandbox(
+    hass, escape_target, protocol, path
 ):
     """A traversal path is refused and nothing is written outside the sandbox."""
     register_services(hass)
@@ -38,16 +41,17 @@ async def test_save_file_refuses_to_escape_the_config_subdirectory(
         await hass.services.async_call(
             DOMAIN,
             "save_file",
-            {"path": path, "content": "pwned: true\n"},
+            {"protocol": protocol, "path": path, "content": "pwned: true\n"},
             blocking=True,
             return_response=True,
         )
 
-    assert not os.path.exists(escape_target)
+    assert not any(os.path.exists(target) for target in escape_target)
 
 
+@pytest.mark.parametrize("protocol", PROTOCOLS)
 @pytest.mark.parametrize("path", TRAVERSAL_PATHS)
-async def test_load_file_refuses_to_escape_the_config_subdirectory(hass, path):
+async def test_load_file_refuses_to_escape_the_sandbox(hass, protocol, path):
     """A traversal path is refused before any file is read."""
     register_services(hass)
 
@@ -55,20 +59,21 @@ async def test_load_file_refuses_to_escape_the_config_subdirectory(hass, path):
         await hass.services.async_call(
             DOMAIN,
             "load_file",
-            {"path": path},
+            {"protocol": protocol, "path": path},
             blocking=True,
             return_response=True,
         )
 
 
-async def test_a_legitimate_nested_path_is_still_allowed(hass):
+@pytest.mark.parametrize("protocol", PROTOCOLS)
+async def test_a_legitimate_nested_path_is_still_allowed(hass, protocol):
     """The sandbox restricts direction, not depth — nesting still works."""
     register_services(hass)
 
     await hass.services.async_call(
         DOMAIN,
         "save_file",
-        {"path": "fixtures/hall.yaml", "content": "a: 1\n"},
+        {"protocol": protocol, "path": "fixtures/hall.yaml", "content": "a: 1\n"},
         blocking=True,
         return_response=True,
     )
@@ -76,7 +81,7 @@ async def test_a_legitimate_nested_path_is_still_allowed(hass):
     result = await hass.services.async_call(
         DOMAIN,
         "load_file",
-        {"path": "fixtures/hall.yaml"},
+        {"protocol": protocol, "path": "fixtures/hall.yaml"},
         blocking=True,
         return_response=True,
     )
