@@ -158,31 +158,38 @@ assert_regex() {
   fi
 }
 
+# Current page path (language-agnostic; used to detect the login redirect).
+current_path() {
+  cli eval "() => location.pathname" 2>/dev/null | grep -oE '/[A-Za-z0-9._/-]*' | head -1
+}
+
 # --- Login ---
+# Language-agnostic: HA's login inputs carry stable name attributes
+# (username/password) regardless of UI language, and Enter submits the form —
+# so this works on an English or a Traditional-Chinese instance alike.
 login() {
   echo "=== Opening browser and logging in ==="
   cli open "$HA_URL" >/dev/null
   sleep 3
 
-  local snap
-  snap=$(snapshot)
-
-  local user_ref pass_ref login_ref
-  user_ref=$(echo "$snap" | grep -oP 'textbox "Username[^"]*".*?\[ref=\K[^\]]+' | head -1)
-  pass_ref=$(echo "$snap" | grep -oP 'textbox "Password[^"]*" \[ref=\K[^\]]+' | head -1)
-  login_ref=$(echo "$snap" | grep -oP 'button "Log in" \[ref=\K[^\]]+' | head -1)
-
-  if [[ -z "$user_ref" || -z "$pass_ref" || -z "$login_ref" ]]; then
-    # Possibly already logged in (session persisted) — continue.
-    echo "  No login form found (already authenticated?)"
+  local path
+  path=$(current_path)
+  if [[ "$path" != /auth/* ]]; then
+    echo "  Already authenticated ($path)"
     return 0
   fi
 
-  cli fill "$user_ref" "$HA_USER" >/dev/null
-  cli fill "$pass_ref" "$HA_PASS" >/dev/null
-  cli click "$login_ref" >/dev/null
+  cli fill "input[name=username]" "$HA_USER" >/dev/null 2>&1
+  cli fill "input[name=password]" "$HA_PASS" >/dev/null 2>&1
+  cli press Enter >/dev/null 2>&1
   sleep 4
-  echo "  Logged in successfully"
+
+  path=$(current_path)
+  if [[ "$path" == /auth/* ]]; then
+    echo "ERROR: still on the login page after submit"
+    exit 2
+  fi
+  echo "  Logged in ($path)"
 }
 
 # --- Language detection ---
@@ -204,11 +211,15 @@ open_panel() {
 }
 
 # --- Click a protocol tab by its label ---
+# The protocol tabs carry role="tab", so the accessibility tree exposes them as
+# `tab "KNX"` (not `button "KNX"`); accept either to stay robust.
 click_proto_tab() {
   local label="$1"
   local snap ref
   snap=$(snapshot)
-  ref=$(echo "$snap" | grep -oP "button \"$label\" \\[ref=\\K[^\\]]+" | head -1)
+  # The active tab carries an extra attribute (`[selected]`) between the name
+  # and its ref, so allow anything up to `[ref=`.
+  ref=$(echo "$snap" | grep -oP "(?:tab|button) \"$label\".*?\\[ref=\\K[^\\]]+" | head -1)
   if [[ -n "$ref" ]]; then
     cli click "$ref" >/dev/null
     sleep 2
@@ -222,7 +233,7 @@ click_inner_tab() {
   local label="$1"
   local snap ref
   snap=$(snapshot)
-  ref=$(echo "$snap" | grep -oP "button \"$label\" \\[ref=\\K[^\\]]+" | head -1)
+  ref=$(echo "$snap" | grep -oP "button \"$label\".*?\\[ref=\\K[^\\]]+" | head -1)
   if [[ -n "$ref" ]]; then
     cli click "$ref" >/dev/null
     sleep 1
@@ -251,9 +262,10 @@ test_shell() {
   assert_not_contains "$scope" "T1.2" "404" "$snap" "Page does not show 404"
   assert_contains "$scope" "T1.3" "$PANEL_TITLE" "$snap" "Shell top-bar title rendered"
 
-  # All three protocol tabs present in the shell tab strip.
+  # All three protocol tabs present in the shell tab strip. They carry
+  # role="tab", so the accessibility tree names them `tab "KNX"` etc.
   for p in "${PROTOCOLS[@]}"; do
-    assert_regex "$scope" "T1.4-$p" "button \"${PROTO_TAB[$p]}\"" "$snap" \
+    assert_regex "$scope" "T1.4-$p" "(tab|button) \"${PROTO_TAB[$p]}\"" "$snap" \
       "Protocol tab present: ${PROTO_TAB[$p]}"
   done
 

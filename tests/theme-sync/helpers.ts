@@ -156,20 +156,34 @@ async function applyTestColorOverride(page: Page): Promise<void> {
  * and attached. Re-applies any active test color override afterwards.
  */
 export async function navigateToPanel(page: Page): Promise<void> {
-  await page.goto(`/${PANEL}`, { waitUntil: "domcontentloaded" });
+  // Retry a transient navigation once — against a real (slower) instance the
+  // first goto occasionally races the frontend boot / auth redirect.
+  try {
+    await page.goto(`/${PANEL}`, { waitUntil: "domcontentloaded" });
+  } catch {
+    await page.waitForTimeout(1000);
+    await page.goto(`/${PANEL}`, { waitUntil: "domcontentloaded" });
+  }
   await applyTestColorOverride(page);
 
-  for (let attempt = 0; attempt < 10; attempt++) {
-    const ready = await page.evaluate((tag) => {
+  // Wait until the custom element is defined, attached, and has rendered its
+  // tab strip. waitForFunction polls in-page, which is more robust on a real
+  // (slower) instance than a fixed attempt loop.
+  await page.waitForFunction(
+    (tag) => {
       const defined = !!customElements.get(tag);
-      const el = (window as any).__woowDeepFind(tag);
-      return defined && !!el && !!el.shadowRoot &&
-        el.shadowRoot.querySelectorAll(".proto-tab").length > 0;
-    }, PANEL_TAG);
-    if (ready) break;
-    await page.waitForTimeout(1000);
-    await applyTestColorOverride(page);
-  }
+      const el = (window as any).__woowDeepFind?.(tag);
+      return (
+        defined &&
+        !!el &&
+        !!el.shadowRoot &&
+        el.shadowRoot.querySelectorAll(".proto-tab").length > 0
+      );
+    },
+    PANEL_TAG,
+    { timeout: 20_000, polling: 500 }
+  );
+
   await applyTestColorOverride(page);
   await page.waitForTimeout(500);
 }
@@ -228,6 +242,36 @@ export async function getHAPrimaryColor(page: Page): Promise<string> {
   );
 }
 
+/** HA's --primary-background-color from the top-level document. */
+export async function getHABackgroundColor(page: Page): Promise<string> {
+  return page.evaluate(() =>
+    getComputedStyle(document.documentElement)
+      .getPropertyValue("--primary-background-color")
+      .trim()
+  );
+}
+
+/**
+ * Override a CSS custom property on the top-level document (or clear it with
+ * null). Used to prove the panel *follows* a theme variable — HA swaps
+ * --primary-background-color in dark mode, so following it == being dark-aware,
+ * without depending on flaky programmatic dark-mode toggling.
+ */
+export async function overrideDocCssVar(
+  page: Page,
+  name: string,
+  value: string | null
+): Promise<void> {
+  await page.evaluate(
+    ({ n, v }) => {
+      if (v === null) document.documentElement.style.removeProperty(n);
+      else document.documentElement.style.setProperty(n, v);
+    },
+    { n: name, v: value }
+  );
+  await page.waitForTimeout(300);
+}
+
 /** A CSS custom property as *inherited by the panel element* (resolved value). */
 export async function getPanelCssVar(page: Page, varName: string): Promise<string> {
   return page.evaluate(
@@ -272,28 +316,6 @@ export async function getPanelBackground(page: Page): Promise<string> {
 export async function setHAPrimaryColor(page: Page, hexColor: string): Promise<void> {
   _testColorState.primary = hexColor;
   _testColorState.dark = computeDarkVariant(hexColor);
-  await applyTestColorOverride(page);
-}
-
-export async function setHADarkMode(page: Page, mode: "auto" | "light" | "dark"): Promise<void> {
-  await page.evaluate((m) => {
-    const ha = document.querySelector("home-assistant") as any;
-    if (m === "dark") {
-      document.documentElement.setAttribute("data-theme", "dark");
-    } else {
-      document.documentElement.removeAttribute("data-theme");
-    }
-    if (ha?.hass?.connection) {
-      ha.hass.connection
-        .sendMessagePromise({
-          type: "frontend/set_user_data",
-          key: "core",
-          value: { darkMode: m === "dark" ? true : m === "light" ? false : null },
-        })
-        .catch(() => {});
-    }
-  }, mode);
-  await page.waitForTimeout(500);
   await applyTestColorOverride(page);
 }
 

@@ -23,8 +23,9 @@ import {
   getActiveTabColor,
   getPanelBackground,
   getPanelCssVar,
+  getHABackgroundColor,
+  overrideDocCssVar,
   setHAPrimaryColor,
-  setHADarkMode,
   waitForThemeSync,
   resetTestColorState,
   normalizeToRgbTriplet,
@@ -146,43 +147,58 @@ test.describe("Group 2: Theme sync", () => {
 });
 
 /* ================================================================== */
-/*  Group 3: Dark mode                                                */
+/*  Group 3: Background / dark-mode readiness                          */
+/*                                                                     */
+/*  The panel is dark-aware by binding its surfaces to HA's theme      */
+/*  variables (chiefly --primary-background-color), which HA swaps when */
+/*  dark mode turns on. We verify that binding directly — the panel     */
+/*  follows the variable — rather than driving HA's dark mode from      */
+/*  outside, which no external hook can do reliably across versions.    */
 /* ================================================================== */
 
-test.describe("Group 3: Dark mode", () => {
+test.describe("Group 3: Background / dark-mode readiness", () => {
   test.afterEach(async ({ page }) => {
     try {
-      await setHADarkMode(page, "light");
+      await overrideDocCssVar(page, "--primary-background-color", null);
     } catch {
       // page may already be closed
     }
   });
 
-  test("3.1 Panel background differs between light and dark mode", async ({ page }) => {
-    await setHADarkMode(page, "light");
+  test("3.1 Panel background matches HA's --primary-background-color", async ({ page }) => {
     await navigateToPanel(page);
-    await page.waitForTimeout(1000);
-    const lightBg = await getPanelBackground(page);
 
-    await setHADarkMode(page, "dark");
-    await page.waitForTimeout(1500);
-    await navigateToPanel(page);
-    await page.waitForTimeout(1000);
-    const darkBg = await getPanelBackground(page);
+    const haBg = await getHABackgroundColor(page);
+    const panelBg = await getPanelBackground(page);
 
-    // The panel background binds to --primary-background-color, which HA swaps
-    // between modes — so the two computed colors must not be identical.
-    expect(lightBg).not.toBe(darkBg);
+    // The panel host paints var(--primary-background-color), so its computed
+    // background must equal what HA sets at the document level.
+    expect(normalizeToRgbTriplet(panelBg)).toBe(normalizeToRgbTriplet(haBg));
   });
 
-  test("3.2 Panel still follows the primary color in dark mode", async ({ page }) => {
-    await setHADarkMode(page, "dark");
-    await page.waitForTimeout(1000);
+  test("3.2 Panel background follows a background-variable change (dark-mode path)", async ({
+    page,
+  }) => {
+    await navigateToPanel(page);
+
+    // Simulate what dark mode does: swap --primary-background-color to a dark
+    // value. The panel must follow, proving it inherits the theme variable.
+    const darkBg = "#1c1c1c";
+    await overrideDocCssVar(page, "--primary-background-color", darkBg);
+    await page.waitForTimeout(500);
+
+    const panelBg = await getPanelBackground(page);
+    expect(normalizeToRgbTriplet(panelBg)).toBe(normalizeToRgbTriplet(darkBg));
+  });
+
+  test("3.3 Panel still follows the primary color while the background is dark", async ({
+    page,
+  }) => {
+    await navigateToPanel(page);
+    await overrideDocCssVar(page, "--primary-background-color", "#1c1c1c");
 
     const testColor = "#ff9800"; // orange
     await setHAPrimaryColor(page, testColor);
-
-    await navigateToPanel(page);
     await waitForThemeSync(page, testColor, 6000);
 
     const tabColor = await getActiveTabColor(page);
