@@ -489,36 +489,41 @@ This project has undergone comprehensive enterprise-grade testing. Tests fall in
 
 | Suite | Tests | Environment | Pass Rate | Coverage |
 |-------|-------|-------------|-----------|----------|
-| **Service Layer (hermetic)** | 14 | CI (`pytest`) | 100% | Admin gating, sandbox boundaries, file operations, apply/reload semantics |
-| **Enterprise Integration** | 175 | Live HA (opt-in) | 100% | Deployment, WebSocket API, Security, Edge Cases, Frontend, Isolation, Restart, Logging, Regression |
-| **Theme Sync (Playwright)** | 16 | Browser (opt-in) | 100% | Color sync, dark mode, cross-panel consistency, navigation stability |
-| **Live/opt-in total** | **191** | — | **100%** | Full stack coverage |
+| **Service layer (hermetic)** | 14 | CI (`pytest`) | 100% | Admin gating, sandbox boundaries, file operations, apply/reload semantics |
+| **Config & panel seam (hermetic)** | 14 | CI (`pytest`) | 100% | Singleton config flow, per-protocol enable toggles, panel registration |
+| **Hermetic total (CI)** | **28** | CI (`pytest`) | **100%** | `tests/services` + `tests/config` |
+| **Enterprise integration** | 10 phases | Live HA (opt-in) | 100% | Deployment, WebSocket API, security, edge cases, frontend, options→tabs, cross-protocol isolation, restart, logging/regression, service layer |
+| **Theme sync (Playwright)** | 12 | Browser (opt-in) | 100% | Panel structure (tabs), color/theme sync, dark-mode & background readiness |
 
-> CI (`.github/workflows/ci.yml`) runs ruff lint, hassfest manifest validation, the 14 hermetic service tests, and the frontend build on every push and PR. The `191` figure refers to the live/opt-in enterprise + Playwright suites, which are not run in CI.
+> CI (`.github/workflows/ci.yml`) runs ruff lint, hassfest manifest validation, the **28 hermetic tests** (`tests/services` + `tests/config`, scoped by `pytest.ini`), and the frontend build on every push and PR. The live enterprise and Playwright suites are opt-in and are **not** run in CI. The enterprise suite's last frozen full run scored **175/175** (v2.0.0, 9 phases — see [`docs/testing/2026-04-10-test-report.md`](docs/testing/2026-04-10-test-report.md)); the merged integration adds a 10th service-layer phase.
 
-### Enterprise Integration Test (175 tests)
+### Enterprise integration suite (`tests/live/live_enterprise.py`)
+
+Ten phases against a live Home Assistant. The per-phase counts below are from the
+last frozen full run (v2.0.0, **175/175** — see the
+[dated report](docs/testing/2026-04-10-test-report.md)); Phase 10 was added with
+the service layer in v3.0.0.
 
 | Phase | Tests | Description |
 |-------|-------|-------------|
-| 1. Deployment Lifecycle | 11 | Component installation, config entry, panel registration |
-| 2. WebSocket Backend API | 36 | List/load/save operations, error handling |
-| 3. Security Boundaries | 34 | Path traversal, permission enforcement, injection prevention |
-| 4. Edge Cases & Stress | 8 | Large files, concurrent access, malformed input |
-| 5. Frontend Panel | 57 | UI rendering, theme sync, editor functionality |
-| 6. Cross-Component Isolation | 11 | Three-protocol independence verification |
-| 7. HA Restart Resilience | 11 | Component survival across HA restarts |
-| 8. Log & Error Handling | 4 | Proper logging and error reporting |
-| 9. Multi-Round Regression | 3 | Stability across repeated test cycles |
+| 1. Deployment lifecycle | 11 | Component install, singleton config entry, panel registration |
+| 2. WebSocket backend API | 36 | List/load/save operations, error handling |
+| 3. Security boundaries | 34 | Path traversal, permission enforcement, injection prevention |
+| 4. Edge cases & stress | 8 | Large files, concurrent access, malformed input |
+| 5. Frontend panel | 57 | Single tabbed bundle — rendering, theme sync, editor functionality |
+| 6. Options → tabs + cross-protocol isolation | 11 | Enabled protocols drive the tabs; each protocol sees only its own sandbox |
+| 7. HA restart resilience | 11 | Panel and API survive HA restarts |
+| 8. Log & error handling | 4 | Proper logging and error reporting |
+| 9. Multi-round regression & soak | 3 | Stability across repeated test cycles |
+| 10. Service layer *(new in v3.0.0)* | — | `list_files` / `load_file` / `save_file` / `apply` over REST — admin gating, sandbox, apply contract |
 
-### Playwright Theme Sync Test (16 tests)
+### Playwright panel & theme-sync suite (`tests/theme-sync/`, 12 tests)
 
 | Group | Tests | Description |
 |-------|-------|-------------|
-| 1. Basic Sync | 4 | Initial render, color change follow, all 5 CSS vars, sequential changes |
-| 2. Color Parsing | 4 | Black/white/red edge values, dark-primary-color fallback |
-| 3. Dark Mode | 2 | Dark mode sync, dark-to-light switch without residual color |
-| 4. Stability | 3 | 3-second SLA, rapid 5x changes, navigate away/back |
-| 5. Cross-Panel | 3 | All 3 panels identical colors, visual hero backgrounds match |
+| 1. Panel structure | 4 | Tabs equal the enabled protocols, first tab active on load, clicking activates a tab, exactly one active at a time |
+| 2. Theme sync | 5 | Primary color on initial render, follows HA color changes, `--primary-color` reaches the panel, sequential changes settle, color persists across a tab switch |
+| 3. Background / dark-mode readiness | 3 | Panel background matches `--primary-background-color`, follows a background-variable change, still follows the primary color while the background is dark |
 
 ### Running Tests
 
@@ -607,7 +612,7 @@ Woow_ha_multi_protocol_connect/
 │   ├── theme-sync/                # Playwright browser automation tests
 │   │   ├── playwright.config.ts   # Test configuration
 │   │   ├── helpers.ts             # Shared test utilities
-│   │   └── theme-sync.spec.ts     # 16 test cases across 5 groups
+│   │   └── theme-sync.spec.ts     # 12 test cases across 3 groups
 │   ├── live/                      # Standalone live-integration scripts (opt-in)
 │   │   ├── live_enterprise.py            # Enterprise integration tests
 │   │   ├── live_integration_deploy.py    # Deployment verification tests
@@ -657,6 +662,10 @@ Woow_ha_multi_protocol_connect/
 - **Security & apply semantics preserved:** the 7-layer path guard ([ADR-0001](docs/adr/0001-reject-dotdot-path-components.md))
   and restart-averse `apply` contract ([ADR-0002](docs/adr/0002-apply-reload-semantics.md))
   now key off `protocol` instead of domain
+- **Testing:** added a hermetic config/options/panel suite (`tests/config`, 14 tests)
+  alongside the service suite — CI now runs **28 hermetic tests**; the live enterprise
+  suite gained a 10th service-layer phase, and the Playwright suite was refocused on
+  panel structure + theme sync (12 tests across 3 groups)
 
 ### v2.2.0 (2026-08)
 

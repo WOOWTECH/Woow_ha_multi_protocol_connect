@@ -416,35 +416,39 @@ Art-Net 和 sACN 燈光控制的步驟式設定 — 燈具類型定義、通道�
 | 測試套件 | 測試數 | 執行環境 | 通過率 | 覆蓋範圍 |
 |----------|--------|----------|--------|----------|
 | **服務層（hermetic）** | 14 | CI（`pytest`） | 100% | 管理員權限、沙箱邊界、檔案操作、apply/reload 語意 |
-| **企業整合測試** | 175 | 實機 HA（選用） | 100% | 部署、WebSocket API、安全、邊緣案例、前端、隔離、重啟、日誌、回歸 |
-| **主題同步測試（Playwright）** | 16 | 瀏覽器（選用） | 100% | 色彩同步、深色模式、跨面板一致性、導航穩定性 |
-| **live/選用合計** | **191** | — | **100%** | 全棧覆蓋 |
+| **設定與面板接縫（hermetic）** | 14 | CI（`pytest`） | 100% | 單例設定流程、各協定啟用切換、面板註冊 |
+| **hermetic 合計（CI）** | **28** | CI（`pytest`） | **100%** | `tests/services` + `tests/config` |
+| **企業整合測試** | 10 階段 | 實機 HA（選用） | 100% | 部署、WebSocket API、安全、邊緣案例、前端、選項→分頁、跨協定隔離、重啟、日誌/回歸、服務層 |
+| **主題同步測試（Playwright）** | 12 | 瀏覽器（選用） | 100% | 面板結構（分頁）、色彩/主題同步、深色模式與背景 |
 
-> CI（`.github/workflows/ci.yml`）於每次 push 與 PR 執行 ruff lint、hassfest manifest 驗證、14 個 hermetic 服務測試，以及前端建置。`191` 指的是不在 CI 執行的 live/選用企業測試＋Playwright 套件。
+> CI（`.github/workflows/ci.yml`）於每次 push 與 PR 執行 ruff lint、hassfest manifest 驗證、**28 個 hermetic 測試**（`tests/services` + `tests/config`，由 `pytest.ini` 界定範圍），以及前端建置。live 企業測試與 Playwright 套件為選用，**不**在 CI 執行。企業套件最後一次凍結的完整執行為 **175/175**（v2.0.0，9 階段 — 見 [`docs/testing/2026-04-10-test-report.md`](docs/testing/2026-04-10-test-report.md)）；合併後的整合再加上第 10 個服務層階段。
 
-### 企業整合測試（175 個測試）
+### 企業整合套件（`tests/live/live_enterprise.py`）
+
+對實機 Home Assistant 執行的十個階段。下方各階段測試數為最後一次凍結的完整執行
+（v2.0.0，**175/175** — 見[日期化報告](docs/testing/2026-04-10-test-report.md)）；
+第 10 階段隨服務層在 v3.0.0 加入。
 
 | 階段 | 測試數 | 說明 |
 |------|--------|------|
-| 1. 部署生命週期 | 11 | 元件安裝、設定項目、面板註冊 |
+| 1. 部署生命週期 | 11 | 元件安裝、單例設定項目、面板註冊 |
 | 2. WebSocket 後端 API | 36 | 列表/讀取/儲存操作、錯誤處理 |
 | 3. 安全邊界 | 34 | 路徑穿越、權限執行、注入防禦 |
 | 4. 邊緣案例與壓力 | 8 | 大檔案、並發存取、格式錯誤輸入 |
-| 5. 前端面板 | 57 | UI 渲染、主題同步、編輯器功能 |
-| 6. 跨元件隔離 | 11 | 三協定獨立性驗證 |
-| 7. HA 重啟韌性 | 11 | 元件在 HA 重啟後存活 |
+| 5. 前端面板 | 57 | 單一分頁打包 — 渲染、主題同步、編輯器功能 |
+| 6. 選項→分頁 + 跨協定隔離 | 11 | 已啟用協定驅動分頁；每個協定只看到自己的沙箱 |
+| 7. HA 重啟韌性 | 11 | 面板與 API 在 HA 重啟後存活 |
 | 8. 日誌與錯誤處理 | 4 | 正確的日誌記錄和錯誤報告 |
-| 9. 多輪回歸 | 3 | 重複測試循環的穩定性 |
+| 9. 多輪回歸與 soak | 3 | 重複測試循環的穩定性 |
+| 10. 服務層 *（v3.0.0 新增）* | — | 透過 REST 的 `list_files` / `load_file` / `save_file` / `apply` — 管理員權限、沙箱、apply 契約 |
 
-### Playwright 主題同步測試（16 個測試）
+### Playwright 面板與主題同步套件（`tests/theme-sync/`，12 個測試）
 
 | 組別 | 測試數 | 說明 |
 |------|--------|------|
-| 1. 基本同步 | 4 | 初始渲染、色彩變更跟隨、全部 5 個 CSS 變數、連續變更 |
-| 2. 色彩解析 | 4 | 黑/白/紅邊緣值、dark-primary-color 回退 |
-| 3. 深色模式 | 2 | 深色模式同步、深→淺切換無殘留色彩 |
-| 4. 穩定性 | 3 | 3 秒 SLA、快速 5 次變更、導航離開/返回 |
-| 5. 跨面板 | 3 | 三面板色彩一致、視覺 hero 背景匹配 |
+| 1. 面板結構 | 4 | 分頁等於已啟用協定、載入時第一個分頁啟用、點擊可啟用分頁、同時僅一個分頁啟用 |
+| 2. 主題同步 | 5 | 初始渲染的主色彩、跟隨 HA 色彩變更、`--primary-color` 抵達面板、連續變更收斂、色彩在分頁切換後保留 |
+| 3. 背景 / 深色模式就緒 | 3 | 面板背景符合 `--primary-background-color`、跟隨背景變數變更、背景為深色時仍跟隨主色彩 |
 
 ### 執行測試
 
@@ -517,7 +521,7 @@ Woow_ha_multi_protocol_connect/
 │   ├── theme-sync/                # Playwright 瀏覽器自動化測試
 │   │   ├── playwright.config.ts   # 測試設定
 │   │   ├── helpers.ts             # 共用測試工具
-│   │   └── theme-sync.spec.ts     # 5 組 16 個測試案例
+│   │   └── theme-sync.spec.ts     # 3 組 12 個測試案例
 │   ├── live/                      # 獨立即時整合腳本（選用）
 │   │   ├── live_enterprise.py            # 企業整合測試
 │   │   ├── live_integration_deploy.py    # 部署驗證測試
@@ -565,6 +569,9 @@ Woow_ha_multi_protocol_connect/
 - **保留安全與 apply 語意：** 7 層路徑防護（[ADR-0001](docs/adr/0001-reject-dotdot-path-components.md)）
   與避免重啟的 `apply` 契約（[ADR-0002](docs/adr/0002-apply-reload-semantics.md)）
   現改以 `protocol` 為鍵，而非 domain
+- **測試：** 在服務套件之外新增一組 hermetic 設定/選項/面板套件（`tests/config`，14 個測試）
+  — CI 現執行 **28 個 hermetic 測試**；live 企業套件新增第 10 個服務層階段，Playwright
+  套件重新聚焦於面板結構與主題同步（3 組 12 個測試）
 
 ### v2.2.0 (2026-08)
 
